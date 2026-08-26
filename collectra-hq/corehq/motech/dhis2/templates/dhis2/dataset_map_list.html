@@ -1,0 +1,91 @@
+{% extends 'hqwebapp/bootstrap5/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry "dhis2/js/dataset_map" %}
+
+{% block pagination_header %}
+  {% registerurl "send_dataset_now" domain "---" %}
+
+  <h2>{% trans "DHIS2 DataSet Maps" %}</h2>
+{% endblock %}
+
+{% block pagination_footer %}
+  <a href="{% url 'dataset_map_create_view' domain %}">
+    <button type="button" class="btn btn-primary">
+      {% trans "Add DataSet Map" %}
+    </button></a>
+
+  <a href="{% url 'dataset_map_json_create_view' domain %}">
+  <button type="button" class="btn btn-outline-primary">
+    {% trans "Add DataSet Map (JSON UI)" %}
+  </button></a>
+
+  <div id="send-now-result" class="mt-3 text-success d-none"></div>
+  <a id="remote-logs" class="d-none" href="#" target="_blank">{% trans "View log" %} <i class="fa fa-external-link"></i></a>
+{% endblock %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="dataset-map-template">
+    <td>
+      <a data-bind="attr: {href: editUrl}">
+        <span data-bind="text: description"></span>
+      </a>
+    </td>
+    <td data-bind="text: connectionSettings"></td>
+    <td data-bind="text: frequency"></td>
+    <td data-bind="text: ucr"></td>
+    <td>
+      <button type="button"
+              data-bind="attr: {'onclick': 'sendNow(' + id + ')'}"
+              class="btn btn-outline-primary">
+        {% trans "Send Now" %}
+      </button>
+
+      <a data-bind="attr: {href: jsonEditUrl}">
+        <button type="button" class="btn btn-outline-primary">
+          {% trans "Edit (JSON UI)" %}
+        </button></a>
+
+      <button type="button"
+              class="btn btn-outline-danger"
+              data-bind="attr: {'data-bs-target': '#delete-dataset-map-' + id}"
+              data-bs-toggle="modal">
+        <i class="fa fa-remove"></i> {% trans "Delete" %}
+      </button>
+      <div class="modal fade"
+           data-bind="attr: {'id': 'delete-dataset-map-' + id}">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>
+                {% trans "Delete DataSet Map" %} <strong data-bind="text: description"></strong>?
+              </h3>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-outline-primary"
+                      data-bs-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="button"
+                      class="btn btn-outline-danger delete-item-confirm">
+                <i class="fa fa-remove"></i> {% trans "Delete" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+  </script>
+
+  <script type="text/html" id="dataset-map-deleted-template">
+    <td data-bind="text: description"></td>
+    <td data-bind="text: connectionSettings"></td>
+    <td data-bind="text: frequency"></td>
+    <td data-bind="text: ucr"></td>
+    <td>{% trans 'Deleted' %}</td>
+  </script>
+
+{% endblock %}

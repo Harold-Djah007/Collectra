@@ -1,0 +1,22 @@
+package org.javarosa.core.model;
+
+/**
+ * Filter for rule for a combo box that accepts answer choice strings based on simple prefix logic
+ *
+ * @author Aliza Stone
+ */
+public class StandardFilterRule implements ComboboxFilterRule {
+
+    @Override
+    public boolean shouldRestrictTyping() {
+        return true;
+    }
+
+    @Override
+    public boolean choiceShouldBeShown(ComboItem choice, CharSequence textEntered) {
+        if (textEntered == null || "".contentEquals(textEntered)) {
+            return true;
+        }
+        return choice.getDisplayText().toLowerCase().startsWith(textEntered.toString().toLowerCase());
+    }
+}

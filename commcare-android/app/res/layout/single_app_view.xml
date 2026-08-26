@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:gravity="center"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    tools:viewBindingIgnore="true">
+
+    <TextView
+        android:gravity="center"
+        android:id="@+id/app_name"
+        tools:text="App Name"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:paddingBottom="@dimen/standard_spacer"
+        android:paddingTop="@dimen/standard_spacer"
+        android:textColor="@color/darkest_grey"
+        style="@style/TextAppearance.AppCompat.Display1" />
+
+    <TextView
+        android:gravity="center"
+        android:id="@+id/app_version"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:textColor="@color/darkest_grey"
+        style="@style/TextAppearance.AppCompat.Body1" />
+
+    <TextView
+        android:gravity="center"
+        android:id="@+id/profile_warning"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/pre_multiple_apps_warning"
+        android:textColor="@color/cc_attention_negative_color"
+        style="@style/TextAppearance.AppCompat.Body2"
+        android:visibility="visible"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/uninstall_button"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/standard_spacer"
+        android:layout_width="fill_parent"
+        android:onClick="rebootAlertDialog"
+        android:text="@string/uninstall_app" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/archive_button"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/standard_spacer"
+        android:layout_width="fill_parent"
+        android:onClick="toggleArchiveClicked"
+        android:text="@string/archive_app" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/update_button"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/standard_spacer"
+        android:layout_width="fill_parent"
+        android:onClick="updateClicked"
+        android:text="@string/update_app" />
+
+    <com.google.android.material.button.MaterialButton
+        android:clickable="true"
+        android:id="@+id/verify_button"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/standard_spacer"
+        android:layout_width="fill_parent"
+        android:onClick="verifyResourcesClicked"
+        android:text="@string/verify_resources" />
+
+</LinearLayout>

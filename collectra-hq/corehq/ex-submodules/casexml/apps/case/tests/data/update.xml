@@ -1,0 +1,23 @@
+<?xml version='1.0' ?>
+<registration version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://openrosa.org/case/test/update">
+<meta>
+    <deviceID>Chalimbana</deviceID>
+    <timeStart>2010-06-29T13:42:50.137</timeStart>
+    <timeEnd />
+    <username>admin</username>
+    <userID>c2c253a1-7d82-11df-a037-005056c00008</userID>
+    <instanceID>REPLACE_UID</instanceID>
+</meta>
+<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="REPLACE_CASEID" user_id="someuser" date_modified="2010-06-30T13:42:50" >
+    <update>
+        <case_type>a_new_type</case_type>
+        <case_name>a new name</case_name>
+        <date_opened>2010-05-12T13:42:50</date_opened>
+        <someprop>abcd</someprop>
+        <somenewprop>efgh</somenewprop>
+    </update>
+</case>
+<patient>
+    <patient_id>12345</patient_id>
+</patient>
+</registration>

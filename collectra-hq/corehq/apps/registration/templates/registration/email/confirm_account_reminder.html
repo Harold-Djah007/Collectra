@@ -1,0 +1,16 @@
+{% extends 'registration/email/confirm_account.html' %}
+{% load i18n %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    Don't forget to activate your account. Your new project space is
+    waiting for you!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% blocktrans %}
+    We noticed that you registered for an account yesterday,
+    but it seems you haven't confirmed your email address yet.
+  {% endblocktrans %}
+{% endblock %}

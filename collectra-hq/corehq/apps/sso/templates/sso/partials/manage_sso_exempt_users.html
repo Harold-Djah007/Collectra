@@ -1,0 +1,63 @@
+{% load i18n %}
+
+{# requires sso/js/edit_identity_provider #}
+
+<div id="sso-exempt-user-manager" class="ko-template">
+  <div class="card card-modern-gray card-form-only mb-3">
+    <div class="card-body">
+      <fieldset>
+        <legend>{% trans "SSO Exempt Users" %}</legend>
+        <p>
+          {% blocktrans %}
+            Users in this list will not be forced to sign in with SSO when the
+            Identity Provider is active.
+          {% endblocktrans %}
+        </p>
+        <!-- ko if: showNoObjectsMessage -->
+        <p class="alert alert-danger">
+          <i class="fa fa-warning"></i>
+          {% blocktrans %}
+            No users are exempt from SSO for this Identity Provider. Please add
+            at least <strong>one enterprise admin</strong>
+            before making this Identity Provider active!
+          {% endblocktrans %}
+        </p>
+        <!-- /ko -->
+        <ul data-bind="foreach: linkedObjects">
+          <li>
+            <strong class="pe-2" data-bind="text: $data"></strong>
+            (<button type="button"
+                     class="btn btn-link"
+                     data-bind="click: $parent.removeObject">remove</button>)
+          </li>
+        </ul>
+        <p class="text-danger"
+           data-bind="text: asyncHandlerError,
+                      visible: asyncHandlerError"></p>
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="card card-modern-gray card-form-only">
+    <div class="card-body row align-items-center">
+      <div class="col-2">
+        <input
+          data-bind="textInput: newObject"
+          placeholder="jsmith@example.org"
+          type="email"
+          class="form-control"
+        />
+      </div>
+      <button type="button"
+              data-bind="click: addObject,
+                         enable: isNewObjectValid(),
+                         "
+              class="btn btn-primary col-auto">
+        {% trans "Add User" %}
+      </button>
+      <span class="text-danger col-auto"
+            data-bind="text: addObjectError,
+                       visible: addObjectError"></span>
+    </div>
+  </div>
+</div>

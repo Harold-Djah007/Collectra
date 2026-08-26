@@ -1,0 +1,59 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    tools:viewBindingIgnore="true">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_margin="16dp"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/ImageView01"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/content_min_margin"
+            android:paddingBottom="@dimen/content_min_margin"
+            android:paddingLeft="@dimen/content_min_margin"
+            android:paddingTop="@dimen/content_min_margin"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            app:srcCompat="@drawable/commcare_by_dimagi"
+            android:layout_marginEnd="@dimen/content_min_margin"
+            android:paddingStart="@dimen/content_min_margin"></ImageView>
+
+        <TextView
+            android:id="@+id/ReportPrompt01"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ImageView01"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:padding="@dimen/content_min_margin"
+            android:text="@string/hello_world"
+            tools:context=".ReportProblemActivity"/>
+
+        <EditText
+            android:id="@+id/ReportText01"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ReportPrompt01"
+            android:gravity="top"
+            android:hint="@string/your_comment"
+            android:inputType="textMultiLine"
+            android:lines="5"
+            android:textColor="@color/black"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/ReportButton01"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ReportText01"
+            android:layout_centerHorizontal="true"
+            android:text="Submit Report"/>
+
+    </RelativeLayout>
+</ScrollView>

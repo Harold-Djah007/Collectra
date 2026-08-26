@@ -1,0 +1,22 @@
+<partial>
+    <entry>
+    <form>http://openrosa.org/formdesigner/5FBED77B-E327-495D-97E8-0733B97D8EA5</form>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id_case_clinic" function="some xpath expression containing instance('casedb') and instance('commcaresession')"/>
+    </session>
+    <assertions>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=some xpath expression containing instance('casedb') and instance('commcaresession')]) = 1">
+        <text>
+          <locale id="case_autoload.raw.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
+  </entry>
+</partial>

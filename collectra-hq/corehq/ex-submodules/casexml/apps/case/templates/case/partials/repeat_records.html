@@ -1,0 +1,33 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>{% trans "Last Sent" %} ({{ tz_abbrev }})</th>
+      <th>{% trans "URL" %}</th>
+      <th>{% trans "Status" %}</th>
+      <th>{% trans "Attempts" %}</th>
+      <th>{% trans "Action" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for repeat_record in repeat_records %}
+    <tr>
+      <td>{{ repeat_record.last_checked }}</td>
+      <td>{{ repeat_record.url }}</td>
+      <td>{{ repeat_record.state }}</td>
+      <td>
+        {{ repeat_record.attempts }}
+      </td>
+      <td>
+        <a class="btn btn-default requeue-record-payload"
+           role="button"
+           data-record-id="{{ repeat_record.record_id }}">
+          {% trans "Requeue Request" %}
+        </a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,47 @@
+version: 2
+updates:
+- package-ecosystem: uv
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  cooldown:
+    default-days: 7
+  open-pull-requests-limit: 7
+  labels:
+  - product/invisible
+  # Focus on major versions only
+  # Todo: remove once we're in steady-state on major versions
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-patch"
+        - "version-update:semver-minor"
+
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  cooldown:
+    default-days: 7
+  open-pull-requests-limit: 5
+  labels:
+  - product/invisible
+  - dependencies/javascript
+  # Focus on major versions only
+  # Todo: remove once we're in steady-state on major versions
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-patch"
+        - "version-update:semver-minor"
+
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: weekly
+  cooldown:
+    default-days: 7
+  labels:
+  - product/invisible

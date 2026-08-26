@@ -1,0 +1,63 @@
+package org.commcare.fragments;
+
+import android.content.Context;
+import android.os.Bundle;
+import androidx.fragment.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import org.commcare.dalvik.R;
+import org.commcare.views.SquareButtonWithText;
+
+/**
+ * Fragment to start, update or cancel an app installation.
+ *
+ * @author Daniel Luna (dcluna@dimagi.com)
+ */
+public class InstallConfirmFragment extends Fragment {
+    private StartStopInstallCommands buttonCommands;
+
+    public interface StartStopInstallCommands {
+        void onStartInstallClicked();
+
+        void onStopInstallClicked();
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (!(context instanceof StartStopInstallCommands)) {
+            throw new ClassCastException(context + " must implemement " + StartStopInstallCommands.class.getName());
+        }
+
+        this.buttonCommands = (StartStopInstallCommands)context;
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.install_confirm_fragment, container, false);
+
+        SquareButtonWithText btnStartInstall = view.findViewById(R.id.btn_start_install);
+        btnStartInstall.setText(getString(R.string.install_button_start));
+        btnStartInstall.setEnabled(true);
+        btnStartInstall.setOnClickListener(v -> buttonCommands.onStartInstallClicked());
+
+        SquareButtonWithText btnStopInstall = view.findViewById(R.id.btn_stop_install);
+        btnStopInstall.setText(getString(R.string.install_button_startover));
+        btnStopInstall.setEnabled(true);
+        btnStopInstall.setOnClickListener(v -> buttonCommands.onStopInstallClicked());
+
+        TextView setupMsg = view.findViewById(R.id.str_setup_message);
+        setupMsg.setText(getString(R.string.install_ready_top));
+
+        TextView setupMsg2 = view.findViewById(R.id.str_setup_message_2);
+        setupMsg2.setText(getString(R.string.install_ready_bottom));
+
+        TextView netWarn = view.findViewById(R.id.net_warn);
+        netWarn.setText(getString(R.string.install_netwarn));
+
+        return view;
+    }
+}

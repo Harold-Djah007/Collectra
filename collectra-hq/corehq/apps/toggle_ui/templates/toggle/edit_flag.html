@@ -1,0 +1,421 @@
+{% extends 'hqwebapp/bootstrap3/base_page.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% js_entry_b3 'toggle_ui/js/edit-flag' %}
+
+{% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
+
+{% block stylesheets %}
+  <style>
+    .margin-vertical-sm {
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+
+    .label-release {
+      background-color: #c22eff !important;
+    }
+
+    /* B5: replace with table-borderless and align-middle */
+    #feature-flag-items tbody td {
+      border: 0;
+      vertical-align: middle;
+    }
+  </style>
+{% endblock %}
+
+{% block page_content %}
+  {% registerurl 'edit_toggle' toggle.slug %}
+  {% registerurl 'domain_internal_settings' '---' %}
+  {% initial_page_data 'items' toggle.enabled_users %}
+  {% initial_page_data 'namespaces' namespaces %}
+  {% initial_page_data 'last_used' last_used %}
+  {% initial_page_data 'service_type' service_type %}
+  {% initial_page_data 'dimagi_users' dimagi_users %}
+  {% initial_page_data 'is_random_editable' is_random_editable %}
+  {% initial_page_data 'randomness' static_toggle.randomness %}
+  {% if not usage_info %}
+    <a href="{{ page_url }}?usage_info=true" class="pull-right">
+      <button class="btn btn-info">
+        <i class="icon-white icon-info-sign"></i>
+        {% trans "Show usage" %}
+      </button>
+    </a>
+  {% endif %}
+  {% if static_toggle.description %}
+    <p>{{ static_toggle.description }}</p>
+  {% endif %}
+  <p>
+    <span class="label label-{{ static_toggle.tag.css_class }}"
+      >{{ static_toggle.tag.name }}</span
+    >
+    {% if is_random %}
+      <span class="label label-info"
+        >Random: {{ static_toggle.randomness }}</span
+      >
+    {% endif %}
+  </p>
+  <p>{{ static_toggle.tag.description }}</p>
+  {% if is_feature_release %}
+    <div class="alert alert-warning" role="alert">
+      {% blocktrans trimmed with owner=static_toggle.owner %}
+        Please confirm with {{ owner }} before using it.
+      {% endblocktrans %}
+    </div>
+  {% endif %}
+  {% if static_toggle.help_link %}
+    <p>
+      <a href="{{ static_toggle.help_link }}" target="_blank"
+        >{% trans "More information" %}</a
+      >
+    </p>
+  {% endif %}
+
+  {% if service_type_nested %}
+    {% for service_type, by_plan_name in service_type_nested.items %}
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th class="col-sm-2">Subscription Type</th>
+            <th class="col-sm-3">Plan Name</th>
+            <th class="col-sm-7">List of Domains</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for plan_name, domains in by_plan_name.items %}
+            <tr>
+              <td>{{ service_type }}</td>
+              <td>{{ plan_name }}</td>
+              <td>{{ domains | join:", " }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  {% endif %}
+
+  {% if paused %}
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th class="col-sm-2">Subscription Type</th>
+          <th class="col-sm-3">Plan Name</th>
+          <th class="col-sm-7">List of Domains</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for service_type_and_plan_name, domains in paused.items %}
+          <tr>
+            <td>{{ service_type_and_plan_name.0 }}</td>
+            <td>{{ service_type_and_plan_name.1 }}</td>
+            <td>{{ domains | join:", " }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if static_toggle.relevant_environments %}
+    {% if debug or server_environment in static_toggle.relevant_environments %}
+      <div class="alert alert-warning" role="alert">
+        {% blocktrans %}
+          <strong>Please Note:</strong> This feature flag is available on this
+          server environment, but not on others.
+        {% endblocktrans %}
+      </div>
+    {% else %}
+      <div class="alert alert-danger" role="alert">
+        {% blocktrans %}
+          <strong>CAUTION:</strong> This feature flag is not available on the
+          current server environment.
+        {% endblocktrans %}
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if static_toggle.always_enabled %}
+    <div class="alert alert-info">
+      <i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+        This feature flag is <strong>always enabled</strong> for the following
+        domains:
+      {% endblocktrans %}
+      <ul>
+        {% for domain in static_toggle.always_enabled %}
+          <li>{{ domain }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if static_toggle.always_disabled %}
+    <div class="alert alert-info">
+      <i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+        This feature flag is <strong>always disabled</strong> for the following
+        domains:
+      {% endblocktrans %}
+      <ul>
+        {% for domain in static_toggle.always_disabled %}
+          <li>{{ domain }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if static_toggle.parent_toggles %}
+    <div class="alert alert-info">
+      <p>
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          This feature flag also requires the following flags to be enabled:
+        {% endblocktrans %}
+      </p>
+      <ul>
+        {% for dependency in static_toggle.parent_toggles %}
+          <li>
+            <a href="{% url "edit_toggle" dependency.slug %}" target="_blank"
+              >{{ dependency.label }}</a
+            >
+          </li>
+        {% endfor %}
+      </ul>
+      <p>
+        {% blocktrans %}
+          Enabling this feature flag will automatically enable the flags listed
+          above.
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
+
+  {% if not is_random %}
+    <div
+      class="alert d-flex justify-content-between {% if toggle.status == 'active' %}alert-info{% else %}alert-warning{% endif %}"
+      role="alert"
+    >
+      <div>Toggle Status: <strong>{{ toggle.status }}</strong></div>
+      <button
+        class="btn btn-default"
+        data-toggle="modal"
+        data-target="#change-toggle-status"
+      >
+        See More {% if user.is_staff %}/ Edit{% endif %}
+      </button>
+    </div>
+  {% endif %}
+
+  <div
+    class="modal fade"
+    id="change-toggle-status"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="change-toggle-status-label"
+  >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="change-toggle-status-label">
+            Change feature flag status
+          </h4>
+        </div>
+        <form
+          class="form"
+          action="{% url 'toggle_status' toggle.slug %}"
+          method="POST"
+        >
+          {% csrf_token %}
+          <div class="modal-body">
+            <p>
+              This is a utility to allow us to release or remove feature flags
+              without a code deploy, and with a much easier way to walk back the
+              change. This makes the code changes a lower risk cleanup step that
+              won't affect any users.
+            </p>
+
+            <p>
+              The default state for a feature flag is "active" - where it can be
+              turned on or off for individual users or domains. If we are to
+              remove a feature flag, you can first set it to "disabled" here,
+              which will behave the same as removing everything from the list.
+              Likewise to make a feature flag generally available (GA), set it
+              to "released," and it will behave as if you've enabled the flag
+              for all projects and users.
+            </p>
+            {% for status_option in status_options %}
+              <div class="radio">
+                <label>
+                  <input
+                    type="radio"
+                    name="toggle_status"
+                    value="{{ status_option }}"
+                    {% if status_option == toggle.status %}checked{% endif %}
+                    {% if not user.is_staff %}disabled{% endif %}
+                  />
+                  {{ status_option }}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">
+              Close
+            </button>
+            <button
+              type="submit"
+              class="btn btn-danger"
+              {% if not user.is_staff %}disabled{% endif %}
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+  <div id="toggle_editing_ko">
+    {% if can_edit_toggle %}
+      <div data-bind="saveButton: saveButtonTop"></div>
+    {% endif %}
+    {% if is_random_editable %}
+      <div class="input-group">
+        <label for="randomness-edit">Randomness Level: </label>
+        <span
+          data-bind="makeHqHelp: {
+          description: '{% trans "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all" %}'}"
+        >
+        </span>
+        <input
+          id="randomness-edit"
+          class="input-medium form-control"
+          type="number"
+          step="0.01"
+          min="0"
+          max="1"
+          data-bind="value: randomness"
+        />
+      </div>
+    {% endif %}
+    {% if allows_items %}
+      {% if not can_edit_toggle %}
+        <div class="alert alert-info">
+          <h5>
+            <i class="fa fa-info-circle"></i> {% trans "Why can't I edit?" %}
+          </h5>
+          {% if toggle.status == 'active' %}
+            <p>
+              {% blocktrans %}
+                You do not have permission to modify this flag. Please contact
+                support if any changes are needed.
+              {% endblocktrans %}
+            </p>
+          {% else %}
+            <p>
+              {% blocktrans with status=toggle.status %}
+                This feature is {{ status }} for all users and domains, so the
+                individually toggled items are irrelevant. The toggle will soon
+                be removed.
+              {% endblocktrans %}
+            </p>
+          {% endif %}
+        </div>
+      {% endif %}
+      <table class="table table-condensed" id="feature-flag-items">
+        <thead>
+          <tr>
+            <th>
+              {% trans "Enabled toggle items" %}
+              {% if is_random %}
+                <span
+                  data-bind="makeHqHelp: {
+                description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"
+                ></span>
+              {% endif %}
+            </th>
+            <th>Namespace</th>
+            {% if usage_info %}
+              <th>Latest Form Submission</th>
+              <th>Subscription Plan</th>
+              <th>Dimagi Users</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: items">
+          <tr>
+            <td class="col-sm-4">
+              <div class="input-group">
+                <span class="input-group-btn">
+                  {% if can_edit_toggle %}
+                    <button
+                      class="btn btn-default"
+                      data-bind="click: $parent.removeItem"
+                    >
+                      <i class="text-danger fa-regular fa-trash-can"></i>
+                    </button>
+                  {% endif %}
+                </span>
+                <input
+                  class="form-control"
+                  type="text"
+                  data-bind="value: value"
+                  {% if not can_edit_toggle %}disabled{% endif %}
+                />
+                <span class="input-group-addon">
+                  <i
+                    data-bind="class: (value() && value()[0] == '!') ? 'fa fa-circle-xmark' : 'fa fa-check'"
+                  ></i>
+                </span>
+              </div>
+            </td>
+            <td class="col-sm-2">
+              <a
+                style="display: none"
+                data-bind="
+                visible: namespace() === 'domain',
+                attr: { href: domainUrl }
+              "
+              >
+                domain <i class="fa fa-external-link"></i>
+              </a>
+              <span
+                style="display: none"
+                data-bind="visible: namespace() != 'domain'"
+              >
+                <i class="fa fa-user"></i> user
+              </span>
+            </td>
+            {% if usage_info %}
+              <td class="col-sm-2" data-bind="text: last_used"></td>
+              <td class="col-sm-4" data-bind="text: service_type"></td>
+              <td class="col-sm-4" data-bind="text: dimagi_users"></td>
+            {% endif %}
+          </tr>
+        </tbody>
+      </table>
+      {% if can_edit_toggle %}
+        {% for namespace in namespaces %}
+          <button
+            class="btn btn-primary"
+            data-bind="click: function (){ addItem('{{ namespace }}') }"
+          >
+            <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
+          </button>
+        {% endfor %}
+      {% endif %}
+    {% endif %}
+    {% if can_edit_toggle %}
+      <div data-bind="saveButton: saveButtonBottom"></div>
+    {% endif %}
+  </div>
+{% endblock %}

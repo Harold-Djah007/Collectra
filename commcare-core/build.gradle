@@ -1,0 +1,267 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'java-library'
+    id "me.champeau.jmh" version "0.7.0"
+}
+
+// Needed even though it looks unused
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+configurations {
+    ccapi.extendsFrom(ccapiImplementation)
+    cliOutput.extendsFrom (cliImplementation)
+    harness
+    translate.extendsFrom(translateImplementation)
+    testsAsJar
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+test {
+    reports.junitXml.destination = file('build/reports/tests')
+}
+
+sourceSets {
+    translate {
+        java {
+            compileClasspath += main.output
+        }
+    }
+
+
+    cli {
+        java {
+            compileClasspath += main.output
+            compileClasspath += translate.output
+        }
+    }
+
+    ccapi {
+        java {
+            compileClasspath += main.output
+            srcDir 'src/cli/java'
+            exclude 'org/commcare/util/cli/**'
+            exclude 'org/commcare/util/mocks/**'
+        }
+    }
+
+    test {
+        java {
+            compileClasspath += cli.output
+            compileClasspath += ccapi.output
+            compileClasspath += translate.output
+        }
+    }
+
+}
+
+dependencies {
+    api 'com.github.stefanhaustein:kxml2:2.4.1'
+    implementation 'javax.ws.rs:javax.ws.rs-api:2.0.1'
+    // Added so Android Studio recognizes libs in util jar projects
+    implementation 'org.json:json:20251224'
+    implementation 'commons-cli:commons-cli:1.3.1'
+    implementation 'joda-time:joda-time:2.12.1'
+    implementation 'com.carrotsearch:hppc:0.9.1'
+    api 'com.squareup.retrofit2:retrofit:2.9.0'
+    api 'com.squareup.okhttp3:okhttp:4.11.0'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'io.opentracing:opentracing-api:0.33.0'
+    implementation 'io.opentracing:opentracing-util:0.33.0'
+    implementation 'com.datadoghq:dd-trace-api:1.10.0'
+    implementation 'org.gavaghan:geodesy:1.1.3'
+    cliImplementation 'org.json:json:20251224'
+    cliImplementation 'com.github.stefanhaustein:kxml2:2.4.1'
+    cliImplementation 'commons-cli:commons-cli:1.3.1'
+    cliImplementation 'joda-time:joda-time:2.9.4'
+    cliImplementation 'io.reactivex.rxjava2:rxjava:2.1.1'
+    cliImplementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    cliImplementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    cliImplementation 'com.google.guava:guava:31.1-jre'
+    cliImplementation 'com.datadoghq:dd-trace-api:1.10.0'
+
+    testImplementation sourceSets.main.output
+    testImplementation sourceSets.ccapi.output
+    testImplementation sourceSets.cli.output
+    testImplementation sourceSets.translate.output
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20251224'
+    testImplementation 'org.xerial:sqlite-jdbc:3.40.0.0'
+    testImplementation 'joda-time:joda-time:2.9.4'
+    testImplementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    testImplementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    testImplementation 'com.google.guava:guava:31.1-jre'
+
+    ccapiImplementation sourceSets.main.output
+    ccapiImplementation 'org.json:json:20251224'
+    ccapiImplementation 'org.xerial:sqlite-jdbc:3.40.0.0'
+    ccapiImplementation 'com.github.stefanhaustein:kxml2:2.4.1'
+    ccapiImplementation 'joda-time:joda-time:2.9.4'
+    ccapiImplementation 'com.carrotsearch:hppc:0.9.1'
+    ccapiImplementation 'io.reactivex.rxjava2:rxjava:2.1.1'
+    ccapiImplementation "com.squareup.retrofit2:retrofit:2.9.0"
+    ccapiImplementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    ccapiImplementation 'com.google.guava:guava:31.1-jre'
+    ccapiImplementation 'io.opentracing:opentracing-api:0.33.0'
+    ccapiImplementation 'io.opentracing:opentracing-util:0.33.0'
+    ccapiImplementation 'com.datadoghq:dd-trace-api:1.10.0'
+
+    translateImplementation 'com.github.stefanhaustein:kxml2:2.4.1'
+    translateImplementation 'xpp3:xpp3:1.1.4c'
+    translateImplementation 'commons-cli:commons-cli:1.3.1'
+    translateImplementation files('lib/json-simple-1.1.1.jar')
+    translateImplementation 'joda-time:joda-time:2.9.4'
+    translateImplementation 'org.json:json:20251224'
+    translateImplementation 'io.reactivex.rxjava2:rxjava:2.1.1'
+    translateImplementation "com.squareup.retrofit2:retrofit:2.9.0"
+    translateImplementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    translateImplementation 'com.google.guava:guava:31.1-jre'
+
+    // 'compile' dependency is also needed to run 'gradle jmh' for some reason,
+    // but leaving it in conflicts with apk builds, so only uncomment the
+    // following lines when jmh needed:
+    /*
+            compile 'org.openjdk.jmh:jmh-core:1.17.3'
+            compile 'org.openjdk.jmh:jmh-generator-annprocess:1.17.3'
+            jmhCompile 'org.openjdk.jmh:jmh-core:1.17.3'
+            jmhCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.17.3'
+            */
+}
+
+jar {
+    archiveBaseName = "commcare-libraries"
+}
+
+jar.dependsOn test
+
+task cliJar(type: Jar, dependsOn: cliClasses) {
+    archiveBaseName = "commcare-cli"
+    from sourceSets.translate.output
+    from sourceSets.cli.output
+    from sourceSets.main.output
+    from {
+        configurations.cliOutput.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    manifest {
+        attributes 'Main-Class': 'org.commcare.util.cli.CliMain'
+    }
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    filesMatching(["**/LICENSE.txt","**/NOTICE.txt", "META-INF/**"]) {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+}
+
+task ccapiJar(type: Jar, dependsOn: ccapiClasses) {
+    archiveBaseName = "commcare-api"
+    from sourceSets.ccapi.output
+    from sourceSets.main.output
+    from {
+        configurations.ccapi.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    filesMatching(["**/LICENSE.txt","**/NOTICE.txt", "META-INF/**"]) {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+}
+
+task harnessJar(type: Jar, dependsOn: translateClasses) {
+    archiveBaseName = "javarosa-cli"
+    from sourceSets.translate.output
+    from sourceSets.main.output
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    manifest {
+        attributes 'Main-Class': 'org.javarosa.engine.Harness'
+    }
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    filesMatching(["**/LICENSE.txt","**/NOTICE.txt", "META-INF/**"]) {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+}
+
+// used to provide the test source files to external projects, such as commcare-android,
+// which might want to import classes
+task testsrcJar(type: Jar, dependsOn: testClasses) {
+    archiveClassifier = 'tests'
+    from files(sourceSets.test.output)
+    from files(sourceSets.cli.output)
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+
+
+task formTranslateJar(type: Jar, dependsOn: translateClasses) {
+    archiveBaseName = "form_translate"
+    from sourceSets.translate.output
+    from sourceSets.main.output
+    from {
+        configurations.translate.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    manifest {
+        attributes 'Main-Class': 'org.javarosa.xform.schema.Harness'
+    }
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    filesMatching(["**/LICENSE.txt","**/NOTICE.txt", "META-INF/**", "**/org.xmlpull.v1.XmlPullParserFactory","org/xmlpull/v1/*"]) {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+}
+
+artifacts {
+  cliOutput cliJar
+  ccapi ccapiJar
+  harness harnessJar
+  translate formTranslateJar
+  testsAsJar testsrcJar
+}
+
+task copyTestResources(type: Copy) {
+    from sourceSets.test.resources
+    into "${buildDir}/classes/test"
+}
+processTestResources.dependsOn copyTestResources
+
+def buildDeps = hasProperty('javarosaDeps') ? javarosaDeps : null
+
+/* for use primarily by the build server to extract the required 3rd-party
+libraries into the javarosa source tree. to use this in your own build, set the
+'extract-libs-fresh' property, then also set the 'javarosa-deps' property to
+the path of the library archive (make sure you are using the version of the
+archive compatible with the version you wish to build) */
+task extractLibs(type: Copy) {
+    if (buildDeps != null) {
+        from zipTree(file("${buildDeps}")) into file("${projectDir}")
+    }
+}
+
+compileJava.dependsOn extractLibs
+
+jmh {
+    duplicateClassesStrategy = DuplicatesStrategy.FAIL
+    fork = 2
+    iterations = 10
+    warmupIterations = 20
+    includeTests = true
+    // default mode is 'throughput'; where a larger score is better
+}

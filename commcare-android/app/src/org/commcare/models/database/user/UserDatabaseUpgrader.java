@@ -1,0 +1,871 @@
+package org.commcare.models.database.user;
+
+import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
+
+import org.commcare.CommCareApplication;
+import org.commcare.android.database.user.models.ACasePreV24Model;
+import org.commcare.android.database.user.models.ACasePreV28Model;
+import org.commcare.android.database.user.models.FormRecordV2;
+import org.commcare.android.database.user.models.FormRecordV3;
+import org.commcare.android.database.user.models.FormRecordV5;
+import org.commcare.android.database.user.models.SessionStateDescriptor;
+import org.commcare.android.logging.ForceCloseLogEntry;
+import org.commcare.android.javarosa.AndroidLogEntry;
+import org.commcare.cases.model.Case;
+import org.commcare.cases.model.StorageIndexedTreeElementModel;
+import org.commcare.logging.XPathErrorEntry;
+import org.commcare.models.database.IDatabase;
+import org.commcare.models.database.user.models.AndroidCaseIndexTablePreV21;
+import org.commcare.modern.database.TableBuilder;
+import org.commcare.models.database.ConcreteAndroidDbHelper;
+import org.commcare.models.database.DbUtil;
+import org.commcare.models.database.IndexedFixturePathUtils;
+import org.commcare.models.database.SqlStorage;
+import org.commcare.models.database.SqlStorageIterator;
+import org.commcare.models.database.migration.FixtureSerializationMigration;
+import org.commcare.android.database.user.models.ACase;
+import org.commcare.android.database.user.models.ACasePreV6Model;
+import org.commcare.android.database.user.models.AUser;
+import org.commcare.models.database.user.models.AndroidCaseIndexTable;
+import org.commcare.models.database.user.models.CommCareEntityStorageCache;
+import org.commcare.android.database.user.models.FormRecord;
+import org.commcare.android.database.user.models.FormRecordV1;
+import org.commcare.android.database.user.models.GeocodeCacheModel;
+import org.commcare.modern.database.DatabaseIndexingUtils;
+import org.javarosa.core.model.User;
+import org.javarosa.core.services.Logger;
+import org.javarosa.core.services.storage.Persistable;
+
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Vector;
+
+import static org.commcare.modern.database.IndexedFixturePathsConstants.INDEXED_FIXTURE_PATHS_COL_ATTRIBUTES;
+import static org.commcare.modern.database.IndexedFixturePathsConstants.INDEXED_FIXTURE_PATHS_TABLE;
+
+/**
+ * @author ctsims
+ */
+class UserDatabaseUpgrader {
+    private static final String TAG = UserDatabaseUpgrader.class.getSimpleName();
+
+    private boolean inSenseMode = false;
+    private final Context c;
+    private final byte[] fileMigrationKey;
+    private final String userKeyRecordId;
+
+    public UserDatabaseUpgrader(Context c, String userKeyRecordId, boolean inSenseMode, byte[] fileMigrationKey) {
+        this.c = c;
+        this.userKeyRecordId = userKeyRecordId;
+        this.inSenseMode = inSenseMode;
+        this.fileMigrationKey = fileMigrationKey;
+    }
+
+    public void upgrade(IDatabase db, int oldVersion, int newVersion) {
+        // A lot of the upgrade processes can take a little while, so we tell the service to wait
+        // longer than usual in order to make sure the upgrade has time to finish
+        CommCareApplication.instance().setCustomServiceBindTimeout(5 * 60 * 1000);
+
+        int startVersion = oldVersion;
+
+        if (oldVersion == 1) {
+            if (upgradeOneTwo(db)) {
+                oldVersion = 2;
+            }
+        }
+
+        if (oldVersion == 2) {
+            if (upgradeTwoThree(db)) {
+                oldVersion = 3;
+            }
+        }
+
+        if (oldVersion == 3) {
+            if (upgradeThreeFour(db)) {
+                oldVersion = 4;
+            }
+        }
+
+        if (oldVersion == 4) {
+            if (upgradeFourFive(db)) {
+                oldVersion = 5;
+            }
+        }
+
+        if (oldVersion == 5) {
+            if (upgradeFiveSix(db)) {
+                oldVersion = 6;
+            }
+        }
+
+        if (oldVersion == 6) {
+            if (upgradeSixSeven(db)) {
+                oldVersion = 7;
+            }
+        }
+
+        if (oldVersion == 7) {
+            if (upgradeSevenEight(db)) {
+                oldVersion = 8;
+            }
+        }
+
+        if (oldVersion == 8) {
+            if (upgradeEightNine(db)) {
+                oldVersion = 9;
+            }
+        }
+
+        if (oldVersion == 9) {
+            if (upgradeNineTen(db)) {
+                oldVersion = 10;
+            }
+        }
+
+        if (oldVersion == 10) {
+            if (upgradeTenEleven(db)) {
+                oldVersion = 11;
+            }
+        }
+
+        if (oldVersion == 11) {
+            if (upgradeElevenTwelve(db)) {
+                oldVersion = 12;
+            }
+        }
+
+        if (oldVersion == 12) {
+            if (upgradeTwelveThirteen(db)) {
+                oldVersion = 13;
+            }
+        }
+        if (oldVersion == 13) {
+            if (upgradeThirteenFourteen(db)) {
+                oldVersion = 14;
+            }
+        }
+
+        if (oldVersion == 14) {
+            if (upgradeFourteenFifteen(db)) {
+                oldVersion = 15;
+            }
+        }
+        if (oldVersion == 15) {
+            if (upgradeFifteenSixteen(db)) {
+                oldVersion = 16;
+            }
+        }
+        if (oldVersion == 16) {
+            if (upgradeSixteenSeventeen(db)) {
+                oldVersion = 17;
+            }
+        }
+        if (oldVersion == 17) {
+            if (upgradeSeventeenEighteen(db)) {
+                oldVersion = 18;
+            }
+        }
+        if (oldVersion == 18) {
+            if (upgradeEighteenNineteen(db)) {
+                oldVersion = 19;
+            }
+        }
+        if (oldVersion == 19) {
+            if (upgradeNineteenTwenty(db)) {
+                oldVersion = 20;
+            }
+        }
+        if (oldVersion == 20) {
+            if (upgradeTwentyTwentyOne(db)) {
+                oldVersion = 21;
+            }
+        }
+        if (oldVersion == 21) {
+            if (upgradeTwentyOneTwentyTwo(db)) {
+                oldVersion = 22;
+            }
+        }
+
+        if (oldVersion == 22) {
+            if (upgradeTwentyTwoTwentyThree(db)) {
+                oldVersion = 23;
+            }
+        }
+
+        if (oldVersion == 23) {
+            if (upgradeTwentyThreeTwentyFour(db)) {
+                oldVersion = 24;
+            }
+        }
+
+        if (oldVersion == 24) {
+            // We are doing migration to v25 because of a bug in migration to v23 earlier, so
+            // we only want to actually trigger this for apps already on v23 or greater
+            if (startVersion > 22) {
+                if (upgradeTwentyFourTwentyFive(db)) {
+                    oldVersion = 25;
+                }
+            } else {
+                oldVersion = 25;
+            }
+        }
+
+        if (oldVersion == 25) {
+            if(upgradeTwentyFiveTwentySix(db)){
+                oldVersion = 26;
+            }
+        }
+
+        if (oldVersion == 26) {
+            if (updateTwentySixTwentySeven(db)) {
+                oldVersion = 27;
+            }
+        }
+
+        if (oldVersion == 27) {
+            if (updateTwentySevenTwentyEight(db)) {
+                oldVersion = 28;
+            }
+        }
+
+        if (oldVersion == 28) {
+            if (updateTwentyEightTwentyNine(db)) {
+                oldVersion = 29;
+            }
+        }
+    }
+
+    private boolean upgradeOneTwo(final IDatabase db) {
+        db.beginTransaction();
+        try {
+            markSenseIncompleteUnsent(db);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeTwoThree(final IDatabase db) {
+        db.beginTransaction();
+        try {
+            markSenseIncompleteUnsent(db);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeThreeFour(IDatabase db) {
+        db.beginTransaction();
+        try {
+            UserDbUpgradeUtils.addStockTable(db);
+            UserDbUpgradeUtils.updateIndexes(db);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeFourFive(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DatabaseIndexingUtils.indexOnTableCommand("ledger_entity_id", "ledger", "entity_id"));
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeFiveSix(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DatabaseIndexingUtils.indexOnTableCommand("case_status_open_index", "AndroidCase", "case_type,case_status"));
+
+            DbUtil.createNumbersTable(db);
+            db.execSQL(CommCareEntityStorageCache.getTableDefinition());
+            CommCareEntityStorageCache.createIndexes(db);
+
+            db.execSQL(AndroidCaseIndexTablePreV21.getTableDefinition());
+            AndroidCaseIndexTable.createIndexes(db);
+            AndroidCaseIndexTablePreV21 cit = new AndroidCaseIndexTablePreV21(db);
+
+            //NOTE: Need to use the PreV6 case model any time we manipulate cases in this model for upgraders
+            //below 6
+            SqlStorage<ACase> caseStorage = new SqlStorage<ACase>(ACase.STORAGE_KEY, ACasePreV6Model.class, new ConcreteAndroidDbHelper(c, db));
+
+            for (ACase c : caseStorage) {
+                cit.indexCase(c);
+            }
+
+
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeSixSeven(IDatabase db) {
+        long start = System.currentTimeMillis();
+        db.beginTransaction();
+        try {
+            SqlStorage<ACase> caseStorage = new SqlStorage<ACase>(ACase.STORAGE_KEY, ACasePreV6Model.class, new ConcreteAndroidDbHelper(c, db));
+            updateModels(caseStorage);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+            Log.d(TAG, "Case model update complete in " + (System.currentTimeMillis() - start) + "ms");
+        }
+    }
+
+    /**
+     * Depcrecate the old AUser object so that both platforms are using the User object
+     * to represents users
+     */
+    private boolean upgradeSevenEight(IDatabase db) {
+        long start = System.currentTimeMillis();
+        db.beginTransaction();
+        try {
+            SqlStorage<Persistable> userStorage = new SqlStorage<>(AUser.STORAGE_KEY, AUser.class, new ConcreteAndroidDbHelper(c, db));
+            SqlStorageIterator<Persistable> iterator = userStorage.iterate();
+            while (iterator.hasMore()) {
+                AUser oldUser = (AUser)iterator.next();
+                User newUser = oldUser.toNewUser();
+                userStorage.write(newUser);
+            }
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+            Log.d(TAG, "Case model update complete in " + (System.currentTimeMillis() - start) + "ms");
+        }
+    }
+
+    /*
+     * Deserialize user fixtures in db using old form instance serialization
+     * scheme, and re-serialize them using the new scheme that preserves
+     * attributes.
+     */
+    private boolean upgradeEightNine(IDatabase db) {
+        Log.d(TAG, "starting user fixture migration");
+
+        FixtureSerializationMigration.stageFixtureTables(db);
+
+        boolean didFixturesMigrate =
+                FixtureSerializationMigration.migrateFixtureDbBytes(db, c, userKeyRecordId, fileMigrationKey);
+
+        FixtureSerializationMigration.dropTempFixtureTable(db);
+        return didFixturesMigrate;
+    }
+
+    /**
+     * Adding an appId field to FormRecords, for compatibility with multiple apps functionality
+     */
+    private boolean upgradeNineTen(IDatabase db) {
+        db.beginTransaction();
+        try {
+
+            if (UserDbUpgradeUtils.multipleInstalledAppRecords()) {
+                // Cannot migrate FormRecords once this device has already started installing
+                // multiple applications, because there is no way to know which of those apps the
+                // existing FormRecords belong to
+                UserDbUpgradeUtils.deleteExistingFormRecordsAndWarnUser(c, db);
+                UserDbUpgradeUtils.addAppIdColumnToTable(db);
+                db.setTransactionSuccessful();
+                return true;
+            }
+
+            SqlStorage<FormRecordV1> oldStorage = new SqlStorage<>(
+                    FormRecord.STORAGE_KEY,
+                    FormRecordV1.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            String appId = UserDbUpgradeUtils.getInstalledAppRecord().getApplicationId();
+            Vector<FormRecordV2> upgradedRecords = new Vector<>();
+            // Create all of the updated records, based upon the existing ones
+            for (FormRecordV1 oldRecord : oldStorage) {
+                FormRecordV2 newRecord = new FormRecordV2(
+                        oldRecord.getInstanceURIString(),
+                        oldRecord.getStatus(),
+                        oldRecord.getFormNamespace(),
+                        oldRecord.getAesKey(),
+                        oldRecord.getInstanceID(),
+                        oldRecord.lastModified(),
+                        appId);
+                newRecord.setID(oldRecord.getID());
+                upgradedRecords.add(newRecord);
+            }
+
+            UserDbUpgradeUtils.addAppIdColumnToTable(db);
+
+            // Write all of the new records to the updated table
+            SqlStorage<FormRecordV2> newStorage = new SqlStorage<>(
+                    FormRecord.STORAGE_KEY,
+                    FormRecordV2.class,
+                    new ConcreteAndroidDbHelper(c, db));
+            for (FormRecordV2 r : upgradedRecords) {
+                newStorage.write(r);
+            }
+
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeTenEleven(IDatabase db) {
+        db.beginTransaction();
+        try {
+            // add table for dedicated xpath error logging for reporting xpath
+            // errors on specific cc app builds.
+            TableBuilder builder = new TableBuilder(XPathErrorEntry.STORAGE_KEY);
+            builder.addData(new XPathErrorEntry());
+            db.execSQL(builder.getTableCreateString());
+            db.setTransactionSuccessful();
+            return true;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeElevenTwelve(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL("DROP TABLE IF EXISTS " + GeocodeCacheModel.STORAGE_KEY);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        return true;
+    }
+
+    private boolean upgradeTwelveThirteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            TableBuilder builder = new TableBuilder(AndroidLogEntry.STORAGE_KEY);
+            builder.addData(new AndroidLogEntry());
+            db.execSQL(builder.getTableCreateString());
+
+            builder = new TableBuilder(ForceCloseLogEntry.STORAGE_KEY);
+            builder.addData(new ForceCloseLogEntry());
+            db.execSQL(builder.getTableCreateString());
+
+            db.setTransactionSuccessful();
+            return true;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeThirteenFourteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            SqlStorage<FormRecordV2> formRecordSqlStorage = new SqlStorage<>(
+                    FormRecord.STORAGE_KEY,
+                    FormRecordV2.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            // Re-store all the form records, forcing new date representation
+            // to be used.  Must happen proactively because the date parsing
+            // code was updated to handle new representation
+            for (FormRecordV2 formRecord : formRecordSqlStorage) {
+                formRecordSqlStorage.write(formRecord);
+            }
+
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeFourteenFifteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            IndexedFixturePathUtils.createStorageBackedFixtureIndexTableV15(db);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeFifteenSixteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            String typeFirstIndexId = "NAME_TARGET_RECORD";
+            String typeFirstIndex = "name" + ", " + "case_rec_id" + ", " + "target";
+            db.execSQL(DatabaseIndexingUtils.indexOnTableCommand(typeFirstIndexId, "case_index_storage", typeFirstIndex));
+
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Add a metadata field to all form records for "form number" that will be used for ordering
+     * submissions. Since submissions were previously ordered by the last modified property,
+     * set the new form numbers in this order.
+     */
+    private boolean upgradeSixteenSeventeen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            SqlStorage<FormRecordV2> oldStorage = new SqlStorage<>(
+                    FormRecord.STORAGE_KEY,
+                    FormRecordV2.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            Set<String> idsOfAppsWithOldFormRecords =
+                    UserDbUpgradeUtils.getAppIdsForRecords(oldStorage);
+            Vector<FormRecordV3> upgradedRecords = new Vector<>();
+
+            for (String appId : idsOfAppsWithOldFormRecords) {
+                migrateV2FormRecordsForSingleApp(appId, oldStorage, upgradedRecords);
+            }
+
+            // Add new column to db and then write all of the new records
+            UserDbUpgradeUtils.addFormNumberColumnToTable(db);
+            SqlStorage<FormRecordV3> newStorage = new SqlStorage<>(
+                    FormRecord.STORAGE_KEY,
+                    FormRecordV3.class,
+                    new ConcreteAndroidDbHelper(c, db));
+            for (FormRecordV3 r : upgradedRecords) {
+                newStorage.write(r);
+            }
+
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Add index on owner ID to case db
+     */
+    private boolean upgradeSeventeenEighteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ACase.STORAGE_KEY,
+                    "owner_id",
+                    "TEXT"));
+
+            SqlStorage<ACase> caseStorage = new SqlStorage<>(ACase.STORAGE_KEY, ACasePreV24Model.class,
+                    new ConcreteAndroidDbHelper(c, db));
+            updateModels(caseStorage);
+
+            db.execSQL(DatabaseIndexingUtils.indexOnTableCommand(
+                    "case_owner_id_index", "AndroidCase", "owner_id"));
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeEighteenNineteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            SqlStorage<ACase> caseStorage = new SqlStorage<>(ACase.STORAGE_KEY, ACasePreV24Model.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            AndroidCaseIndexTablePreV21 indexTable = new AndroidCaseIndexTablePreV21(db);
+            indexTable.reIndexAllCases(caseStorage);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeNineteenTwenty(IDatabase db) {
+        db.beginTransaction();
+        try {
+            Set<String> allIndexedFixtures = IndexedFixturePathUtils.getAllIndexedFixtureNamesAsSet(db);
+            for (String fixtureName : allIndexedFixtures) {
+                String tableName = StorageIndexedTreeElementModel.getTableName(fixtureName);
+                SqlStorage<StorageIndexedTreeElementModel> storageForThisFixture =
+                        new SqlStorage<>(tableName, StorageIndexedTreeElementModel.class,
+                                new ConcreteAndroidDbHelper(c, db));
+                StorageIndexedTreeElementModel exampleChildElement =
+                        storageForThisFixture.iterate().nextRecord();
+                IndexedFixturePathUtils.buildFixtureIndices(db, tableName, exampleChildElement.getIndexColumnNames());
+            }
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+
+    private boolean upgradeTwentyTwentyOne(IDatabase db) {
+        db.beginTransaction();
+        try {
+            UserDbUpgradeUtils.addRelationshipToAllCases(c, db);
+            UserDbUpgradeUtils.migrateFormRecordsToV3(c, db);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+
+    }
+
+    private boolean upgradeTwentyOneTwentyTwo(IDatabase db) {
+        //drop the existing table and recreate using current definition
+        db.beginTransaction();
+        try {
+            db.execSQL("DROP TABLE IF EXISTS " + CommCareEntityStorageCache.TABLE_NAME);
+            db.execSQL(CommCareEntityStorageCache.getTableDefinition());
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeTwentyTwoTwentyThree(IDatabase db) {
+        // drop the existing table and recreate using current definition
+        boolean success;
+        Vector<Uri> migratedInstances;
+        db.beginTransaction();
+        try {
+            migratedInstances = UserDbUpgradeUtils.migrateV4FormRecords(c, db);
+            db.setTransactionSuccessful();
+            success = true;
+        } finally {
+            db.endTransaction();
+        }
+
+        // delete all instance provider entries if everything good until now
+        if (success && migratedInstances != null) {
+            try {
+                for (Uri instanceUri : migratedInstances) {
+                    c.getContentResolver().delete(instanceUri, null, null);
+                }
+            } catch (Exception e) {
+                // Failure here won't cause any problems in app operations. So fail silently.
+                e.printStackTrace();
+                Logger.exception("Error while deleting InstanceProvider entries during user db migration", e);
+            }
+        }
+        return success;
+    }
+
+    /**
+     * Add external_id index to Case table
+     */
+    private boolean upgradeTwentyThreeTwentyFour(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ACase.STORAGE_KEY,
+                    Case.EXTERNAL_ID_KEY,
+                    "TEXT"));
+
+            SqlStorage<ACasePreV28Model> caseStorage = new SqlStorage<>(ACase.STORAGE_KEY, ACasePreV28Model.class,
+                    new ConcreteAndroidDbHelper(c, db));
+            updateModels(caseStorage);
+
+            db.execSQL(DatabaseIndexingUtils.indexOnTableCommand(
+                    "case_external_id_index", "AndroidCase", "external_id"));
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    // check for integrity of SSD records and wipes the whole table in case of any discrepancy
+    private boolean upgradeTwentyFourTwentyFive(IDatabase db) {
+        db.beginTransaction();
+        try {
+            boolean strandedRecordObserved = false;
+            SqlStorage<FormRecordV5> formRecordStorage = UserDbUpgradeUtils.getFormRecordStorage(c, db, FormRecordV5.class);
+            SqlStorage<SessionStateDescriptor> ssdStorage = new SqlStorage<>(
+                    SessionStateDescriptor.STORAGE_KEY,
+                    SessionStateDescriptor.class,
+                    new ConcreteAndroidDbHelper(c, db));
+            for (SessionStateDescriptor ssd : ssdStorage) {
+                // we are in invalid state if formRecord with corresponding ssd form id
+                // either doesn't exist or has status unstarted
+                try {
+                    FormRecordV5 formRecord = formRecordStorage.read(ssd.getFormRecordId());
+                    if (formRecord.getStatus().contentEquals(FormRecord.STATUS_UNSTARTED)) {
+                        strandedRecordObserved = true;
+                        break;
+                    }
+                } catch (NoSuchElementException e) {
+                    strandedRecordObserved = true;
+                    break;
+                }
+            }
+
+            if (strandedRecordObserved) {
+                SqlStorage.wipeTable(db, SessionStateDescriptor.STORAGE_KEY);
+
+                // Since we have wiped out SSD records, we won't be able to resume
+                // incomplete forms with their earlier session state. Therfore we are
+                // going to delete all incomplete form records as well
+                Vector<FormRecordV5> incompleteRecords = formRecordStorage.getRecordsForValue(FormRecord.META_STATUS, FormRecord.STATUS_INCOMPLETE);
+                for (FormRecordV5 incompleteRecord : incompleteRecords) {
+                    formRecordStorage.remove(incompleteRecord);
+                }
+            }
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean upgradeTwentyFiveTwentySix(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    INDEXED_FIXTURE_PATHS_TABLE,
+                    INDEXED_FIXTURE_PATHS_COL_ATTRIBUTES,
+                    "BLOB"));
+
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean updateTwentySixTwentySeven(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    FormRecord.STORAGE_KEY,
+                    FormRecord.META_DESCRIPTOR,
+                    "TEXT"));
+            UserDbUpgradeUtils.migrateV5FormRecords(c, db);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Add category and state index to Case table
+     */
+    private boolean updateTwentySevenTwentyEight(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ACase.STORAGE_KEY,
+                    Case.CATEGORY_KEY,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ACase.STORAGE_KEY,
+                    Case.STATE_KEY,
+                    "TEXT"));
+
+            SqlStorage<ACase> caseStorage = new SqlStorage<>(ACase.STORAGE_KEY, ACase.class,
+                    new ConcreteAndroidDbHelper(c, db));
+            updateModels(caseStorage);
+
+            db.execSQL(DatabaseIndexingUtils.indexOnTableCommand(
+                    "case_category_index", "AndroidCase", TableBuilder.scrubName(Case.INDEX_CATEGORY)));
+            db.execSQL(DatabaseIndexingUtils.indexOnTableCommand(
+                    "case_state_index", "AndroidCase", TableBuilder.scrubName(Case.INDEX_STATE)));
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean updateTwentyEightTwentyNine(IDatabase db) {
+        //drop the existing table and recreate using current definition
+        db.beginTransaction();
+        try {
+            db.execSQL("DROP TABLE IF EXISTS " + CommCareEntityStorageCache.TABLE_NAME);
+            db.execSQL(CommCareEntityStorageCache.getTableDefinition());
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void migrateV2FormRecordsForSingleApp(String appId,
+                                                  SqlStorage<FormRecordV2> oldStorage,
+                                                  Vector<FormRecordV3> upgradedRecords) {
+        Vector<Integer> recordIds = oldStorage.getIDsForValue(FormRecord.META_APP_ID, appId);
+
+        // Sort the old record ids by their last modified date, which is how form submission
+        // ordering was previously done
+        UserDbUpgradeUtils.sortRecordsByDate(recordIds, oldStorage);
+
+        int submissionNumber = 0;
+        for (int i = 0; i < recordIds.size(); i++) {
+            FormRecordV2 oldRecord = oldStorage.read(recordIds.elementAt(i));
+            FormRecordV3 newRecord = new FormRecordV3(
+                    oldRecord.getInstanceURIString(),
+                    oldRecord.getStatus(),
+                    oldRecord.getFormNamespace(),
+                    oldRecord.getAesKey(),
+                    oldRecord.getInstanceID(),
+                    oldRecord.lastModified(),
+                    oldRecord.getAppId());
+            String statusOfOldRecord = oldRecord.getStatus();
+            if (FormRecord.STATUS_COMPLETE.equals(statusOfOldRecord) ||
+                    FormRecord.STATUS_UNSENT.equals(statusOfOldRecord)) {
+                // By processing the old records in order of their last modified date, we make
+                // sure that we are setting this form numbers in the most accurate order we can
+                newRecord.setFormNumberForSubmissionOrdering(submissionNumber++);
+            }
+            newRecord.setID(oldRecord.getID());
+            upgradedRecords.add(newRecord);
+        }
+    }
+
+    private void markSenseIncompleteUnsent(final IDatabase db) {
+        //Fix for Bug in 2.7.0/1, forms in sense mode weren't being properly marked as complete after entry.
+        if (inSenseMode) {
+            //Get form record storage
+            SqlStorage<FormRecordV5> storage = new SqlStorage<>(FormRecord.STORAGE_KEY, FormRecordV5.class, new ConcreteAndroidDbHelper(c, db));
+
+            //Iterate through all forms currently saved
+            for (FormRecordV5 record : storage) {
+                //Update forms marked as incomplete with the appropriate status
+                if (FormRecord.STATUS_INCOMPLETE.equals(record.getStatus())) {
+                    //update to complete to process/send.
+                    storage.write(record.updateStatus(FormRecord.STATUS_COMPLETE));
+                }
+            }
+        }
+    }
+
+    /**
+     * Reads and rewrites all of the records in a table, generally to adapt an old serialization format to a new
+     * format
+     */
+    private <T extends Persistable> void updateModels(SqlStorage<T> storage) {
+        for (T t : storage) {
+            storage.write(t);
+        }
+    }
+
+}

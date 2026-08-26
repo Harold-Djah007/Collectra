@@ -1,0 +1,6 @@
+# Service configurations specific to 'arm64' (Apple M1) architecture for MacOS Big Sur (v 11).
+
+services:
+  postgres:
+    # TODO: enumerate differences with 'dimagi/docker-postgresql' image
+    image: docker.io/arm64v8/postgres

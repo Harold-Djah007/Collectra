@@ -1,0 +1,241 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  <link type="text/scss"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'registry/scss/registry.scss' %}" />
+  <link type="text/scss"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'registry/scss/light_color_scheme.scss' %}" />
+  {% endcompress %}
+{% endblock %}
+
+{% js_entry 'registry/js/registry_list' %}
+
+{% block page_content %}
+  {% initial_page_data "owned_registries" owned_registries %}
+  {% initial_page_data "invited_registries" invited_registries %}
+  {% initial_page_data "availableCaseTypes" available_case_types %}
+  {% registerurl "accept_registry_invitation" domain %}
+  {% registerurl "reject_registry_invitation" domain %}
+  {% registerurl "manage_registry" domain '---' %}
+  {% registerurl "validate_registry_name" domain %}
+  <div id="data-registry-list">
+    <div class="row">
+      <div class="col-md-12 col-lg-9">
+        <h3>{% trans "Data Registries" %}
+          <span class="hq-help-template"
+              data-content="{% blocktrans %}Data Registries allow sharing data between Project Spaces. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/USH/Data+Registry'>Help Site</a>.{% endblocktrans %}"
+          ></span>
+        {% if allow_create %}
+        <div class="float-end">
+          <button type="button" class="btn btn-primary" data-bind="openModal: 'create-registry-modal'">
+            <i class="fa fa-plus"></i>
+            {% trans "New Registry" %}
+          </button>
+        </div>
+        {% endif %}
+        </h3>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-12 col-lg-9">
+      <!-- ko foreach: ownedRegistries -->
+      <div class="card show-focus mb-3">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-lg-10 clickable" data-bind="click: () => document.location.href = manageUrl;">
+              <h5 class="card-title">
+                <a data-bind="text: name, attr: { href: manageUrl }"></a>
+              </h5>
+            </div>
+            <div class="col-lg-2 text-end text-success">
+              <i class="fa fa-user"></i>
+              {% trans "Owner" %}
+              <span class="badge" data-bind="
+                class: is_active() ? 'label-success-light' : 'label-warning-light',
+                attr: {'title': is_active() ? '{% trans_html_attr "Active" %}' : '{% trans_html_attr "Inactive" %}'}
+              ">
+                <i class="fa" data-bind="class: is_active() ? 'fa-play' : 'fa-pause'"></i>
+              </span>
+            </div>
+          </div>
+          <p class="card-text" data-bind="text: description"></p>
+          <span class="badge label-default-light" data-bind="ifnot: invitation_count">
+            {% trans "No project spaces invited to this registry" %}
+          </span>
+          <span class="badge label-success-light" data-bind="if: accepted_invitation_count">
+            <i class="fa-regular fa-circle-check"></i>
+            <span data-bind="text: acceptedText"></span>
+          </span>
+          <span class="badge label-info-light" data-bind="if: pending_invitation_count">
+            <i class="fa-regular fa-clock"></i>
+            <span data-bind="text: pendingText"></span>
+          </span>
+          <span class="badge label-warning-light" data-bind="if: rejected_invitation_count">
+            <i class="fa fa-ban"></i>
+            <span data-bind="text: rejectedText"></span>
+          </span>
+        </div>
+      </div>
+      <!-- /ko -->
+
+    <!-- ko foreach: invitedRegistries -->
+      <div class="card show-focus mb-3">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-lg-10 clickable" data-bind="click: () => document.location.href = manageUrl;">
+              <h5 class="card-title">
+                <a data-bind="text: name, attr: { href: manageUrl }"></a>
+              </h5>
+            </div>
+            <div class="col-lg-2 text-end text-body-secondary">
+              <i class="fa-regular fa-user"></i>
+              <span data-bind="text: statusText"></span>
+              <span class="badge label-default-light" data-bind="
+                attr: {'title': is_active() ? '{% trans_html_attr "Active" %}' : '{% trans_html_attr "Inactive" %}'}
+              ">
+                <i class="fa" data-bind="class: is_active() ? 'fa-play' : 'fa-pause'"></i>
+              </span>
+            </div>
+          </div>
+          <p class="card-text" data-bind="text: description"></p>
+          <p class="help-block">{% trans "Owner" %}:&nbsp;<span data-bind="text: domain_name"></span></p>
+          <!-- ko if: invitation.status() === 'rejected' -->
+          <span class="badge label-default-light">
+              {% trans "Invitation rejected" %}
+          </span>
+          <!-- /ko -->
+          <!-- ko if: invitation.status() === 'accepted' -->
+            <span class="badge label-default-light" data-bind="ifnot: participator_count">
+              {% trans "No other project spaces are participating in this registry" %}
+            </span>
+            <span class="badge label-default-light" data-bind="if: participator_count">
+              <span data-bind="text: participatorCountText"></span>
+            </span>
+          <!-- /ko -->
+          <!-- ko if: invitation.status() === 'pending' -->
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bind="click: rejectInvitation">
+              <i class="fa fa-remove"></i>
+              {% trans "Opt out" %}
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bind="openModal: 'accept-invitation-modal'">
+              <i class="fa fa-check"></i>
+              {% trans "Opt in" %}
+            </button>
+          <!-- /ko -->
+        </div>
+      </div>
+    <!-- /ko -->
+      </div>
+    </div>
+  </div>
+
+  <script type="text/html" id="accept-invitation-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="accept-invitation-modal-title">{% trans "Accept the invitation?" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+        </div>
+        <div class="modal-body">
+          <p>
+            {% blocktrans trimmed %}
+            Are you sure you want to accept the invitation to participate in the
+            <mark data-bind="text: name"></mark> data registry?
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-primary" data-bind="click: acceptInvitation" data-bs-dismiss="modal">{% trans "Accept" %}</a>
+        </div>
+      </div>
+    </div>
+  </script>
+
+{% if allow_create %}
+  <script type="text/html" id="create-registry-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="create-registry-modal-title">{% trans "Create a new Data Registry" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+        </div>
+        <form class="form-horizontal"
+                style="margin: 0; padding: 0"
+                action="{% url "create_registry" domain %}"
+                method="post"
+                data-bind="submit: submitCreate"
+        >
+          {% csrf_token %}
+          <div class="modal-body">
+            <fieldset>
+              <div class="mb-3" data-bind="css: {'has-error': nameChecked() && !nameValid()}">
+                <label for="name" class="form-label">
+                  {% trans "Name" %}
+                </label>
+                <i class="fa" data-bind="
+                   visible: nameChecked() || validatingPending(),
+                   css: {
+                       'fa-check': nameValid() && !validatingPending(),
+                       'text-success': nameValid() && !validatingPending(),
+                       'fa-remove': !nameValid() && !validatingPending(),
+                       'text-danger': !nameValid() && !validatingPending(),
+                       'text-primary': validatingPending,
+                       'fa-refresh': validatingPending,
+                       'fa-spin': validatingPending
+                   }
+                "></i>
+                <input type="text" name="name" class="form-control" required data-bind="textInput: name"/>
+                <span class='help-block' data-bind="visible: nameChecked() && !nameValid()">
+                  {% trans "Registry name must be unique." %}
+                </span>
+              </div>
+              <div class="mb-3">
+                <label for="description" class="form-label">
+                    {% trans "Description" %}
+                </label>
+                <textarea name="description" class="form-control vertical-resize"></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="case_types" class="form-label">
+                    {% trans "Case Types" %}
+                </label>
+                <span data-bind="makeHqHelp: { description: '{% trans "Use the Data Dictionary to manage available case types." %}'}"></span>
+                <select multiple name="case_types" class="form-control" required data-bind="select2: availableCaseTypes, selectedOptions: caseTypes">
+                </select>
+              </div>
+            </fieldset>
+          </div>
+          <div class="modal-footer">
+            <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary" data-bind="
+              css: {disabled: formCreateRegistrySent()},
+              attr: {disabled: formCreateRegistrySent()}
+            ">{% trans 'Cancel' %}</a>
+            <button type="submit" class="btn btn-primary" data-bind="
+              css: {disabled: formCreateRegistrySent() || !nameValid()},
+              attr: {disabled: formCreateRegistrySent() || !nameValid()}
+            ">
+              <i class="fa fa-plus" data-bind="
+                 css: {
+                     'fa-plus': !formCreateRegistrySent(),
+                     'fa-refresh': formCreateRegistrySent,
+                     'fa-spin': formCreateRegistrySent
+                 }
+              "></i>
+              {% trans "Create Registry" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </script>
+{% endif %}
+{% endblock %}

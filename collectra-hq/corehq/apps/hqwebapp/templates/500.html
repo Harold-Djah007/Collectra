@@ -1,0 +1,93 @@
+{% extends "error_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block title %}
+  {% trans "500 Error" %}
+{% endblock %}
+
+{% js_entry 'hqwebapp/js/500' %}
+
+{% block page_name %}{% trans "Oh no, something unexpected just happened!" %}{% endblock %}
+{% block page_content %}
+  <div class="row">
+  {% if not enterprise_mode %}
+    <div class="col-sm-4">
+      <p><img id="sad-danny" src="{% static 'hqwebapp/images/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
+    </div>
+  {% endif %}
+    <div class="{% if not enterprise_mode %}col-sm-8{% else %}col-sm-12{% endif %}">
+      <div class="card text-bg-light mb-3">
+        <div class="card-body">
+          <h4 class="card-title pb-1 mb-3 border-bottom">
+            {% trans "First time here?" %}
+          </h4>
+          <p>
+            {% blocktrans %}
+              Try refreshing. Often the problem is temporary and the page will succeed if you try again.
+            {% endblocktrans %}
+          </p>
+          <p class="mb-0">
+            <button id="refresh" type="button" class="btn btn-outline-primary">{% trans "Refresh Page" %}</button>
+          </p>
+        </div>
+      </div>
+
+      {% if not enterprise_mode %}
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <h4 class="card-title pb-1 mb-3 border-bottom">
+              {% trans "Check the status of our services." %}
+            </h4>
+            <p>
+              {% blocktrans %}
+                If there is a problem with our systems, we'll post an update to our Status Page.
+              {% endblocktrans %}
+            </p>
+            <p class="mb-0">
+              <a href="https://status.commcarehq.org/" class="btn btn-outline-primary">{% trans "View Status Page" %}</a>
+            </p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if allow_report_an_issue %}
+        <div class="card text-bg-light">
+          <div class="card-body">
+            <h4 class="card-title pb-1 mb-3 border-bottom">
+              {% blocktrans %}
+                Been here before? Report an issue to help us get this problem fixed faster.
+              {% endblocktrans %}
+            </h4>
+            <form action="{% url "bug_report" %}" method="post">
+              {% csrf_token %}
+              <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
+              <input type="hidden" id="bug-report-500-username" name="username" value="{{ user.username }}"/>
+              <input type="hidden" id="bug-report-500-domain" name="domain" value="{{ domain }}"/>
+              <input type="hidden" id="bug-report-500-app_id" name="app_id" value="{{ app.id }}"/>
+              <input type="hidden" id="bug-report-500-now" name="now" value="true" />
+              <input type="hidden" id="bug-report-500-when" name="when" value="right now" />
+              <input type="hidden" name="five-hundred-report" value="true" />
+              <input type="hidden" id="bug-report-500t-traceback" name="500traceback" value="{{ 500traceback }}"/>
+              <input type="hidden" id="bug-report-500-sentry_id" name="sentry_id" value="{{ sentry_event_id }}"/>
+
+              {{ now }}
+              <fieldset>
+                {% trans "We would appreciate any additional information about what happened before you encountered this problem." %}<br><br>
+                <div class="mb-3">
+                  <label class="form-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
+                  <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
+                  <textarea class="form-control vertical-resize" name="message" id="bug-report-500-message" rows="5"></textarea>
+                </div>
+              </fieldset>
+              <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+      <br />
+    </div>
+  </div>
+{% endblock %}

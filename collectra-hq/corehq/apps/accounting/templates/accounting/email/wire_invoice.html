@@ -1,0 +1,105 @@
+{% load i18n %}
+
+<p>{{ greeting }}</p>
+
+<p>
+  {% blocktrans %}
+    Please find attached the prepayment invoice for your CommCare subscription.
+  {% endblocktrans %}
+</p>
+
+<table cellpadding="2">
+  <tr>
+    <th align="right">
+      {% trans 'Invoice No.' %}:
+    </th>
+    <td>
+      {{ statement_number }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Project Space' %}:
+    </th>
+    <td>
+      <a href="{{ domain_url }}">
+        {{ domain }}
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Amount Due' %}:
+    </th>
+    <td>
+      {{ amount_due }}
+    </td>
+  </tr>
+  {% if date_due %}
+    <tr>
+      <th align="right">
+        {% trans 'Due Date' %}:
+      </th>
+      <td>
+        {{ date_due }}
+      </td>
+    </tr>
+  {% endif %}
+</table>
+
+<p>
+  {% blocktrans %}
+    <b>Note:</b> Any on-demand charges for excess users or SMS will be billed separately
+    based on actual usage in the following month. If you prefer, you may also prepay for
+    expected on-demand usage. Please contact us if you would like to explore this option.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    <b>Instructions for Payment</b>
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.
+    If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:
+  {% endblocktrans %}
+</p>
+
+<ol>
+  <li>
+    {% blocktrans %}
+      Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.
+    {% endblocktrans %}
+  </li>
+
+  <li>
+    {% blocktrans %}
+      Send an email to {{ accounts_email }} after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.
+    {% endblocktrans %}
+  </li>
+</ol>
+
+<p>
+  {% blocktrans %}
+    Thank you for using CommCare. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Best Regards,<br />
+    The CommCare Team<br />
+    www.commcarehq.org
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Statement From:
+    CommCare and the corporation Dimagi, Inc.
+    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA
+  {% endblocktrans %}
+</p>

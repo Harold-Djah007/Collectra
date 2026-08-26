@@ -1,0 +1,297 @@
+{
+  "domains": [
+    "abtmali",
+    "airs",
+    "airs-testing",
+    "airsbenin",
+    "airsethiopia",
+    "airskenya",
+    "airsmadagascar",
+    "airsmozambique",
+    "airsrwanda",
+    "airstanzania",
+    "airszambia",
+    "airszimbabwe",
+    "kenya-vca",
+    "pmievolve-ethiopia-1",
+    "pmievolve-ghana",
+    "pmievolve-kenya",
+    "pmievolve-madagascar",
+    "pmievolve-malawi",
+    "pmievolve-mozambique",
+    "pmievolve-rwanda",
+    "pmievolve-sierra-leone",
+    "pmievolve-uganda",
+    "pmievolve-zambia",
+    "vectorlink-benin",
+    "vectorlink-burkina-faso",
+    "vectorlink-ethiopia",
+    "vectorlink-ghana",
+    "vectorlink-ivorycoast",
+    "vectorlink-kenya",
+    "vectorlink-madagascar",
+    "vectorlink-malawi",
+    "vectorlink-mali",
+    "vectorlink-mozambique",
+    "vectorlink-rwanda",
+    "vectorlink-senegal",
+    "vectorlink-sierra-leone",
+    "vectorlink-tanzania",
+    "vectorlink-uganda",
+    "vectorlink-zambia",
+    "vectorlink-zimbabwe"
+  ],
+  "server_environment": ["production"],
+  "config": {
+    "engine_id": "default",
+    "base_item_expression": {},
+    "configured_filter": {
+        "type": "and",
+        "filters": [
+            {
+                "expression": {
+                    "property_name": "type",
+                    "type": "property_name"
+                },
+                "operator": "eq",
+                "property_value": "pmt_data",
+                "type": "boolean_expression"
+            },
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "closed"
+              },
+              "type": "boolean_expression",
+              "comment": null,
+              "property_value": false
+            }
+        ]
+    },
+    "configured_indicators": [
+      {
+        "display_name": "country",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "country",
+        "expression": {
+          "type": "property_name",
+          "property_name": "country"
+        }
+      },
+      {
+        "display_name": "level_1",
+        "datatype": "string",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_1",
+        "type": "raw",
+        "property_name": "level_1_name",
+        "property_path": []
+      },
+      {
+        "display_name": "level_2",
+        "datatype": "string",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_2",
+        "type": "raw",
+        "property_name": "level_2_name",
+        "property_path": []
+      },
+      {
+        "display_name": "level_3",
+        "datatype": "string",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_3",
+        "type": "raw",
+        "property_name": "level_3_name",
+        "property_path": []
+      },
+      {
+        "display_name": "level_4",
+        "datatype": "string",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_4",
+        "type": "raw",
+        "property_name": "level_4_name",
+        "property_path": []
+      },
+      {
+        "display_name": "worker_code",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "worker_code",
+        "expression": {
+          "type": "constant",
+          "constant": null
+        }
+      },
+      {
+        "display_name": "structures_found",
+        "property_name": "structures_found",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "structures_found",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "structures_sprayed",
+        "property_name": "structures_sprayed",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "structures_sprayed",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "total_sprayers",
+        "property_name": "total_sprayers",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "total_sprayers",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "insecticide_used",
+        "property_name": "insecticide_used",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "insecticide_used",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "date_of_data_collection",
+        "property_name": "date_of_data_collection",
+        "datatype": "date",
+        "is_primary_key": false,
+        "column_id": "date_of_data_collection",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "structures_per_sprayer",
+        "property_name": "structures_per_sprayer",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "structures_per_sprayer",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "structures_per_IU",
+        "property_name": "structures_per_IU",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "structures_per_IU",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "spray_coverage",
+        "property_name": "spray_coverage",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "spray_coverage",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "username",
+        "property_name": "username",
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "username",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "timeEnd",
+        "property_name": "modified_on",
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "timeEnd",
+        "is_nullable": true,
+        "type": "raw",
+        "property_path": []
+      },
+      {
+        "display_name": "level_1_target_number",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "level_1_target",
+        "property_path": [],
+        "column_id": "level_1_target_number"
+      },
+      {
+        "display_name": "level_2_target_number",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "level_2_target",
+        "property_path": [],
+        "column_id": "level_2_target_number"
+      },
+      {
+        "display_name": "level_3_target_number",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "level_3_target",
+        "property_path": [],
+        "column_id": "level_3_target_number"
+      },
+      {
+        "display_name": "level_4_target_number",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "level_4_target",
+        "property_path": [],
+        "column_id": "level_4_target_number"
+      },
+      {
+        "display_name": "country_target_number",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "country_target",
+        "property_path": [],
+        "column_id": "country_target_number"
+      }
+    ],
+    "description": "",
+    "display_name": "SMS Case Indicators (static)",
+    "named_filters": {},
+    "referenced_doc_type": "CommCareCase",
+    "table_id": "static-sms-indicators-001"
+  }
+}

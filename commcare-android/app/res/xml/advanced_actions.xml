@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference android:key="wifi-direct"/>
+    <Preference android:key="manage-sd-card"/>
+    <Preference android:key="report-problem"/>
+    <Preference android:key="force-log-submit"/>
+    <Preference android:key="validate-media"/>
+    <Preference android:key="connection-test"/>
+    <Preference android:key="recovery-mode"/>
+    <Preference android:key="clear-user-data"/>
+    <Preference android:key="clear-saved-session"/>
+    <Preference android:key="bypass-pre-update-sync"/>
+    <Preference android:key="enable-rate-limit-popup" />
+    <Preference android:key="enable-manual-form-quarantine" />
+</PreferenceScreen>

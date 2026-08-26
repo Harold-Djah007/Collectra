@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:viewBindingIgnore="true">
+
+    <TextView
+        android:id="@+id/mulitple_app_limit_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/standard_spacer"
+        android:textSize="17sp"
+        android:layout_centerInParent="true"
+        android:gravity="center"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/back_to_manager_button"
+        android:layout_marginBottom="@dimen/standard_spacer_large"
+        android:text="Go to App Manager"
+        android:textSize="19sp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
+
+</RelativeLayout>

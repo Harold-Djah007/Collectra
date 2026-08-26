@@ -1,0 +1,69 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{# Use this entry point if you don't need to add any extra JavaScript to an HTMX + Alpine page. #}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block content %}
+  <div class="container py-4">
+    <h1>
+      {% trans "To-Do" %}
+      <button
+        class="btn btn-primary btn-sm"
+        {# request.path_info is just the same URL for this view #}
+        hx-post="{{ request.path_info }}"
+        {# hq-hx-action triggers the create_new_item method in TodoListDemoView #}
+        hq-hx-action="create_new_item"
+        {# Insert the returned HTML at the beginning of the #todo-list <ul> #}
+        hx-target="#todo-list"
+        hx-swap="afterbegin"
+      >
+        <i class="fa-solid fa-plus"></i> {% trans "Add Item" %}
+      </button>
+    </h1>
+
+    <ul
+      class="list-group"
+      id="todo-list"
+    >
+      {% for item in items %}
+        {% if not item.is_done %}
+          {% include "styleguide/htmx_todo/item.html" %}
+        {% endif %}
+      {% endfor %}
+    </ul>
+
+    <h2 class="pt-5">
+      {% trans "Done" %}
+    </h2>
+    <ul
+      class="list-group"
+      id="done-items"
+    >
+      {% for item in items %}
+        {% if item.is_done %}
+          {% include "styleguide/htmx_todo/item_done.html" %}
+        {% endif %}
+      {% endfor %}
+    </ul>
+
+    <div class="py-5">
+      <button
+        class="btn btn-outline-danger"
+        type="button"
+        {# This posts to a non-existent @hq_hx_action method, intentionally triggering the HTMX error modal. #}
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="does_not_exist"
+      >
+        {% trans "Trigger Error" %}
+      </button>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block modals %}
+  {# You can include this template or an extension of it to show HTMX errors to the user. #}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

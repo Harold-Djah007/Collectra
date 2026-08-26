@@ -1,0 +1,9 @@
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_item_share"
+        android:title="@string/share"
+        android:icon="@drawable/ic_share_24dp"
+        app:actionProviderClass="org.commcare.views.CommCareShareActionProvider"
+        app:showAsAction="ifRoom"/>
+</menu>

@@ -1,0 +1,712 @@
+import json
+import re
+from collections import defaultdict
+from dataclasses import dataclass
+from functools import wraps
+
+from django.conf import settings
+from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
+
+from couchforms.geopoint import GeoPoint
+from jsonobject.exceptions import BadValueError
+
+from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.phone.data_providers.case.livequery import (
+    get_all_related_live_cases,
+)
+from dimagi.utils.logging import notify_exception
+
+from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_app_cached
+from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.case_search.const import (
+    CASE_SEARCH_MAX_RESULTS,
+    COMMCARE_PROJECT,
+    IS_RELATED_CASE,
+)
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
+    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
+    get_capability,
+)
+from corehq.apps.case_search.exceptions import (
+    CaseFilterError,
+    CaseSearchUserError,
+    TooManyRelatedCasesError,
+)
+from corehq.apps.case_search.filter_dsl import (
+    SearchFilterContext,
+    build_filter_from_xpath,
+)
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_XPATH_QUERY_KEY,
+    UNSEARCHABLE_KEYS,
+    CaseSearchConfig,
+    CaseSearchEndpoint,
+    extract_search_request_config,
+)
+from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
+from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
+from corehq.apps.es import HQESQuery, case_search
+from corehq.apps.es import cases as case_es
+from corehq.apps.es import filters, queries
+from corehq.apps.es.case_search import (
+    CaseSearchES,
+    case_property_date_range,
+    case_property_geo_distance,
+    case_property_missing,
+    case_property_numeric_range,
+    case_property_query,
+    case_property_starts_with,
+    reverse_index_case_query,
+    sounds_like_text_query,
+    wrap_case_search_hit,
+)
+from corehq.apps.es.profiling import ESQueryProfiler
+from corehq.apps.registry.exceptions import (
+    RegistryAccessException,
+    RegistryNotFound,
+)
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.util.quickcache import quickcache
+
+
+@dataclass
+class CaseSearchProfiler(ESQueryProfiler):
+    search_class: HQESQuery = CaseSearchES
+    name: str = 'Case Search'
+    primary_count: int = 0
+    related_count: int = 0
+
+
+def time_function():
+    """Decorator to get timing information on a case search function that has `helper` as the first arg"""
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(helper, *args, **kwargs):
+            tag = fn.__name__
+            if helper:
+                with helper.profiler.timing_context(tag):
+                    return fn(helper, *args, **kwargs)
+            return fn(helper, *args, **kwargs)
+        return _inner
+    return decorator
+
+
+def get_case_search_results_from_request(domain, app_id, couch_user, request_dict, debug=False):
+    profiler = CaseSearchProfiler(debug_mode=debug)
+    with profiler.timing_context:
+        config = extract_search_request_config(request_dict)
+        cases = get_case_search_results(
+            domain,
+            config,
+            app_id=app_id,
+            couch_user=couch_user,
+            profiler=profiler,
+        )
+        with profiler.timing_context('CaseDBFixture.fixture'):
+            fixtures = CaseDBFixture(cases).fixture
+    return fixtures, profiler
+
+
+def get_case_search_results(domain, config, app_id=None, couch_user=None, profiler=None):
+    helper = _get_helper(couch_user, domain, config.case_types, config.data_registry)
+    if profiler:
+        helper.profiler = profiler
+
+    if config.endpoint_id:
+        if not toggles.CASE_SEARCH_ENDPOINTS.enabled(domain):
+            raise CaseSearchUserError(_("Configurable Endpoints are not available"))
+        return get_endpoint_results(helper, config)
+    else:
+        return get_unconfigured_endpoint_results(helper, config, app_id)
+
+
+def get_endpoint_results(helper, config):
+    try:
+        # TODO: cache? Prefetch endpoint version?
+        endpoint = CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
+    except (CaseSearchEndpoint.DoesNotExist, ValueError):
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+    if not endpoint.is_active:
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+
+    parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
+    query_root = None
+    if not errors:
+        query_root, errors = parse_query_spec(
+            endpoint.current_version.query,
+            parameters,
+            endpoint.case_type,
+            get_capability(helper.domain)
+        )
+    if errors:
+        notify_exception(None, "Stored endpoint query failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
+    return get_primary_case_search_endpoint_results(
+        helper,
+        [endpoint.case_type],
+        config.criteria,
+        query_root)
+
+@time_function()
+def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):
+    builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
+    with helper.profiler.timing_context('build_query'):
+        search_es = builder.build_query(criteria)
+    if limit:
+        search_es = search_es.size(limit)
+
+    results = search_es.run()
+    with helper.profiler.timing_context('wrap_cases'):
+        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
+    return cases
+
+
+def get_unconfigured_endpoint_results(helper, config, app_id):
+    cases = get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
+    if app_id:
+        cases.extend(get_and_tag_related_cases(
+            helper, app_id, config.case_types, cases,
+            config.custom_related_case_property,
+            config.include_all_related_cases,
+        ))
+    return cases
+
+
+@time_function()
+def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=None):
+    builder = CaseSearchQueryBuilder(helper, case_types)
+    try:
+        with helper.profiler.timing_context('build_query'):
+            search_es = builder.build_query(criteria, commcare_sort)
+    except TooManyRelatedCasesError:
+        raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
+    except CaseFilterError as e:
+        # This is an app building error, notify so we can track
+        notify_exception(None, str(e), details={'exception_type': type(e)})
+        raise CaseSearchUserError(str(e))
+
+    results = search_es.run()
+    with helper.profiler.timing_context('wrap_cases'):
+        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
+    return cases
+
+
+def _get_helper(couch_user, domain, case_types, registry_slug):
+    helper = QueryHelper(domain)
+    if registry_slug:
+        try:
+            registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
+            registry_helper.check_data_access(couch_user, case_types)
+        except (RegistryNotFound, RegistryAccessException):
+            pass
+        else:
+            helper = RegistryQueryHelper(domain, couch_user, registry_helper)
+    helper.is_case_search = True
+    return helper
+
+
+class QueryHelper:
+    def __init__(self, domain):
+        self.domain = domain
+        self.profiler = CaseSearchProfiler()
+        self.is_case_search = False
+
+    def get_base_queryset(self, slug=None):
+        # slug is only informational, used for profiling
+        _CaseSearchES = self.profiler.get_profiled_search_class(slug)
+        # See case_search_sub.py docstring for context on index_name
+        return _CaseSearchES(index=self.config.index_name or None).domain(self.domain)
+
+    def wrap_case(self, es_hit, include_score=False):
+        return wrap_case_search_hit(es_hit, include_score=include_score)
+
+    def get_all_related_live_cases(self, initial_cases):
+        case_ids = {case.case_id for case in initial_cases}
+        return get_all_related_live_cases(self.domain, case_ids)
+
+    @cached_property
+    def config(self):
+        try:
+            return (CaseSearchConfig.objects
+                    .prefetch_related('fuzzy_properties')
+                    .prefetch_related('ignore_patterns')
+                    .get(domain=self.domain))
+        except CaseSearchConfig.DoesNotExist:
+            return CaseSearchConfig(domain=self.domain)
+
+
+class RegistryQueryHelper(QueryHelper):
+    def __init__(self, domain, couch_user, registry_helper):
+        super().__init__(domain)
+        self._couch_user = couch_user
+        self._registry_helper = registry_helper
+
+    def get_base_queryset(self, slug=None):
+        _CaseSearchES = self.profiler.get_profiled_search_class(slug)
+        return _CaseSearchES().domain(self._registry_helper.visible_domains)
+
+    def wrap_case(self, es_hit, include_score=False):
+        case = super().wrap_case(es_hit, include_score)
+        case.case_json[COMMCARE_PROJECT] = case.domain
+        return case
+
+    def get_all_related_live_cases(self, initial_cases):
+        all_cases = self._registry_helper.get_multi_domain_case_hierarchy(self._couch_user, initial_cases)
+        initial_case_ids = {case.case_id for case in initial_cases}
+        return list(case for case in all_cases if case.case_id not in initial_case_ids)
+
+
+class CaseSearchQueryBuilder:
+    """Compiles the case search object for the view"""
+
+    def __init__(self, helper, case_types):
+        self.request_domain = helper.domain
+        self.case_types = case_types
+        self.helper = helper
+        self.config = helper.config
+
+    def build_query(self, search_criteria, commcare_sort=None):
+        search_es = self._get_initial_search_es()
+        search_es = self._apply_sort(search_es, commcare_sort)
+        for criteria in search_criteria:
+            search_es = self._apply_filter(search_es, criteria)
+        return search_es
+
+    def _get_initial_search_es(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
+
+        return (self.helper.get_base_queryset('main')
+                .case_type(self.case_types)
+                .is_closed(False)
+                .size(max_results))
+
+    def _apply_sort(self, search_es, commcare_sort=None):
+        if commcare_sort:
+            return self._sort_by_case_properties(search_es, commcare_sort)
+        return search_es.set_sorting_block(['_score', '_doc'])
+
+    def _sort_by_case_properties(self, search_es, commcare_sort_properties):
+        for sort_property in commcare_sort_properties:
+            search_es = search_es.sort_by_case_property(
+                sort_property.property_name,
+                desc=sort_property.is_descending,
+                sort_type=sort_property.sort_type
+            )
+        return search_es
+
+    def _apply_filter(self, search_es, criteria):
+        if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
+            _require_case_search_advanced(self.request_domain)
+            if not criteria.is_empty:
+                xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
+                for xpath in xpaths:
+                    search_es = search_es.filter(self._build_filter_from_xpath(xpath))
+                return search_es
+        elif criteria.key == 'case_id':
+            return search_es.filter(case_es.case_ids(criteria.value))
+        elif criteria.key == 'owner_id':
+            if not criteria.is_empty:
+                return search_es.filter(case_search.owner(criteria.value))
+        elif criteria.key == CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY:
+            if not criteria.is_empty:
+                return search_es.filter(case_search.blacklist_owner_id(criteria.value_as_list))
+        elif criteria.key == COMMCARE_PROJECT:
+            if not criteria.is_empty:
+                return search_es.filter(filters.domain(criteria.value))
+        elif criteria.key not in UNSEARCHABLE_KEYS:
+            return search_es.add_query(self._get_case_property_query(criteria), queries.MUST)
+        return search_es
+
+    def _build_filter_from_xpath(self, xpath, fuzzy=False):
+        context = SearchFilterContext(self.request_domain, fuzzy, self.helper)
+        with self.helper.profiler.timing_context('_build_filter_from_xpath'):
+            return build_filter_from_xpath(xpath, context=context)
+
+    def _get_daterange_query(self, criteria):
+        startdate, enddate = criteria.get_date_range()
+        return case_property_date_range(criteria.key, gte=startdate, lte=enddate)
+
+    def _get_case_property_query(self, criteria):
+        if criteria.has_multiple_terms and criteria.has_missing_filter:
+            non_blank_criteria = criteria.clone_without_blanks()
+            return self._get_case_property_or_missing_query(non_blank_criteria)
+        else:
+            return self._get_query(criteria)
+
+    def _get_case_property_or_missing_query(self, criteria):
+        if criteria.is_empty:
+            return case_property_missing(criteria.key)
+
+        if criteria.is_ancestor_query:
+            missing_filter = self._build_filter_from_xpath(f'{criteria.key} = ""')
+        else:
+            missing_filter = case_property_missing(criteria.key)
+        return filters.OR(self._get_query(criteria), missing_filter)
+
+    def _get_query(self, criteria):
+        if criteria.is_daterange:
+            return self._get_daterange_query(criteria)
+
+        value = self._remove_ignored_patterns(criteria.key, criteria.value)
+        fuzzy = criteria.key in self._fuzzy_properties
+        if fuzzy and criteria.has_multiple_terms:
+            raise CaseFilterError(
+                _("Fuzzy search is not supported with multiple values"),
+                criteria.key
+            )
+        if criteria.is_ancestor_query:
+            query = f'{criteria.key} = "{value}"'
+            if isinstance(value, list):
+                query = f"""{criteria.key} = unwrap-list('{json.dumps(value)}')"""
+            return self._build_filter_from_xpath(query, fuzzy=fuzzy)
+        elif criteria.is_index_query:
+            return reverse_index_case_query(value, criteria.index_query_identifier)
+        else:
+            return case_property_query(criteria.key, value, fuzzy=fuzzy)
+
+    def _remove_ignored_patterns(self, case_property, value):
+        for to_remove in self._patterns_to_remove[case_property]:
+            if isinstance(value, list):
+                value = [re.sub(to_remove, '', val) for val in value]
+            else:
+                value = re.sub(to_remove, '', value)
+        return value
+
+    @cached_property
+    def _patterns_to_remove(self):
+        patterns_by_property = defaultdict(list)
+        for pattern in self.config.ignore_patterns.filter(
+                domain=self.request_domain,
+                case_type__in=self.case_types,
+        ):
+            patterns_by_property[pattern.case_property].append(re.escape(pattern.regex))
+        return patterns_by_property
+
+    @cached_property
+    def _fuzzy_properties(self):
+        return [
+            prop for properties_config in
+            self.config.fuzzy_properties.filter(domain=self.request_domain,
+                                                case_type__in=self.case_types)
+            for prop in properties_config.properties
+        ]
+
+class CaseSearchEndpointQueryBuilder:
+    """Compiles the case search object for the view"""
+    def __init__(
+        self,
+        helper,
+        case_types,
+        query_root):
+        self.request_domain = helper.domain
+        self.case_types = case_types
+        self.query_root = query_root
+        self.helper = helper
+        self.config = helper.config
+
+    def build_query(self, search_criteria):
+        self.param_values = {c.key: c.value for c in search_criteria}
+        search_es = self._get_initial_search_es()
+        query = self._parse_query(self.query_root)
+        if query is None:
+            # Every condition dropped (e.g. all inputs were unsupplied
+            # parameters). Apply no extra filter rather than match-all-via-empty.
+            return search_es
+        return search_es.add_query(query, queries.MUST)
+
+    def _get_initial_search_es(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
+
+        return (self.helper.get_base_queryset('main')
+                .case_type(self.case_types)
+                .is_closed(False)
+                .size(max_results))
+
+    def _get_child_queries(self, node):
+        child_queries = [self._parse_query(child) for child in node.children]
+        return [q for q in child_queries if q is not None]
+
+    def _parse_query(self, node):
+        if node.type in ('all', 'any', 'none'):
+            # Drop a group with no surviving children rather than collapsing to
+            # an empty AND/OR. An empty bool matches all documents, which in an
+            # `any`/OR context would make the whole query match everything.
+            children = self._get_child_queries(node)
+            if not children:
+                return None
+            if node.type == 'all':
+                return filters.AND(*children)
+            if node.type == 'any':
+                return filters.OR(*children)
+            return filters.NOT(filters.OR(*children))
+        elif node.type == 'component':
+            return self._parse_component_node(node)
+        else:
+            return None
+
+    def _input_value(self, input_):
+        if input_ is None:
+            return None
+        if isinstance(input_, ParameterInput):
+            return self.param_values.get(input_.value)
+        return input_.value
+
+    def _parse_component_node(self, node):
+        operator = node.operator
+
+        if node.field_type == FIELD_TYPE_GEOPOINT:
+            if operator == 'within_distance':
+                point = self._input_value(node.inputs.get('point'))
+                distance = self._input_value(node.inputs.get('distance'))
+                unit = self._input_value(node.inputs.get('unit'))
+                if None in (point, distance, unit):
+                    return None
+                try:
+                    geo_point = GeoPoint.from_string(point, flexible=True)
+                    distance = float(distance)
+                except (BadValueError, ValueError):
+                    return None
+                if unit not in queries.DISTANCE_UNITS:
+                    return None
+                return case_property_geo_distance(node.field, geo_point, **{unit: distance})
+            return None
+
+        field = node.field
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+
+        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_date_range(field, **{operator: value})
+            elif operator == 'fuzzy_date':
+                if not validate_date(value):
+                    return None
+                return case_property_query(field, date_permutations(value), boost_first=True)
+        elif node.field_type == FIELD_TYPE_NUMBER:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_numeric_range(field, **{operator: value})
+        elif node.field_type == FIELD_TYPE_SELECT:
+            if operator == 'selected_any':
+                return case_property_query(field, value, multivalue_mode='or')
+            elif operator == 'selected_all':
+                return case_property_query(field, value, multivalue_mode='and')
+            elif operator == 'is_empty':
+                return case_property_missing(field)
+        else:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
+            elif operator == 'starts_with':
+                return case_property_starts_with(field, value)
+            elif operator == 'fuzzy':
+                return case_property_query(field, value, fuzzy=True)
+            elif operator == 'phonetic':
+                return sounds_like_text_query(field, value)
+        return None
+
+@time_function()
+def get_and_tag_related_cases(helper, app_id, case_types, cases,
+                            custom_related_case_property, include_all_related_cases):
+    """
+    Fetch related cases that are necessary to display any related-case
+    properties in the app requesting this case search.
+
+    Returns list of CommCareCase objects for adding to CaseDBFixture.
+    """
+    if not cases:
+        return []
+
+    expanded_case_results = []
+    if custom_related_case_property:
+        expanded_case_results.extend(get_expanded_case_results(helper, custom_related_case_property, cases))
+
+    unfiltered_results = expanded_case_results
+    top_level_cases = cases + expanded_case_results
+    related_cases = get_related_cases_result(
+        helper, app_id, case_types, top_level_cases, include_all_related_cases)
+    if related_cases:
+        unfiltered_results.extend(related_cases)
+    initial_case_ids = {case.case_id for case in cases}
+    results = list({
+        case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
+    }.values())
+    with helper.profiler.timing_context('_tag_is_related_case'):
+        for case in results:
+            _tag_is_related_case(case)
+    helper.profiler.related_count = len(results)
+    return results
+
+
+@time_function()
+def get_related_cases_result(helper, app_id, case_types, source_cases, include_all_related_cases):
+    """
+    Gets parent, child, and extension cases through sync algorithm if configured.
+    Otherwise, gets case property path defined in search details and child case types
+    used by search detail tab nodesets.
+    """
+    if include_all_related_cases:
+        return _get_all_related_cases(helper, source_cases)
+    else:
+        results = []
+        with helper.profiler.timing_context('get_app_context'):
+            paths, child_case_types = get_app_context(helper.domain, app_id, case_types)
+        if paths:
+            results.extend(get_path_related_cases_results(helper, source_cases, paths))
+        if child_case_types:
+            source_case_ids = {case.case_id for case in source_cases}
+            results.extend(get_child_case_results(helper, source_case_ids, child_case_types))
+        return results
+
+
+def get_app_context(domain, app_id, case_types):
+    """
+    for the provided case types, return paths to required case types, plus child case types
+    """
+    all_paths, all_child_case_types = get_app_context_by_case_type(domain, app_id)
+    paths = set().union(*(all_paths[ct] for ct in case_types if ct in all_paths))
+    child_case_types = set().union(*(
+        all_child_case_types[ct] for ct in case_types if ct in all_child_case_types))
+    return paths, child_case_types
+
+
+@quickcache(['domain', 'app_id'], timeout=24 * 60 * 60)
+def get_app_context_by_case_type(domain, app_id):
+    # Loading and parsing a whole app is actually pretty expensive
+    # This fn extracts what we need and caches only that
+    app = get_app_cached(domain, app_id)
+    return (
+        get_search_detail_relationship_paths(app),
+        get_child_case_types(app),
+    )
+
+
+@time_function()
+def _get_all_related_cases(helper, source_cases):
+    results = []
+    results.extend(helper.get_all_related_live_cases(source_cases))
+    source_case_ids = {case.case_id for case in source_cases}
+    results.extend(get_child_case_results(helper, source_case_ids))
+    return results
+
+
+def get_search_detail_relationship_paths(app):
+    """
+    Get unique case relationships used by search details for each case type
+    that has a module that uses case search
+
+    Returns a set of relationships, e.g. {"parent", "host", "parent/parent"}
+    """
+    paths = defaultdict(set)
+    for module in app.get_modules():
+        if module_offers_search(module):
+            for column in module.search_detail("short").columns + module.search_detail("long").columns:
+                if not column.useXpathExpression:
+                    parts = column.field.split("/")
+                    if len(parts) > 1:
+                        parts.pop()     # keep only the relationship: "parent", "parent/parent", etc.
+                        paths[module.case_type].add("/".join(parts))
+    return paths
+
+
+@time_function()
+def get_path_related_cases_results(helper, cases, paths):
+    """
+    Given a set of cases and a set of case property paths,
+    fetches ES documents for all cases referenced by those paths.
+    """
+    if not cases:
+        return []
+
+    results_cache = {}
+    for path in paths:
+        current_cases = cases
+        parts = path.split("/")
+        for index, identifier in enumerate(parts):
+            fragment = "/".join(parts[:index + 1])
+            if fragment in results_cache:
+                current_cases = results_cache[fragment]
+            else:
+                indices = [case.get_index(identifier) for case in current_cases]
+                related_case_ids = {i.referenced_id for i in indices if i}
+                current_cases = _get_case_search_cases(helper, related_case_ids)
+                results_cache[fragment] = current_cases
+
+    results = []
+    for path in paths:
+        results.extend(results_cache[path])
+
+    return results
+
+
+def get_child_case_types(app):
+    """
+    Get child case types used by search detail tab nodesets in any modules
+    that match the given case type and are configured for case search.
+
+    Returns a set of case types
+    """
+    child_case_types = defaultdict(set)
+    for module in app.get_modules():
+        if module_offers_search(module):
+            for tab in module.search_detail("long").tabs:
+                if tab.has_nodeset and tab.nodeset_case_type:
+                    child_case_types[module.case_type].add(tab.nodeset_case_type)
+    return child_case_types
+
+
+@time_function()
+def get_child_case_results(helper, parent_case_ids, child_case_types=None):
+    query = helper.get_base_queryset('get_child_case_results').get_child_cases(parent_case_ids, "parent")
+    if child_case_types:
+        query = query.case_type(child_case_types)
+    return [helper.wrap_case(result) for result in query.run().hits]
+
+
+@time_function()
+def get_expanded_case_results(helper, custom_related_case_property, cases):
+    expanded_case_ids = {
+        case.get_case_property(custom_related_case_property, dynamic_only=True) for case in cases
+    }
+    expanded_case_ids -= {None, ""}
+    return _get_case_search_cases(helper, expanded_case_ids)
+
+
+@time_function()
+def _get_case_search_cases(helper, case_ids):
+    query = helper.get_base_queryset('_get_case_search_cases').case_ids(case_ids)
+    return [helper.wrap_case(result) for result in query.run().hits]
+
+
+# Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
+def _tag_is_related_case(case):
+    case.case_json[IS_RELATED_CASE] = "true"
+
+
+# log once per domain per day
+@quickcache(['domain'], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def _require_case_search_advanced(domain):
+    if not toggles.CASE_SEARCH_ADVANCED.enabled(domain):
+        notify_exception(None, "Advanced case search feature attempted")

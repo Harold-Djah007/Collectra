@@ -1,0 +1,67 @@
+import json
+
+from django import forms
+from django.utils.translation import gettext as _
+
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration, RegistryDataSourceConfiguration,
+)
+from corehq.apps.userreports.ui.widgets import JsonWidget
+
+
+class ReportDataSourceField(forms.ChoiceField):
+
+    def __init__(self, domain, *args, **kwargs):
+        self.domain = domain
+        standard_sources = DataSourceConfiguration.by_domain(self.domain)
+        registry_sources = RegistryDataSourceConfiguration.by_domain(self.domain)
+        custom_sources = list(StaticDataSourceConfiguration.by_domain(domain))
+        available_data_sources = standard_sources + registry_sources + custom_sources
+        super(ReportDataSourceField, self).__init__(
+            choices=[(src.data_source_id, src.display_name) for src in available_data_sources],
+            *args, **kwargs
+        )
+
+
+class JsonField(forms.CharField):
+    widget = JsonWidget
+    expected_type = None
+    default_null_values = (None, '', ())
+
+    def __init__(self, expected_type=None, null_values=None, *args, **kwargs):
+        self.expected_type = expected_type
+        self.null_values = null_values if null_values is not None else self.default_null_values
+        super(JsonField, self).__init__(*args, **kwargs)
+
+    def prepare_value(self, value):
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except ValueError:
+                return value
+        else:
+            return value
+
+    def to_python(self, value):
+        if value and isinstance(value, dict):
+            return value
+
+        val = super(JsonField, self).to_python(value)
+        if val in self.null_values:
+            return val
+
+        try:
+            return json.loads(val)
+        except Exception:
+            raise forms.ValidationError(_('Please enter valid JSON. This is not valid: {}'.format(value)))
+
+    def validate(self, value):
+        if value in self.null_values:
+            if self.required:
+                raise forms.ValidationError(self.error_messages['required'])
+            return
+
+        if self.expected_type and not isinstance(value, self.expected_type):
+            raise forms.ValidationError(
+                _('Expected {} but was {}').format(self.expected_type.__name__, type(value).__name__))

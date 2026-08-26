@@ -1,0 +1,67 @@
+<OpenRosaResponse>
+    <message nature="ota_restore_success">Successfully restored account test!</message>
+    <Sync xmlns="http://commcarehq.org/sync">
+        <restore_id>sync_token</restore_id>
+    </Sync>
+    <Registration xmlns="http://openrosa.org/user/registration">
+        <username>test</username>
+        <password>sha1$60441$53cf77c2ac3608a944db96af177a6dfe1579e4ba</password>
+        <uuid>test_user</uuid>
+        <date>2012-04-30</date>
+    </Registration>
+
+    <case case_id="521bdbb17001bade54aa23dcb7ff48f9"
+        date_modified="2016-08-03T20:41:58.411000Z" user_id="441bdbb17001bade54aa23dcb7ff48f9"
+        xmlns="http://commcarehq.org/case/transaction/v2">
+        <create>
+            <case_type>case</case_type>
+            <case_name>!!!!!</case_name>
+            <owner_id>441bdbb17001bade54aa23dcb7ff48f9</owner_id>
+        </create>
+        <update>
+            <patient_id>123</patient_id>
+        </update>
+    </case>
+
+    <fixture id="item-list:district" user_id="test_user">
+        <district_list>
+            <district>
+                <id>bang</id>
+                <state_id>ka</state_id>
+                <name>Bangalore</name>
+            </district>
+            <district>
+                <id>hampi</id>
+                <state_id>ka</state_id>
+                <name>Hampi</name>
+            </district>
+            <district>
+                <id>kota</id>
+                <state_id>rj</state_id>
+                <name>Kota</name>
+            </district>
+            <district>
+                <id>baran</id>
+                <state_id>rj</state_id>
+                <name>Baran</name>
+            </district>
+        </district_list>
+    </fixture>
+    <fixture id="item-list:state" user_id="test_user">
+        <state_list>
+            <state>
+                <id>ka</id>
+                <name>karnataka</name>
+            </state>
+            <state>
+                <id>rj</id>
+                <name>Raj as than</name>
+            </state>
+            <state>
+                <id>up</id>
+                <name>Uttar Pradesh</name>
+            </state>
+        </state_list>
+    </fixture>
+
+</OpenRosaResponse>

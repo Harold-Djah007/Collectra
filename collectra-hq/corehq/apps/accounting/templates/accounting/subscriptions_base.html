@@ -1,0 +1,11 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% js_entry_b3 'accounting/js/base_subscriptions_main' %}
+
+{% block page_content %}
+  <form class="form form-horizontal" method="post">
+    {% crispy form %}
+  </form>
+{% endblock %}

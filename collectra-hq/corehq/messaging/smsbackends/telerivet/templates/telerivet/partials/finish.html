@@ -1,0 +1,23 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+<h2 data-bind="visible: !setupComplete()">{% trans "Finish Setup" %}</h2>
+<h2 data-bind="visible: setupComplete()">{% trans "Complete" %}</h2>
+<div data-bind="visible: !setupComplete()">
+    <p class="help-block">
+    <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+        Choose a name for this gateway below and click Finish.
+        {% endblocktrans %}
+    </p>
+</div>
+<div data-bind="visible: !setupComplete()">
+    {% crispy finalize_gateway_form %}
+</div>
+<div data-bind="visible: setupComplete()">
+    {% blocktrans %}
+    Success! You are being redirected to the gateway list. If it does not happen automatically,
+    <a href="{{ gateway_list_url }}">click here</a>.
+    {% endblocktrans %}
+</div>

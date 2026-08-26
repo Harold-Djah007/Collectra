@@ -1,0 +1,13 @@
+{% load hq_shared_tags %}
+{% initial_page_data 'session_expiry' request.session.session_expiry %}
+{% initial_page_data 'secure_timeout_username' request.couch_user.username %}
+{% registerurl 'iframe_domain_login' request.project.name %}
+{% registerurl 'domain_login_new_window' %}
+{% registerurl 'ping_login' %}
+{% registerurl 'ping_session' %}
+
+{% if use_bootstrap5 %}
+  {% include 'hqwebapp/includes/bootstrap5/inactivity_modal.html' %}
+{% else %}
+  {% include 'hqwebapp/includes/bootstrap3/inactivity_modal.html' %}
+{% endif %}

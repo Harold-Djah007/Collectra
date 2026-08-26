@@ -1,0 +1,29 @@
+--- 
++++ 
+@@ -1,22 +1,10 @@
+-body, html {
+-    height: 100%;
++html, body {
++  height: 100%;
+ }
+ 
+ .hq-container {
+     min-height: 100%;
+     height: auto !important;
+-    margin-bottom: -@navbar-footer-height;
+-    padding-bottom: @navbar-footer-height;
++    margin-bottom: -$navbar-footer-height;
++    padding-bottom: $navbar-footer-height;
+ }
+-
+-.footer-mobile {
+-  font-size: 10px;
+-  text-align: center;
+-  border-top: 1px solid @cc-neutral-hi;
+-  padding-top: 8px;
+-  margin-top:10px;
+-
+-  p {
+-    margin: 0;
+-  }
+-}

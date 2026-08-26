@@ -1,0 +1,630 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          android:versionCode="106"
+          android:versionName="2.65">
+
+
+    <uses-permission android:name="android.permission.NFC"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.BROADCAST_STICKY"/>
+    <uses-permission
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:name="android.permission.INTERNET"/>
+    <uses-permission
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- required to ensure app compatibility -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false"/>
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false"/>
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false"/>
+    <uses-feature
+        android:name="android.hardware.location.network"
+        android:required="false"/>
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false"/>
+
+    <uses-sdk tools:overrideLibrary="com.dimagi.android.zebraprinttool, com.simprints.libsimprints,
+    ru.noties.markwon.il, ru.noties.markwon.view, ru.noties.markwon.renderer,
+    com.google.firebase.crashlytics, com.google.firebase.iid, com.appmattus.certificatetransparency"/>
+
+    <permission-group
+        android:name="collectra.permission-group.DATABASE"
+        android:description="@string/permission_content_provider_description"
+        android:label="@string/permission_content_provider_label"
+        />
+
+    <permission-group
+        android:name="collectra.permission-group.EXTERNAL_ACTION"
+        android:description="@string/permission_external_action_description"
+        android:label="@string/permission_external_action_label"
+        />
+
+    <permission-group
+        android:name="collectra.permission-group.INTERNAL_ACTION"
+        android:label="@string/permission_group_internal_action_label"
+        />
+
+    <permission
+        android:description="@string/permission_content_provider_description"
+        android:label="@string/permission_content_provider_label"
+        android:name="${applicationId}.provider.cases.read"
+        android:permissionGroup="collectra.permission-group.DATABASE"
+        android:protectionLevel="dangerous">
+    </permission>
+
+    <permission
+        android:name="${applicationId}.permission.COMMCARE_LOGOUT"
+        android:description="@string/permission_commcare_logout_description"
+        android:label="@string/permission_commcare_logout_label"
+        android:permissionGroup="collectra.permission-group.EXTERNAL_ACTION"
+        android:protectionLevel="dangerous">
+    </permission>
+
+    <permission
+        android:name="${applicationId}.permission.PROTECT_FALSELY_EXPOSED_COMPONENTS"
+        android:label="@string/permission_protect_falsely_exposed_components_label"
+        android:description="@string/permission_protect_falsely_exposed_components_description"
+        android:permissionGroup="collectra.permission-group.INTERNAL_ACTION"
+        android:protectionLevel="signature">
+    </permission>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="*/*" android:scheme="*" />
+        </intent>
+        <package android:name="com.google.android.apps.maps" />
+        <package android:name="org.commcare.dalvik.reminders" />
+        <package android:name="callout.commcare.org.sendussd" />
+        <package android:name="org.commcare.dalvik.abha" />
+        <package android:name="com.dimagi.biometric" />
+        <package android:name="org.rdtoolkit" />
+        <package android:name="richard.chard.lu.android.areamapper" />
+        <package android:name="org.commcare.respiratory" />
+        <package android:name="com.simprints.id" />
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        tools:replace="android:label,android:icon,android:theme, android:allowBackup"
+        android:name="org.commcare.CommCareApplication"
+        android:icon="@mipmap/commcare_launcher"
+        android:supportsRtl="true"
+        android:label="@string/application_name"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/AppBaseTheme"
+        android:enableOnBackInvokedCallback="false">
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/fcm_default_notification_channel" />
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="face" />
+        <activity
+            android:name="org.commcare.activities.connect.ConnectMessagingActivity"
+            android:theme="@style/CommonTheme.NoActionBar">
+        </activity>
+        <activity
+            android:label="@string/application_name"
+            android:exported="true"
+            android:name="org.commcare.activities.DispatchActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.action.CommCareSession" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="connect.dimagi.com" />
+                <data android:pathPrefix="/users/invite_redirect/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="connect-staging.dimagi.com" />
+                <data android:pathPrefix="/users/invite_redirect/" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.commcare.activities.AppManagerActivity"
+            android:exported="true"
+            android:label="@string/manager_activity_name"
+            android:taskAffinity="org.commcare.Manage"
+            android:theme="@style/CommonTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.commcare.activities.connect.PersonalIdActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/CommonTheme.NoActionBar"/>
+        <activity
+            android:name="org.commcare.activities.LoginActivity"
+            android:label="@string/application_name"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/CommonTheme.NoActionBar"/>
+        <activity
+            android:name="org.commcare.activities.CrashWarningActivity"
+            android:label="CommCare Forced Closure" />
+        <activity android:name="org.commcare.activities.StandardHomeActivity"
+            android:theme="@style/CommonTheme.NoActionBar"/>
+        <activity android:name="org.commcare.activities.RootMenuHomeActivity" />
+        <activity android:name="org.commcare.activities.MenuActivity" />
+        <activity
+            android:name="org.commcare.activities.connect.ConnectActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/ConnectTheme"/>
+        <service android:name="com.google.android.gms.metadata.ModuleDependencies"
+            android:enabled="false"
+            android:exported="false"
+            tools:ignore="MissingClass">
+            <intent-filter>
+                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+            </intent-filter>
+            <meta-data android:name="photopicker_activity:0:required" android:value="" />
+        </service>
+        <provider
+            android:name="org.commcare.provider.FormsProvider"
+            android:authorities="${odkProvider}.forms"
+            android:exported="false" />
+        <provider
+            android:name="org.commcare.provider.InstanceProvider"
+            android:authorities="${odkProvider}.instances"
+            android:exported="false" />
+        <provider
+            android:name="org.commcare.provider.CaseDataContentProvider"
+            android:authorities="${applicationId}.case"
+            android:enabled="true"
+            android:exported="true"
+            android:readPermission="${applicationId}.provider.cases.read" />
+        <provider
+            android:name="org.commcare.provider.FixtureDataContentProvider"
+            android:authorities="${applicationId}.fixture"
+            android:enabled="true"
+            android:exported="true"
+            android:readPermission="${applicationId}.provider.cases.read" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.external.files.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <activity
+            android:name="org.commcare.activities.CommCarePreferenceActivity"
+            android:theme="@style/PreferenceTheme" />
+        <activity
+            android:name="org.commcare.activities.SessionAwarePreferenceActivity"
+            android:theme="@style/PreferenceTheme" />
+        <activity
+            android:name="org.commcare.activities.FullscreenVideoViewActivity"
+            android:theme="@style/FullscreenTheme" />
+        <activity android:name="org.commcare.activities.CallOutActivity" />
+        <activity
+            android:name="org.commcare.activities.CommCareSetupActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/CommonTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="*" />
+                <data android:mimeType="commcare/profile" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.ccpr" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.ccpr" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.ccpr" />
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/commcare_launcher">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.ccz"
+                    android:scheme="file" />
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/commcare_launcher">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.ccz" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.commcare.activities.UpdateActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity
+            android:name="org.commcare.activities.SingleAppManagerActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.EntitySelectActivity"
+            android:windowSoftInputMode="stateUnchanged|adjustResize" />
+        <activity android:name="org.commcare.activities.CommCareGraphActivity" />
+        <activity
+            android:name="org.commcare.activities.EntityDetailActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.FormRecordListActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <service
+            android:enabled="true"
+            android:foregroundServiceType="specialUse"
+            android:name="org.commcare.services.CommCareSessionService">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Service that maintains an encryption key in memory to securely submit data to the server" />
+        </service>
+        <service
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:name="org.commcare.services.NetworkNotificationService">
+        </service>
+        <service
+            android:enabled="true"
+            android:exported="false"
+            android:stopWithTask="true"
+            android:foregroundServiceType="microphone"
+            android:name="org.commcare.views.widgets.AudioRecordingService">
+        </service>
+        <activity
+            android:name="org.commcare.activities.FormEntryActivity"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.PushNotificationLaunchActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="org.commcare.activities.DrawActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.FormHierarchyActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.GeoPointActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.GeoPointMapActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.InstallArchiveActivity"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+      
+        <activity android:name="org.commcare.gis.EntityMapActivity" />
+
+        <activity android:name="org.commcare.activities.RefreshToLatestBuildActivity">
+        </activity>
+        <activity android:name="org.commcare.activities.MultipleAppsLimitWarningActivity">
+        </activity>
+        <activity android:name="org.commcare.activities.GlobalPrivilegeClaimingActivity">
+        </activity>
+        <activity android:name="org.commcare.activities.InstallFromListActivity">
+        </activity>
+
+        <uses-library
+            android:name="com.google.android.maps"
+            android:required="false" />
+        
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
+
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
+
+        <activity android:name="org.commcare.activities.MessageActivity" />
+
+        <receiver
+            android:exported="false"
+            android:name="org.commcare.views.notifications.NotificationClearReceiver">
+        </receiver>
+
+        <activity
+            android:name="org.commcare.activities.ReportProblemActivity"
+            android:label="@string/title_activity_report_problem">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.commcare.activities.CommCareSetupActivity" />
+        </activity>
+        <activity
+            android:name="org.commcare.activities.CommCareVerificationActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name="org.commcare.activities.UnrecoverableErrorActivity" />
+        <activity
+            android:name="org.commcare.activities.KeyAccessRequestActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.action.CommCareKeyAccessRequest" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:exported="true"
+            android:name="org.commcare.android.nfc.NfcWriteActivity"
+            android:permission="org.commcare.dalvik.permission.PROTECT_FALSELY_EXPOSED_COMPONENTS">
+            <intent-filter>
+                <action android:name="org.commcare.nfc.WRITE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:exported="true"
+            android:name="org.commcare.android.nfc.NfcReadActivity"
+            android:permission="org.commcare.dalvik.permission.PROTECT_FALSELY_EXPOSED_COMPONENTS">
+            <intent-filter>
+                <action android:name="org.commcare.nfc.READ" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name="org.commcare.provider.ExternalApiReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.ExternalAction" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+        <receiver
+			android:name="org.commcare.provider.CommCareLogoutReceiver"
+            android:exported="true"
+            android:permission="org.commcare.dalvik.permission.COMMCARE_LOGOUT">
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.CommCareLogoutAction" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="org.commcare.provider.RefreshToLatestBuildReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.RefreshToLatestBuildAction" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="org.commcare.provider.DebugControlsReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.SessionCaptureAction" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.UninstallApp" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.LoginWithCreds" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.TriggerSyncRecover" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.ClearCacheOnRestore" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.api.action.ExpireUserKeyRecord" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="${applicationId}.api.action.SetImageWidgetPath" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name="org.commcare.activities.MultimediaInflaterActivity" />
+        <activity
+            android:name="org.commcare.activities.CommCareFormDumpActivity"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name="org.commcare.activities.ConnectionDiagnosticActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="org.commcare.activities.CommCareWiFiDirectActivity"
+            android:screenOrientation="portrait" />
+        <activity android:name="org.commcare.activities.RecoveryActivity" />
+        <activity
+            android:name="org.commcare.print.TemplatePrinterActivity"
+            android:permission="org.commcare.dalvik.permission.PROTECT_FALSELY_EXPOSED_COMPONENTS"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.commcare.dalvik.action.PRINT" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name="org.commcare.activities.SeatAppActivity" />
+        <activity android:name="org.commcare.activities.PostRequestActivity" />
+        <activity android:name="org.commcare.activities.QueryRequestActivity" />
+        <activity
+            android:name="org.commcare.activities.CreatePinActivity"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+        <activity
+            android:name="org.commcare.activities.PinAuthenticationActivity"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+        <activity android:name="org.commcare.activities.PromptApkUpdateActivity" />
+        <activity android:name="org.commcare.activities.PromptCczUpdateActivity" />
+        <activity
+            android:name="org.commcare.activities.DataChangeLogsActivity"
+            android:exported="false"
+            android:label="@string/title_data_change_logs_activity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <activity android:name="org.commcare.activities.TargetMismatchErrorActivity"/>
+        <activity android:name="org.commcare.recovery.measures.ExecuteRecoveryMeasuresActivity"/>
+        <activity android:name="org.commcare.activities.PromptCCReinstallActivity"/>
+        <activity
+            android:name="org.commcare.activities.camera.MicroImageActivity"/>
+        <activity
+            android:name="org.commcare.activities.camera.CameraOverlayActivity"/>
+        <!-- Start Collect Manifest -->
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${googlePlayMapsApiKey}" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="android.content.APP_RESTRICTIONS"
+            android:resource="@xml/app_restrictions" />
+
+        <activity android:name="org.commcare.activities.CommcareListActivity" /> <!-- This is to disable fabric for debug builds properly - https://stackoverflow.com/a/49836972/3811963 -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+
+        <meta-data
+            android:name="firebase_performance_collection_enabled"
+            android:value="false" />
+
+        <!-- The zebra-print-android library is not yet targeting Android 12 and at least one
+            Activity doesn't have the required attribute exported. The entry below adds the
+            attribute to the final Manifest.
+        -->
+        <activity
+            android:name="com.dimagi.android.zebraprinttool.PrintReceiverActivity"
+            android:exported="true"
+            tools:node="merge" />
+
+        <activity
+            android:name="org.commcare.activities.connect.PersonalIdWorkHistoryActivity"
+            android:theme="@style/CommonTheme.NoActionBar"/>
+
+        <activity
+            android:name="org.commcare.personalId.profile.PersonalIdProfileActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/CommonTheme.NoActionBar"/>
+
+        <service
+            android:name="org.commcare.services.CommCareFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <activity android:name="org.commcare.activities.PushNotificationActivity"
+            android:theme="@style/CommonTheme.NoActionBar"/>
+    </application>
+
+</manifest>
+

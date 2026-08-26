@@ -1,0 +1,21 @@
+<partial>
+  <detail id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select">
+    <title>
+      <text>
+        <locale id="cchq.report_menu"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="cchq.report_name_header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+</partial>

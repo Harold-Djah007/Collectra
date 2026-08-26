@@ -1,0 +1,21 @@
+{% load hq_shared_tags %}
+
+<div>
+  <div data-bind="foreach: selected_path">
+    <select class="form-select"
+      {% if attrs.disabled %}
+            disabled="disabled"
+      {% endif %}
+            data-bind="{% if not attrs.disabled %}enable: children_are_editable(),{% endif %}
+                       options: children,
+                       optionsText: 'display_name',
+                       value: selected_child">
+    </select>
+  </div>
+  <!--
+      Both B3 hide and B5 d-none are used to avoid needing to split this template.
+      When USE_BOOTSTRAP5 is removed, form-control can be removed.
+  -->
+  <i id="loc_ajax" class="fa fa-spinner fa-spin hide d-none"></i>
+  <input name="{{ name }}" type="hidden" data-bind="value: selected_locid" />
+</div>

@@ -1,0 +1,42 @@
+{% extends 'registration/email/confirm_account.html' %}
+{% load i18n %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    {{ inviter }} approved your request to join {{ domain }} on CommCare!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    You're approved to join {{ domain }}!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Confirm My Account
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    {{ inviter }} has approved your request to join the "{{ domain }}" project on CommCare.
+    This approval expires in {{ days }} day(s).
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% blocktrans %}
+    CommCare is a tool that helps manage frontline workers around the world.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because we received an approval from {{ inviter }}
+    for your request to join {{ domain }}
+  {% endblocktrans %}
+{% endblock %}

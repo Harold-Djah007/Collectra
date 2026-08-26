@@ -1,0 +1,10 @@
+{% load hq_shared_tags %}
+
+<div class="charts-multibar-chart"
+     data-config-dict="{% html_attr chart.config_dict %}"
+     data-chart-data="{% html_attr chart.data %}"
+     data-chart-id="{{ chart_id }}"
+     data-chart-x-axis="{% html_attr chart.x_axis %}"
+     data-chart-y-axis="{% html_attr chart.y_axis %}"
+     data-chart-tooltip-format="{% html_attr chart.tooltipFormat %}">
+</div>

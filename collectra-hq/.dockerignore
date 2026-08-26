@@ -1,0 +1,7 @@
+**/__pycache__/
+sharedfiles/
+staticfiles/
+*.log
+application.properties
+formplayer.jar
+localsettings.py

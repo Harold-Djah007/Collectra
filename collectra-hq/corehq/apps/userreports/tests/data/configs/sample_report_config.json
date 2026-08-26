@@ -1,0 +1,53 @@
+{
+    "domain": "user-reports",
+    "doc_type": "ReportConfiguration",
+    "title": "CommBugz",
+    "config_id": "12345",
+    "filters": [
+        {
+            "type": "date",
+            "field": "date",
+            "slug": "date",
+            "display": "Date"
+        }
+    ],
+    "aggregation_columns": [
+        "owner"
+    ],
+    "columns": [
+        {
+            "type": "field",
+            "display": "Owner",
+            "field": "owner",
+            "aggregation": "simple"
+        },
+        {
+            "type": "field",
+            "display": {
+                "en": "Tickets",
+                "fr": "Billets"
+            },
+            "description": "Number of tickets",
+            "field": "count",
+            "aggregation": "sum"
+        },
+        {
+            "type": "field",
+            "display": "Starred",
+            "field": "is_starred",
+            "aggregation": "sum",
+            "format": "percent_of_total"
+        }
+    ],
+    "configured_charts": [
+        {
+            "type": "multibar",
+            "title": "Tickets by owner",
+            "x_axis_column": "owner",
+            "y_axis_columns": [
+                "count"
+            ]
+        }
+
+    ]
+}

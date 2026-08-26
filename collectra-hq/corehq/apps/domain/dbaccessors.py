@@ -1,0 +1,144 @@
+from corehq.apps.domain.models import Domain
+from corehq.util.couch import get_db_by_doc_type
+from corehq.util.couch_helpers import paginate_view
+
+
+def get_doc_count_in_domain_by_class(domain, doc_class):
+    doc_type = doc_class.__name__
+    return get_doc_count_in_domain_by_type(domain, doc_type, doc_class.get_db())
+
+
+def get_doc_count_in_domain_by_type(domain, doc_type, db):
+    start_key = [domain, doc_type]
+    end_key = [domain, doc_type]
+    end_key.append({})
+
+    row = db.view(
+        "by_domain_doc_type_date/view",
+        startkey=start_key,
+        endkey=end_key,
+        reduce=True,
+    ).one()
+    return row["value"] if row else 0
+
+
+def get_doc_ids_in_domain_by_class(domain, doc_class):
+    db = doc_class.get_db()
+    doc_type = doc_class.__name__
+    return get_doc_ids_in_domain_by_type(domain, doc_type, db)
+
+
+def get_doc_ids_in_domain_by_type(domain, doc_type, database=None):
+    """
+    Given a domain and doc type, get all docs matching that domain and type
+    """
+    if not database:
+        database = get_db_by_doc_type(doc_type)
+    return [row['id'] for row in database.view('by_domain_doc_type_date/view',
+        startkey=[domain, doc_type],
+        endkey=[domain, doc_type, {}],
+        reduce=False,
+        include_docs=False,
+    )]
+
+
+def iterate_doc_ids_in_domain_by_type(domain, doc_type, chunk_size=10000,
+                                      database=None, startkey=None, startkey_docid=None):
+
+    if not database:
+        database = get_db_by_doc_type(doc_type)
+
+    view_kwargs = {
+        'reduce': False,
+        'startkey': startkey if startkey else [domain, doc_type],
+        'endkey': [domain, doc_type, {}],
+        'include_docs': False
+    }
+    if startkey_docid:
+        view_kwargs.update({
+            'startkey_docid': startkey_docid
+        })
+    for doc in paginate_view(
+            database,
+            'by_domain_doc_type_date/view',
+            chunk_size,
+            **view_kwargs):
+        yield doc['id']
+
+
+def get_docs_in_domain_by_class(domain, doc_class, limit=None, skip=None):
+    """
+    Given a domain and doc class, get all docs matching that domain and type
+
+    in order to prevent this from being used on a doc_class with many docs per domain
+    doc_class must be white-listed.
+    """
+    whitelist = [
+        'CallCenterIndicatorConfig',
+        'CommCareCaseGroup',
+        'HQGroupExportConfiguration',
+        'Group',
+        'ReportConfiguration',
+        'RegistryReportConfiguration',
+        'LinkedApplication',
+    ]
+    doc_type = doc_class.__name__
+    assert doc_type in whitelist
+
+    kwargs = {}
+    if limit is not None:
+        kwargs['limit'] = limit
+    if skip is not None:
+        kwargs['skip'] = skip
+
+    return doc_class.view(
+        'by_domain_doc_type_date/view',
+        startkey=[domain, doc_type],
+        endkey=[domain, doc_type, {}],
+        reduce=False,
+        include_docs=True,
+        **kwargs
+    ).all()
+
+
+def get_domain_ids_by_names(names):
+    return {result['key']: result['id'] for result in Domain.view(
+        "domain/domains",
+        keys=names,
+        reduce=False,
+        include_docs=False
+    )}
+
+
+def iter_domains():
+    for row in paginate_view(
+            Domain.get_db(),
+            'domain/domains',
+            100,
+            reduce=False,
+            include_docs=False):
+        yield row['key']
+
+
+def deleted_domain_exists(domain):
+    if isinstance(domain, Domain):
+        domain = domain.name  # double check just in case
+    row = Domain.get_db().view('domain/deleted_domains', key=domain, reduce=True).one()
+    return bool(row)
+
+
+def domain_exists(domain):
+    if isinstance(domain, Domain):
+        domain = domain.name  # double check just in case
+    row = Domain.get_db().view('domain/domains', key=domain, reduce=True).one()
+    return bool(row)
+
+
+def domain_or_deleted_domain_exists(domain):
+    return domain_exists(domain) or deleted_domain_exists(domain)
+
+
+def iter_all_domains_and_deleted_domains_with_name(domain):
+    """There should only ever be one!"""
+    yield from Domain.view('domain/deleted_domains', key=domain, reduce=False, include_docs=True).all()
+    yield from Domain.view('domain/domains', key=domain, reduce=False, include_docs=True).all()

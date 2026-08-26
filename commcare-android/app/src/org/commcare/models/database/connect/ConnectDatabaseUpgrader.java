@@ -1,0 +1,1202 @@
+package org.commcare.models.database.connect;
+
+import android.content.Context;
+
+import org.commcare.android.database.connect.models.ConnectAppRecord;
+import org.commcare.android.database.connect.models.ConnectAppRecordV21;
+import org.commcare.android.database.connect.models.ConnectJobAssessmentRecord;
+import org.commcare.android.database.connect.models.ConnectJobAssessmentRecordV21;
+import org.commcare.android.database.connect.models.ConnectJobDeliveryFlagRecord;
+import org.commcare.android.database.connect.models.ConnectJobDeliveryRecord;
+import org.commcare.android.database.connect.models.ConnectJobDeliveryRecordV2;
+import org.commcare.android.database.connect.models.ConnectJobDeliveryRecordV21;
+import org.commcare.android.database.connect.models.ConnectJobDeliveryRecordV22;
+import org.commcare.android.database.connect.models.ConnectJobLearningRecord;
+import org.commcare.android.database.connect.models.ConnectJobLearningRecordV21;
+import org.commcare.android.database.connect.models.ConnectJobPaymentRecord;
+import org.commcare.android.database.connect.models.ConnectJobPaymentRecordV21;
+import org.commcare.android.database.connect.models.ConnectJobPaymentRecordV3;
+import org.commcare.android.database.connect.models.ConnectJobRecord;
+import org.commcare.android.database.connect.models.ConnectJobRecordV10;
+import org.commcare.android.database.connect.models.ConnectJobRecordV2;
+import org.commcare.android.database.connect.models.ConnectJobRecordV21;
+import org.commcare.android.database.connect.models.ConnectJobRecordV4;
+import org.commcare.android.database.connect.models.ConnectJobRecordV7;
+import org.commcare.android.database.connect.models.ConnectLearnModuleSummaryRecord;
+import org.commcare.android.database.connect.models.ConnectLearnModuleSummaryRecordV21;
+import org.commcare.android.database.connect.models.ConnectLearnModuleSummaryRecordV28;
+import org.commcare.android.database.connect.models.ConnectLinkedAppRecord;
+import org.commcare.android.database.connect.models.ConnectLinkedAppRecordV3;
+import org.commcare.android.database.connect.models.ConnectLinkedAppRecordV8;
+import org.commcare.android.database.connect.models.ConnectLinkedAppRecordV9;
+import org.commcare.android.database.connect.models.ConnectMessagingChannelRecord;
+import org.commcare.android.database.connect.models.ConnectMessagingChannelRecordV27;
+import org.commcare.android.database.connect.models.ConnectMessagingMessageRecord;
+import org.commcare.android.database.connect.models.ConnectPaymentUnitRecord;
+import org.commcare.android.database.connect.models.ConnectPaymentUnitRecordV21;
+import org.commcare.android.database.connect.models.ConnectReleaseToggleRecord;
+import org.commcare.android.database.connect.models.ConnectTaskRecord;
+import org.commcare.android.database.connect.models.ConnectUserRecord;
+import org.commcare.android.database.connect.models.ConnectUserRecordV13;
+import org.commcare.android.database.connect.models.ConnectUserRecordV14;
+import org.commcare.android.database.connect.models.ConnectUserRecordV16;
+import org.commcare.android.database.connect.models.ConnectUserRecordV25;
+import org.commcare.android.database.connect.models.ConnectUserRecordV5;
+import org.commcare.android.database.connect.models.PersonalIdWorkHistory;
+import org.commcare.android.database.connect.models.PushNotificationRecord;
+import org.commcare.android.database.connect.models.PushNotificationRecordV21;
+import org.commcare.android.database.connect.models.PushNotificationRecordV23;
+import org.commcare.android.database.connect.models.PushNotificationRecordV24;
+import org.commcare.models.database.ConcreteAndroidDbHelper;
+import org.commcare.models.database.DbUtil;
+import org.commcare.models.database.IDatabase;
+import org.commcare.models.database.SqlStorage;
+import org.commcare.modern.database.TableBuilder;
+import org.commcare.utils.CrashUtil;
+import org.javarosa.core.services.storage.Persistable;
+
+public class ConnectDatabaseUpgrader {
+    private final Context c;
+
+    public ConnectDatabaseUpgrader(Context c) {
+        this.c = c;
+    }
+
+    public void upgrade(IDatabase db, int oldVersion) {
+        if (oldVersion == 1) {
+            upgradeOneTwo(db);
+            oldVersion = 2;
+        }
+
+        if (oldVersion == 2) {
+            upgradeTwoThree(db);
+            oldVersion = 3;
+        }
+
+        if (oldVersion == 3) {
+            upgradeThreeFour(db);
+            oldVersion = 4;
+        }
+
+        if (oldVersion == 4) {
+            upgradeFourFive(db);
+            oldVersion = 5;
+        }
+
+        if (oldVersion == 5) {
+            upgradeFiveSix(db);
+            oldVersion = 6;
+        }
+
+        if (oldVersion == 6) {
+            upgradeSixSeven(db);
+            oldVersion = 7;
+        }
+
+        if (oldVersion == 7) {
+            upgradeSevenEight(db);
+            oldVersion = 8;
+        }
+
+        if (oldVersion == 8) {
+            upgradeEightNine(db);
+            oldVersion = 9;
+        }
+
+        if (oldVersion == 9) {
+            upgradeNineTen(db);
+            oldVersion = 10;
+        }
+
+        if (oldVersion == 10) {
+            upgradeTenEleven(db);
+            oldVersion = 11;
+        }
+
+        if (oldVersion == 11) {
+            upgradeElevenTwelve(db);
+            oldVersion = 12;
+        }
+
+        if (oldVersion == 12) {
+            upgradeTwelveThirteen(db);
+            oldVersion = 13;
+        }
+
+        if (oldVersion == 13) {
+            upgradeThirteenFourteen(db);
+            oldVersion = 14;
+        }
+
+        if (oldVersion == 14) {
+            upgradeFourteenFifteen(db);
+            oldVersion = 15;
+        }
+
+        if (oldVersion == 15) {
+            upgradeFifteenSixteen(db);
+            oldVersion = 16;
+        }
+
+        if (oldVersion == 16) {
+            upgradeSixteenSeventeen(db);
+            oldVersion = 17;
+        }
+
+        if (oldVersion == 17) {
+            upgradeSeventeenEighteen(db);
+            oldVersion = 18;
+        }
+
+        if (oldVersion == 18) {
+            upgradeEighteenNineteen(db);
+            oldVersion = 19;
+        }
+
+        if (oldVersion == 19) {
+            upgradeNineteenTwenty(db);
+            oldVersion = 20;
+        }
+
+        if (oldVersion == 20) {
+            upgradeTwentyTwentyOne(db);
+            oldVersion = 21;
+        }
+
+        if(oldVersion == 21){
+            upgradeTwentyOneTwentyTwo(db);
+            oldVersion = 22;
+        }
+
+        if (oldVersion == 22) {
+            upgradeTwentyTwoTwentyThree(db);
+            oldVersion = 23;
+        }
+
+        if (oldVersion == 23) {
+            upgradeTwentyThreeTwentyFour(db);
+            oldVersion = 24;
+        }
+
+        if (oldVersion == 24) {
+            upgradeTwentyFourTwentyFive(db);
+            oldVersion = 25;
+        }
+
+        if (oldVersion == 25) {
+            upgradeTwentyFiveTwentySix(db);
+            oldVersion = 26;
+        }
+
+        if (oldVersion == 26) {
+            upgradeTwentySixTwentySeven(db);
+            oldVersion = 27;
+        }
+
+        if (oldVersion == 27) {
+            upgradeTwentySevenTwentyEight(db);
+            oldVersion = 28;
+        }
+
+        if (oldVersion == 28) {
+            upgradeTwentyEightTwentyNine(db);
+            oldVersion = 29;
+        }
+    }
+
+    private void upgradeOneTwo(IDatabase db) {
+        addTableForNewModel(db, ConnectJobRecord.STORAGE_KEY, new ConnectJobRecordV2());
+        addTableForNewModel(db, ConnectAppRecord.STORAGE_KEY, new ConnectAppRecord());
+        addTableForNewModel(db, ConnectLearnModuleSummaryRecord.STORAGE_KEY, new ConnectLearnModuleSummaryRecord());
+        addTableForNewModel(db, ConnectJobDeliveryRecord.STORAGE_KEY, new ConnectJobDeliveryRecordV2());
+        addTableForNewModel(db, ConnectJobLearningRecord.STORAGE_KEY, new ConnectJobLearningRecord());
+        addTableForNewModel(db, ConnectJobAssessmentRecord.STORAGE_KEY, new ConnectJobAssessmentRecord());
+        addTableForNewModel(db, ConnectJobPaymentRecord.STORAGE_KEY, new ConnectJobPaymentRecordV3());
+        addTableForNewModel(db, ConnectLinkedAppRecord.STORAGE_KEY, new ConnectLinkedAppRecordV3());
+    }
+
+    private void upgradeTwoThree(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobRecordV2.STORAGE_KEY,
+                    ConnectJobRecordV4.META_CLAIM_DATE,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobDeliveryRecord.STORAGE_KEY,
+                    ConnectJobDeliveryRecord.META_REASON,
+                    "TEXT"));
+            //First, migrate the old ConnectJobRecord in storage to the new version
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectJobRecordV2.STORAGE_KEY,
+                    ConnectJobRecordV2.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectJobRecordV4.STORAGE_KEY,
+                    ConnectJobRecordV4.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobRecordV2 oldRecord = (ConnectJobRecordV2)r;
+                ConnectJobRecordV4 newRecord = ConnectJobRecordV4.fromV2(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            //Next, migrate the old ConnectJobDeliveryRecord in storage to the new version
+            oldStorage = new SqlStorage<>(
+                    ConnectJobDeliveryRecord.STORAGE_KEY,
+                    ConnectJobDeliveryRecordV2.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            newStorage = new SqlStorage<>(
+                    ConnectJobDeliveryRecord.STORAGE_KEY,
+                    ConnectJobDeliveryRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobDeliveryRecordV2 oldRecord = (ConnectJobDeliveryRecordV2)r;
+                ConnectJobDeliveryRecord newRecord = ConnectJobDeliveryRecord.fromV2(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } catch (Exception e){
+            CrashUtil.log(e.getMessage());
+        }
+        finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeThreeFour(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            //First, migrate the old ConnectLinkedAppRecord in storage to the new version
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.META_CONNECTID_LINKED,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.META_OFFERED_1,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.META_OFFERED_1_DATE,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.META_OFFERED_2,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.META_OFFERED_2_DATE,
+                    "TEXT"));
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecordV3.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectLinkedAppRecordV3 oldRecord = (ConnectLinkedAppRecordV3)r;
+                ConnectLinkedAppRecordV8 newRecord = ConnectLinkedAppRecordV8.fromV3(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            //Next, migrate the old ConnectJobPaymentRecord in storage to the new version
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobPaymentRecord.STORAGE_KEY,
+                    ConnectJobPaymentRecord.META_PAYMENT_ID,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobPaymentRecord.STORAGE_KEY,
+                    ConnectJobPaymentRecord.META_CONFIRMED,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobPaymentRecord.STORAGE_KEY,
+                    ConnectJobPaymentRecord.META_CONFIRMED_DATE,
+                    "TEXT"));
+
+            oldStorage = new SqlStorage<>(
+                    ConnectJobPaymentRecord.STORAGE_KEY,
+                    ConnectJobPaymentRecordV3.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            newStorage = new SqlStorage<>(
+                    ConnectJobPaymentRecordV21.STORAGE_KEY,
+                    ConnectJobPaymentRecordV21.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobPaymentRecordV3 oldRecord = (ConnectJobPaymentRecordV3)r;
+                ConnectJobPaymentRecordV21 newRecord = ConnectJobPaymentRecordV21.Companion.fromV3(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeFourFive(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            //First, migrate the old ConnectJobRecord in storage to the new version
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobRecordV4.STORAGE_KEY,
+                    ConnectJobRecordV7.META_START_DATE,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobRecordV7.STORAGE_KEY,
+                    ConnectJobRecordV7.META_IS_ACTIVE,
+                    "TEXT"));
+
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectJobRecordV4.STORAGE_KEY,
+                    ConnectJobRecordV4.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectJobRecordV7.STORAGE_KEY,
+                    ConnectJobRecordV7.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobRecordV4 oldRecord = (ConnectJobRecordV4)r;
+                ConnectJobRecordV7 newRecord = ConnectJobRecordV7.fromV4(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeFiveSix(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            //First, migrate the old ConnectUserRecord in storage to the new version
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecord.META_PIN,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecord.META_SECONDARY_PHONE_VERIFIED,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecord.META_VERIFY_SECONDARY_PHONE_DATE,
+                    "TEXT"));
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecordV5.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecordV13.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectUserRecordV5 oldRecord = (ConnectUserRecordV5)r;
+                ConnectUserRecordV13 newRecord = ConnectUserRecordV13.fromV5(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeSixSeven(IDatabase db) {
+        addTableForNewModel(db, ConnectPaymentUnitRecord.STORAGE_KEY, new ConnectPaymentUnitRecord());
+    }
+
+    private void upgradeSevenEight(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            //First, migrate the old ConnectJobRecord in storage to the new version
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobRecordV7.STORAGE_KEY,
+                    ConnectJobRecordV10.META_USER_SUSPENDED,
+                    "TEXT"));
+
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectJobRecordV7.STORAGE_KEY,
+                    ConnectJobRecordV7.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectJobRecordV10.STORAGE_KEY,
+                    ConnectJobRecordV10.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobRecordV7 oldRecord = (ConnectJobRecordV7)r;
+                ConnectJobRecordV10 newRecord = ConnectJobRecordV10.fromV7(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeEightNine(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            //Migrate the old ConnectLinkedAppRecord in storage to the new version
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.META_LOCAL_PASSPHRASE,
+                    "TEXT"));
+
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecordV8.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectLinkedAppRecordV8 oldRecord = (ConnectLinkedAppRecordV8)r;
+                ConnectLinkedAppRecordV9 newRecord = ConnectLinkedAppRecordV9.fromV8(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeNineTen(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            //Migrate the old ConnectLinkedAppRecord in storage to the new version
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.META_LAST_ACCESSED,
+                    "TEXT"));
+
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecordV9.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectLinkedAppRecord.STORAGE_KEY,
+                    ConnectLinkedAppRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectLinkedAppRecordV9 oldRecord = (ConnectLinkedAppRecordV9)r;
+                ConnectLinkedAppRecord newRecord = ConnectLinkedAppRecord.fromV9(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeTenEleven(IDatabase db) {
+        db.beginTransaction();
+
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobRecord.STORAGE_KEY,
+                    ConnectJobRecord.META_DAILY_START_TIME,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobRecord.STORAGE_KEY,
+                    ConnectJobRecord.META_DAILY_FINISH_TIME,
+                    "TEXT"));
+
+            //First, migrate the old ConnectJobRecord in storage to the new version
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectJobRecordV10.STORAGE_KEY,
+                    ConnectJobRecordV10.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectJobRecordV21.STORAGE_KEY,
+                    ConnectJobRecordV21.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobRecordV10 oldRecord = (ConnectJobRecordV10)r;
+                ConnectJobRecordV21 newRecord = ConnectJobRecordV21.Companion.fromV10(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            //Next, migrate the old ConnectJobDeliveryRecord in storage to the new version
+            oldStorage = new SqlStorage<>(
+                    ConnectJobDeliveryRecordV2.STORAGE_KEY,
+                    ConnectJobDeliveryRecordV2.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            newStorage = new SqlStorage<>(
+                    ConnectJobDeliveryRecordV21.STORAGE_KEY,
+                    ConnectJobDeliveryRecordV21.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobDeliveryRecordV2 oldRecord = (ConnectJobDeliveryRecordV2)r;
+                ConnectJobDeliveryRecordV21 newRecord = ConnectJobDeliveryRecordV21.Companion.fromV2(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeElevenTwelve(IDatabase db) {
+        addTableForNewModel(db, ConnectMessagingChannelRecord.STORAGE_KEY, new ConnectMessagingChannelRecordV27());
+        addTableForNewModel(db, ConnectMessagingMessageRecord.STORAGE_KEY, new ConnectMessagingMessageRecord());
+    }
+
+    private void upgradeTwelveThirteen(IDatabase db) {
+        addTableForNewModel(db, ConnectJobDeliveryFlagRecord.STORAGE_KEY, new ConnectJobDeliveryFlagRecord());
+    }
+
+    private void upgradeThirteenFourteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            SqlStorage<ConnectUserRecordV13> oldStorage = new SqlStorage<>(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecordV13.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecordV14.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (ConnectUserRecordV13 oldRecord : oldStorage) {
+                ConnectUserRecordV14 newRecord = ConnectUserRecordV14.fromV13(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeFourteenFifteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            SqlStorage<ConnectUserRecordV14> oldStorage = new SqlStorage<>(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecordV14.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecordV16.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (ConnectUserRecordV14 oldRecord : oldStorage) {
+                ConnectUserRecordV16 newRecord = ConnectUserRecordV16.fromV14(oldRecord);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+
+    private void upgradeFifteenSixteen(IDatabase db) {
+        addTableForNewModel(db, PersonalIdWorkHistory.STORAGE_KEY, new PersonalIdWorkHistory());
+    }
+
+    private void upgradeSixteenSeventeen(IDatabase db) {
+        db.beginTransaction();
+        try {
+
+            SqlStorage<Persistable> jobStorage = new SqlStorage<>(
+                    ConnectJobRecord.STORAGE_KEY,
+                    ConnectJobRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            boolean hasConnectAccess = jobStorage.getNumRecords() > 0;
+
+            SqlStorage<ConnectUserRecordV16> oldStorage = new SqlStorage<>(
+                    ConnectUserRecordV16.STORAGE_KEY,
+                    ConnectUserRecordV16.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectUserRecordV25.STORAGE_KEY,
+                    ConnectUserRecordV25.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (ConnectUserRecordV16 oldRecord : oldStorage) {
+                ConnectUserRecordV25 newRecord = ConnectUserRecordV25.fromV16(oldRecord, hasConnectAccess);
+                //set this new record to have same ID as the old one
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeSeventeenEighteen(IDatabase db) {
+        db.beginTransaction();
+        try {
+            // We have not been populating this table yet, so just drop and recreate
+            SqlStorage.dropTable(db, PersonalIdWorkHistory.STORAGE_KEY);
+            addTableForNewModel(db, PersonalIdWorkHistory.STORAGE_KEY, new PersonalIdWorkHistory());
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeEighteenNineteen(IDatabase db) {
+        addTableForNewModel(db, PushNotificationRecordV21.STORAGE_KEY, new PushNotificationRecordV21());
+    }
+
+    private void upgradeNineteenTwenty(IDatabase db) {
+        db.beginTransaction();
+        try {
+            SqlStorage.dropTable(db, PushNotificationRecordV21.STORAGE_KEY);
+            addTableForNewModel(db, PushNotificationRecordV21.STORAGE_KEY, new PushNotificationRecordV21());
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeTwentyTwentyOne(IDatabase db) {
+        addTableForNewModel(db, ConnectReleaseToggleRecord.STORAGE_KEY, new ConnectReleaseToggleRecord());
+    }
+
+    //region Twenty One to Twenty Two migrations
+    private void upgradeTwentyOneTwentyTwo(IDatabase db) {
+        db.beginTransaction();
+        try {
+            upgradeConnectJobRecordToV22(db);
+            upgradeConnectJobLearningRecordToV22(db);
+            upgradeConnectJobDeliveryRecordToV22(db);
+            upgradeConnectJobAssessmentRecordToV22(db);
+            upgradeConnectJobPaymentRecordToV22(db);
+            upgradeConnectAppRecordToV22(db);
+            upgradeConnectLearnModuleSummaryRecordToV22(db);
+            upgradeConnectPaymentUnitRecordToV22(db);
+            upgradePushNotificationRecordToV22(db);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeConnectJobRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectJobRecord.STORAGE_KEY,
+                ConnectJobRecord.META_JOB_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectJobRecordV21.STORAGE_KEY,
+                ConnectJobRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                ConnectJobRecord.STORAGE_KEY,
+                ConnectJobRecord.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectJobRecordV21 oldRecord = (ConnectJobRecordV21)r;
+            ConnectJobRecord newRecord = ConnectJobRecord.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+
+    private void upgradeConnectJobDeliveryRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectJobDeliveryRecord.STORAGE_KEY,
+                ConnectJobDeliveryRecord.META_JOB_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectJobDeliveryRecordV21.STORAGE_KEY,
+                ConnectJobDeliveryRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                ConnectJobDeliveryRecordV22.STORAGE_KEY,
+                ConnectJobDeliveryRecordV22.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectJobDeliveryRecordV21 oldRecord = (ConnectJobDeliveryRecordV21)r;
+            ConnectJobDeliveryRecordV22 newRecord = ConnectJobDeliveryRecordV22.Companion.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+
+    private void upgradeConnectJobLearningRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectJobLearningRecord.STORAGE_KEY,
+                ConnectJobLearningRecord.META_JOB_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectJobLearningRecordV21.STORAGE_KEY,
+                ConnectJobLearningRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                ConnectJobLearningRecord.STORAGE_KEY,
+                ConnectJobLearningRecord.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectJobLearningRecordV21 oldRecord = (ConnectJobLearningRecordV21)r;
+            ConnectJobLearningRecord newRecord = ConnectJobLearningRecord.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+
+    private void upgradeConnectJobAssessmentRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectJobAssessmentRecord.STORAGE_KEY,
+                ConnectJobAssessmentRecord.META_JOB_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectJobAssessmentRecordV21.STORAGE_KEY,
+                ConnectJobAssessmentRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                ConnectJobAssessmentRecord.STORAGE_KEY,
+                ConnectJobAssessmentRecord.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectJobAssessmentRecordV21 oldRecord = (ConnectJobAssessmentRecordV21)r;
+            ConnectJobAssessmentRecord newRecord = ConnectJobAssessmentRecord.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+
+    private void upgradeConnectJobPaymentRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectJobPaymentRecord.STORAGE_KEY,
+                ConnectJobPaymentRecord.META_JOB_UUID,
+                "TEXT"));
+
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectJobPaymentRecord.STORAGE_KEY,
+                ConnectJobPaymentRecord.META_PAYMENT_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectJobPaymentRecordV21.STORAGE_KEY,
+                ConnectJobPaymentRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                ConnectJobPaymentRecord.STORAGE_KEY,
+                ConnectJobPaymentRecord.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectJobPaymentRecordV21 oldRecord = (ConnectJobPaymentRecordV21)r;
+            ConnectJobPaymentRecord newRecord = ConnectJobPaymentRecord.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+
+    private void upgradeConnectAppRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectAppRecord.STORAGE_KEY,
+                ConnectAppRecord.META_JOB_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectAppRecordV21.STORAGE_KEY,
+                ConnectAppRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                ConnectAppRecord.STORAGE_KEY,
+                ConnectAppRecord.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectAppRecordV21 oldRecord = (ConnectAppRecordV21)r;
+            ConnectAppRecord newRecord = ConnectAppRecord.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+
+    private void upgradeConnectLearnModuleSummaryRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectLearnModuleSummaryRecord.STORAGE_KEY,
+                ConnectLearnModuleSummaryRecord.META_JOB_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectLearnModuleSummaryRecordV21.STORAGE_KEY,
+                ConnectLearnModuleSummaryRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<ConnectLearnModuleSummaryRecordV28> newStorage = new SqlStorage<>(
+                ConnectLearnModuleSummaryRecordV28.STORAGE_KEY,
+                ConnectLearnModuleSummaryRecordV28.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectLearnModuleSummaryRecordV21 oldRecord = (ConnectLearnModuleSummaryRecordV21)r;
+            ConnectLearnModuleSummaryRecordV28 newRecord = ConnectLearnModuleSummaryRecordV28.Companion.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+
+    private void upgradeConnectPaymentUnitRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectPaymentUnitRecord.STORAGE_KEY,
+                ConnectPaymentUnitRecord.META_JOB_UUID,
+                "TEXT"));
+
+        db.execSQL(DbUtil.addColumnToTable(
+                ConnectPaymentUnitRecord.STORAGE_KEY,
+                ConnectPaymentUnitRecord.META_PAYMENT_UNIT_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                ConnectPaymentUnitRecordV21.STORAGE_KEY,
+                ConnectPaymentUnitRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                ConnectPaymentUnitRecord.STORAGE_KEY,
+                ConnectPaymentUnitRecord.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            ConnectPaymentUnitRecordV21 oldRecord = (ConnectPaymentUnitRecordV21)r;
+            ConnectPaymentUnitRecord newRecord = ConnectPaymentUnitRecord.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+    private void upgradePushNotificationRecordToV22(IDatabase db) {
+        db.execSQL(DbUtil.addColumnToTable(
+                PushNotificationRecord.STORAGE_KEY,
+                PushNotificationRecord.META_PAYMENT_UUID,
+                "TEXT"));
+
+        db.execSQL(DbUtil.addColumnToTable(
+                PushNotificationRecord.STORAGE_KEY,
+                PushNotificationRecord.META_OPPORTUNITY_UUID,
+                "TEXT"));
+
+        SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                PushNotificationRecordV21.STORAGE_KEY,
+                PushNotificationRecordV21.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                PushNotificationRecordV23.STORAGE_KEY,
+                PushNotificationRecordV23.class,
+                new ConcreteAndroidDbHelper(c, db));
+
+        for (Persistable r : oldStorage) {
+            PushNotificationRecordV21 oldRecord = (PushNotificationRecordV21)r;
+            PushNotificationRecordV23 newRecord = PushNotificationRecordV23.Companion.fromV21(oldRecord);
+            newRecord.setID(oldRecord.getID());
+            newStorage.write(newRecord);
+        }
+    }
+    //endregion
+
+    private void upgradeTwentyTwoTwentyThree(IDatabase db){
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectJobDeliveryRecord.STORAGE_KEY,
+                    ConnectJobDeliveryRecord.META_SLUG_UUID,
+                    "TEXT"));
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    ConnectJobDeliveryRecordV22.STORAGE_KEY,
+                    ConnectJobDeliveryRecordV22.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    ConnectJobDeliveryRecord.STORAGE_KEY,
+                    ConnectJobDeliveryRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                ConnectJobDeliveryRecordV22 oldRecord = (ConnectJobDeliveryRecordV22)r;
+                ConnectJobDeliveryRecord newRecord = ConnectJobDeliveryRecord.fromV22(oldRecord);
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeTwentyThreeTwentyFour(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    PushNotificationRecord.STORAGE_KEY,
+                    PushNotificationRecord.META_KEY,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    PushNotificationRecord.STORAGE_KEY,
+                    PushNotificationRecord.META_OPPORTUNITY_STATUS,
+                    "TEXT"));
+
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    PushNotificationRecordV23.STORAGE_KEY,
+                    PushNotificationRecordV23.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    PushNotificationRecord.STORAGE_KEY,
+                    PushNotificationRecordV24.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                PushNotificationRecordV23 oldRecord = (PushNotificationRecordV23)r;
+                PushNotificationRecordV24 newRecord = PushNotificationRecordV24.Companion.fromV23(oldRecord);
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeTwentyFourTwentyFive(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    PushNotificationRecord.STORAGE_KEY,
+                    PushNotificationRecord.META_SESSION_ENDPOINT_ID,
+                    "TEXT"));
+
+            db.execSQL(DbUtil.addColumnToTable(
+                    PushNotificationRecord.STORAGE_KEY,
+                    PushNotificationRecord.META_REQUIRE_APP_SYNC,
+                    "TEXT"));
+
+            SqlStorage<Persistable> oldStorage = new SqlStorage<>(
+                    PushNotificationRecordV24.STORAGE_KEY,
+                    PushNotificationRecordV24.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<Persistable> newStorage = new SqlStorage<>(
+                    PushNotificationRecord.STORAGE_KEY,
+                    PushNotificationRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (Persistable r : oldStorage) {
+                PushNotificationRecordV24 oldRecord = (PushNotificationRecordV24)r;
+                PushNotificationRecord newRecord = PushNotificationRecord.Companion.fromV24(oldRecord);
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeTwentyFiveTwentySix(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecord.META_EMAIL,
+                    "TEXT"));
+
+            SqlStorage<ConnectUserRecordV25> oldStorage = new SqlStorage<>(
+                    ConnectUserRecordV25.STORAGE_KEY,
+                    ConnectUserRecordV25.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<ConnectUserRecord> newStorage = new SqlStorage<>(
+                    ConnectUserRecord.STORAGE_KEY,
+                    ConnectUserRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (ConnectUserRecordV25 oldRecord : oldStorage) {
+                ConnectUserRecord newRecord = ConnectUserRecord.fromV25(oldRecord);
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeTwentySixTwentySeven(IDatabase db) {
+        addTableForNewModel(db, ConnectTaskRecord.STORAGE_KEY, new ConnectTaskRecord());
+    }
+
+    private void upgradeTwentySevenTwentyEight(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectMessagingChannelRecord.STORAGE_KEY,
+                    ConnectMessagingChannelRecord.META_CHANNEL_NAME,
+                    "TEXT"));
+
+            SqlStorage<ConnectMessagingChannelRecordV27> oldStorage = new SqlStorage<>(
+                    ConnectMessagingChannelRecord.STORAGE_KEY,
+                    ConnectMessagingChannelRecordV27.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<ConnectMessagingChannelRecord> newStorage = new SqlStorage<>(
+                    ConnectMessagingChannelRecord.STORAGE_KEY,
+                    ConnectMessagingChannelRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (ConnectMessagingChannelRecordV27 oldRecord : oldStorage) {
+                ConnectMessagingChannelRecord newRecord = ConnectMessagingChannelRecord.fromV27(oldRecord);
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeTwentyEightTwentyNine(IDatabase db) {
+        db.beginTransaction();
+        try {
+            db.execSQL(DbUtil.addColumnToTable(
+                    ConnectLearnModuleSummaryRecord.STORAGE_KEY,
+                    ConnectLearnModuleSummaryRecord.META_MODULE_ID,
+                    "INTEGER"));
+
+            SqlStorage<ConnectLearnModuleSummaryRecordV28> oldStorage = new SqlStorage<>(
+                    ConnectLearnModuleSummaryRecord.STORAGE_KEY,
+                    ConnectLearnModuleSummaryRecordV28.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            SqlStorage<ConnectLearnModuleSummaryRecord> newStorage = new SqlStorage<>(
+                    ConnectLearnModuleSummaryRecord.STORAGE_KEY,
+                    ConnectLearnModuleSummaryRecord.class,
+                    new ConcreteAndroidDbHelper(c, db));
+
+            for (ConnectLearnModuleSummaryRecordV28 oldRecord : oldStorage) {
+                ConnectLearnModuleSummaryRecord newRecord =
+                        ConnectLearnModuleSummaryRecord.fromV28(oldRecord);
+                newRecord.setID(oldRecord.getID());
+                newStorage.write(newRecord);
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private static void addTableForNewModel(IDatabase db, String storageKey,
+                                            Persistable modelToAdd) {
+        db.beginTransaction();
+        try {
+            TableBuilder builder = new TableBuilder(storageKey);
+            builder.addData(modelToAdd);
+            db.execSQL(builder.getTableCreateString());
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+}

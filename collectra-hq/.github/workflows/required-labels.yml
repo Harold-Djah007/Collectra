@@ -1,0 +1,36 @@
+name: Labels
+
+on:
+  pull_request_target:  # safe as long as we do not check out and run code from the branch to be merged
+    branches:
+      - master
+    types: [labeled, unlabeled, opened, reopened]
+
+jobs:
+  check_product_label:
+    name: 🏷️ Require a product label
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+    steps:
+      - name: Report product label check
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const hasProductLabel = labels.some(l => l.startsWith('product/'));
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Product label',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: hasProductLabel ? 'success' : 'failure',
+              output: {
+                title: hasProductLabel ? 'Product label present' : 'Missing product label',
+                summary: hasProductLabel
+                  ? 'A product/ label is present on this PR.'
+                  : 'This PR requires a product/ label before it can be merged.',
+              },
+            });

@@ -1,0 +1,39 @@
+{% load compress %}
+{% load hq_shared_tags %}
+{% load statici18n %}
+{% js_entry %}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>CommCare HQ Test</title>
+
+    <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"/>
+
+    <script>
+      window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
+    </script>
+
+    <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+  </head>
+  <body>
+
+    {% registerurl 'notifications_service' %}
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+
+    <div class="initial-analytics-data hide"></div>
+    <div class="analytics-ab-tests hide"></div>
+    <!-- HTML Fixtures -->
+    <div id="mocha"></div>
+    <div id="mocha-fixtures" style="display:none">
+      {% block fixtures %}{% endblock %}
+    </div>
+    <div id="mocha-sandbox"></div>
+
+    {% include "hqwebapp/partials/webpack.html" %}
+  </body>
+</html>

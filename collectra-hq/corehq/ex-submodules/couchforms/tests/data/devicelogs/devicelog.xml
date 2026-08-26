@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+  <device_id>351780060530179</device_id>
+  <report_date>2014-10-13T09:10:30.122+02</report_date>
+  <app_version>CommCare ODK, version "2.15.0"(335344). App v182. CommCare Version 2.15. Build 335344, built on: October-02-2014</app_version>
+  <user_subreport>
+    <user>
+      <username>ricatla</username>
+      <user_id>428d454aa9abc74e1964e16d3565d6b6</user_id>
+      <sync_token>848609ceef09fa567e98ca61e3b0514d</sync_token>
+    </user>
+  </user_subreport>
+  <log_subreport>
+    <log date="2014-10-08T10:43:38.793+02">
+      <type>resources</type>
+      <msg>Staging Sandbox: 54cfe6515fc24e3fafa1170b9a7c2a00</msg>
+    </log>
+    <log date="2014-10-08T10:48:45.196+02">
+      <type>user</type>
+      <msg>login|ricatla|428d454aa9abc74e1964e16d3565d6b6</msg>
+    </log>
+    <log date="2014-10-08T10:43:38.900+02">
+      <type>resources</type>
+      <msg>Beginning install attempt for profile https://www.commcarehq.org/a/chai-moz/apps/download/41a280e1ae2827f4b04edf36ab10395b/media_profile.ccpr?latest=true</msg>
+    </log>
+    <log date="2014-10-08T10:48:22.644+02">
+      <type>Resource</type>
+      <msg>Upgrade table fetched, beginning upgrade</msg>
+    </log>
+    <log date="2014-10-09T10:48:45.811+02">
+      <type>maintenance</type>
+      <msg>Logging out user ricatla</msg>
+    </log>
+    <log date="2014-10-13T09:10:20.183+02">
+      <type>resources</type>
+      <msg>Staging Sandbox: 54cfe6515fc24e3fafa1170b9a7c2a00</msg>
+    </log>
+  </log_subreport>
+  <log_subreport>
+    <log date="2014-10-13T09:10:29.649+02">
+      <type>user</type>
+      <msg>login|ricatla|428d454aa9abc74e1964e16d3565d6b6</msg>
+    </log>
+  </log_subreport>
+  <user_error_subreport version="1">
+    <user_error date="2016-01-06T17:32:51.232-05">
+      <type>error-config</type>
+      <user_id>428d454aa9abc74e1964e16d3565d6b6</user_id>
+      <msg>XPath evaluation: /data/fake</msg>
+      <session></session>
+      <version>102</version>
+      <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
+      <expr></expr>
+    </user_error>
+    <user_error date="2016-01-06T17:47:10.193-05">
+      <type>error-config</type>
+      <user_id>428d454aa9abc74e1964e16d3565d6b6</user_id>
+      <msg>The problem was located in /data/fake
+          XPath evaluation: you messed up some types or something
+      </msg>
+      <session>frame: (COMMAND_ID m2) \ (COMMAND_ID m2-f1)</session>
+      <version>604</version>
+      <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
+      <expr>/data/fake</expr>
+      <context_node>/data/foo</context_node>
+    </user_error>
+  </user_error_subreport>
+  <force_close_subreport>
+    <force_close date="2016-03-15T13:37:04.573+05:45">
+      <type>forceclose</type>
+      <msg>java.lang.Exception: exception_text
+    at org.commcare.activities.CommCareHomeActivity.onResume(CommCareHomeActivity.java:1070)
+    at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1258)
+    at android.app.Activity.performResume(Activity.java:6327)
+    at android.app.ActivityThread.performResumeActivity(ActivityThread.java:3092)
+    at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:3134)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2481)
+    at android.app.ActivityThread.-wrap11(ActivityThread.java)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+    at android.os.Handler.dispatchMessage(Handler.java:102)
+    at android.os.Looper.loop(Looper.java:148)
+    at android.app.ActivityThread.main(ActivityThread.java:5422)
+    at java.lang.reflect.Method.invoke(Native Method)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      </msg>
+      <app_build>15</app_build>
+      <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
+      <android_version>6.0.1</android_version>
+      <device_model>Nexus 5X</device_model>
+      <user_id>ahelis3q3s0c33ms8r5is7yrei7t02m8</user_id>
+      <session_readable></session_readable>
+      <session_serialized>AAAAAA==</session_serialized>
+    </force_close>
+  </force_close_subreport>
+</device_report>

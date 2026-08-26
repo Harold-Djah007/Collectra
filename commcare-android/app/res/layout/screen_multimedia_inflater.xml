@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:viewBindingIgnore="true">
+
+    <RelativeLayout
+        android:id="@+id/screen_multimedia_inflater_frame_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
+
+        <ImageButton
+            android:id="@+id/screen_multimedia_inflater_filefetch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            app:srcCompat="@drawable/ic_menu_archive"
+            android:layout_alignParentEnd="true" />
+
+        <EditText
+            android:id="@+id/screen_multimedia_inflater_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@id/screen_multimedia_inflater_filefetch"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@id/screen_multimedia_inflater_filefetch">
+        </EditText>
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/screen_multimedia_inflater_prompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/screen_multimedia_inflater_frame_location"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="10dp"
+        android:gravity="center"
+        android:text="@string/archive_install_prompt"/>
+
+    <TextView
+        android:id="@+id/screen_multimedia_install_messages"
+        style="@style/TextInteractive"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/screen_multimedia_inflater_frame_location"
+        android:layout_centerHorizontal="true"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/screen_multimedia_inflater_install"
+        android:layout_width="match_parent"
+        android:layout_margin="10dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="bottom"
+        android:paddingVertical="8dp"
+        android:text="@string/archive_install_button"/>
+
+</RelativeLayout>

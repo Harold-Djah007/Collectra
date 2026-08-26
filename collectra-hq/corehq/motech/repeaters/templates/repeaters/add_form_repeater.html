@@ -1,0 +1,11 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% js_entry 'repeaters/js/add_form_repeater' %}
+
+{% block page_content %}
+    {% initial_page_data "repeater_type" repeater_type %}
+    {% crispy form %}
+{% endblock %}

@@ -1,0 +1,15 @@
+<partial>
+  <action auto_launch="false()" redo_last="false">
+    <display>
+      <text>
+        <locale id="case_search.m0"/>
+      </text>
+    </display>
+    <stack>
+      <push>
+        <mark/>
+        <command value="'search_command.m0'"/>
+      </push>
+    </stack>
+  </action>
+</partial>

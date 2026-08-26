@@ -1,0 +1,4 @@
+
+
+class TelerivetException(Exception):
+    pass

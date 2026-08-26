@@ -1,0 +1,39 @@
+package org.commcare.core.interfaces;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * Callbacks for different http response result codes
+ *
+ * @author Phillip Mates (pmates@dimagi.com)
+ */
+public interface HttpResponseProcessor {
+    /**
+     * Http response was in the 200s
+     */
+    void processSuccess(int responseCode, InputStream responseData, String apiVersion);
+
+    /**
+     * Http response was in the 400s.
+     *
+     * Can represent authentication issues, data parity issues between client
+     * and server, among other things
+     */
+    void processClientError(int responseCode, InputStream errorStream);
+
+    /**
+     * Http response was in the 500s
+     */
+    void processServerError(int responseCode);
+
+    /**
+     * Http response that had a code not in the 200-599 range
+     */
+    void processOther(int responseCode);
+
+    /**
+     * A issue occurred while processing the http request or response
+     */
+    void handleIOException(IOException exception);
+}

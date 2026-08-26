@@ -1,0 +1,95 @@
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:background="@color/connect_blue_color">
+        <ImageView
+            android:contentDescription="@null"
+            android:layout_gravity="center"
+            android:layout_height="32dp"
+            android:layout_width="match_parent"
+            android:src="@drawable/commcare_by_dimagi"
+            app:tint="@color/white" />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/profile_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="8dp"
+            android:backgroundTint="@color/persian_indigo">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    app:cardCornerRadius="50dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/white"
+                    app:strokeWidth="2dp">
+
+                    <ImageView
+                        android:id="@+id/user_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/nav_drawer_person_avatar"
+                        android:contentDescription="@null" />
+
+                    <!-- Overlay Container: Clipped automatically by the CardView -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="5dp"
+                        android:layout_gravity="bottom"
+                        android:background="@color/black_60">
+
+                        <ImageView
+                            android:id="@+id/user_image_overlay_icon"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_personalid_camera"
+                            android:contentDescription="@null" />
+                    </FrameLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/header_user_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.NavDrawerItem"/>
+                    <TextView
+                        android:id="@+id/header_manage_profile"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:text="@string/personalid_manage_profile"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+        <View
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:paddingBottom="16dp"
+            android:background="@color/darker_grey"/>
+    </LinearLayout>
+</layout>

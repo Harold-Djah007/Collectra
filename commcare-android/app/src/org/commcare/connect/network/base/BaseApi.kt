@@ -1,0 +1,97 @@
+package org.commcare.connect.network.base
+
+import android.content.Context
+import android.os.Handler
+import okhttp3.ResponseBody
+import org.commcare.activities.CommCareActivity
+import org.commcare.connect.ConnectConstants
+import org.javarosa.core.io.StreamsUtil
+import org.javarosa.core.services.Logger
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.IOException
+
+class BaseApi {
+    companion object {
+        fun callApi(
+            context: Context,
+            call: Call<ResponseBody>,
+            callback: IApiCallback,
+            endPoint: String,
+        ) {
+            showProgressDialog(context)
+            call.enqueue(
+                object : Callback<ResponseBody?> {
+                    override fun onResponse(
+                        call: Call<ResponseBody?>,
+                        response: Response<ResponseBody?>,
+                    ) {
+                        dismissProgressDialog(context)
+                        if (response.isSuccessful && response.body() != null) {
+                            // Handle success
+                            try {
+                                response.body()!!.byteStream().use { responseStream ->
+                                    callback.processSuccess(response.code(), responseStream)
+                                }
+                            } catch (e: IOException) {
+                                Logger.exception("Error reading response stream", e)
+                                // Handle error when reading the stream
+                                callback.processFailure(response.code(), endPoint, "", e)
+                            }
+                        } else {
+                            val stream =
+                                if (response.errorBody() != null) {
+                                    response
+                                        .errorBody()!!
+                                        .byteStream()
+                                } else {
+                                    null
+                                }
+                            try {
+                                val errorBody = NetworkUtils.getErrorBody(stream)
+                                NetworkUtils.logFailedResponse(response.message(), response.code(), endPoint, errorBody)
+                                callback.processFailure(
+                                    response.code(),
+                                    endPoint,
+                                    errorBody,
+                                    Throwable("Unknown failure with ${response.code()} for $endPoint"),
+                                )
+                            } finally {
+                                StreamsUtil.closeStream(stream)
+                            }
+                        }
+                    }
+
+                    override fun onFailure(
+                        call: Call<ResponseBody?>,
+                        t: Throwable,
+                    ) {
+                        dismissProgressDialog(context)
+                        // Handle network errors, etc.
+                        NetworkUtils.logNetworkError(t, endPoint)
+                        callback.processNetworkFailure(t)
+                    }
+                },
+            )
+        }
+
+        fun showProgressDialog(context: Context) {
+            if (context is CommCareActivity<*>) {
+                val handler = Handler(context.getMainLooper())
+                handler.post {
+                    (context as CommCareActivity<*>).showProgressDialogIfNeeded(ConnectConstants.NETWORK_ACTIVITY_ID)
+                }
+            }
+        }
+
+        fun dismissProgressDialog(context: Context) {
+            if (context is CommCareActivity<*>) {
+                val handler = Handler(context.getMainLooper())
+                handler.post {
+                    (context as CommCareActivity<*>).dismissProgressDialogForTask(ConnectConstants.NETWORK_ACTIVITY_ID)
+                }
+            }
+        }
+    }
+}

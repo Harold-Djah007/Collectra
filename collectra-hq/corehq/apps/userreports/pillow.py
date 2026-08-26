@@ -1,0 +1,738 @@
+import hashlib
+import signal
+from abc import ABC, abstractmethod
+from collections import Counter, defaultdict
+from datetime import datetime
+
+from django.conf import settings
+
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from pillowtop.exceptions import PillowConfigError
+from pillowtop.logger import pillow_logging
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import BulkPillowProcessor
+from pillowtop.utils import (
+    bulk_fetch_changes_docs,
+    ensure_document_exists,
+    ensure_matched_revisions,
+)
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.change_feed.topics import CASE_TOPICS
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
+from corehq.pillows.base import is_couch_change_for_sql_domain
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
+from corehq.util.timer import TimingContext
+
+from .adaptercache import AdapterCache, MigrationCache, TTLCache
+from .const import KAFKA_TOPICS
+from .data_source_providers import (
+    DynamicDataSourceProvider,
+    RegistryDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from .exceptions import UserReportsWarning
+from .models import AsyncIndicator
+from .pillow_utils import TaskCoordinator, rebuild_sql_tables
+from .specs import EvaluationContext
+from .util import get_indicator_adapter
+
+REBUILD_CHECK_INTERVAL = 3 * 60 * 60  # in seconds
+LONG_UCR_LOGGING_THRESHOLD = 0.5
+_SHARED_ADAPTER_CACHES = defaultdict(AdapterCache)
+
+
+class WarmShutdown(object):
+    # modified from https://stackoverflow.com/a/50174144
+
+    shutting_down = False
+
+    def __enter__(self):
+        self.current_handler = signal.signal(signal.SIGTERM, self.handler)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.shutting_down and exc_type is None:
+            exit(0)
+        signal.signal(signal.SIGTERM, self.current_handler)
+
+    def handler(self, signum, frame):
+        self.shutting_down = True
+
+
+def time_ucr_process_change(method):
+    def timed(*args, **kw):
+        ts = datetime.now()
+        result = method(*args, **kw)
+        te = datetime.now()
+        seconds = (te - ts).total_seconds()
+        if seconds > LONG_UCR_LOGGING_THRESHOLD:
+            table = args[2]
+            doc = args[3]
+            log_message = "UCR data source {} on doc_id {} took {} seconds to process".format(
+                table.config._id, doc['_id'], seconds
+            )
+            pillow_logging.warning(log_message)
+        return result
+    return timed
+
+
+def _filter_by_hash(configs, ucr_division):
+    ucr_start = ucr_division[0]
+    ucr_end = ucr_division[-1]
+    for config in configs:
+        table_hash = hashlib.md5(config.table_id.encode('utf-8')).hexdigest()[0]
+        if ucr_start <= table_hash <= ucr_end:
+            yield config
+
+
+def _filter_domains_to_skip(configs):
+    """Return a list of configs whose domain exists on this environment"""
+    configs = list(configs)  # convert generator to list for multiple passes
+    domain_names = list({config.domain for config in configs if config.is_static})
+    existing_domains = list(get_domain_ids_by_names(domain_names))
+    for config in configs:
+        if not config.is_static or config.domain in existing_domains:
+            yield config
+
+
+def _filter_invalid_config(configs):
+    """Return a list of configs that have been validated"""
+    # Note: if a (valid) earlier version of a config is cached, it will
+    # not be removed as a result of a new (invalid) version being saved
+    # because this filter is applied before the config reaches the
+    # cache. It is unclear if it is by design that subsequent changes
+    # continue to be processed against the outdated (valid) version of
+    # the config/adapter.
+    for config in configs:
+        try:
+            config.validate()
+            yield config
+        except Exception:
+            pillow_logging.warning("Invalid config found during bootstrap: %s", config._id)
+
+
+def _get_indicator_adapter_for_pillow(config):
+    return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
+
+
+class UcrTableManager(ABC):
+    """Base class for table managers that encapsulates the bootstrap and refresh
+    functionality."""
+    def __init__(self, bootstrap_interval, run_migrations, adapter_cache):
+        """
+        :param bootstrap_interval: time in seconds when SQL tables are rebuilt.
+        :param run_migrations: If True, rebuild tables if the data source changes. Otherwise,
+            do not attempt to change database
+        :param adapter_cache: AdapterCache. May be shared across multiple table managers.
+        """
+        self.cache = TTLCache(self.iter_adapters, adapter_cache)
+        self.is_dedicated_migration_process = False
+        if run_migrations:
+            interval = bootstrap_interval or REBUILD_CHECK_INTERVAL
+            self.rebuild_coordinator = TaskCoordinator('rebuild-ucr', interval)
+        else:
+            self.rebuild_coordinator = None
+
+    def configure_dedicated_migration_process(self):
+        """Configure the table manager for a dedicated migration process
+
+        In this mode, the only other methods that will be called are
+        run_migrations and iter_adapters (via cache). The TTL cache
+        is not used.
+        """
+        self.is_dedicated_migration_process = True
+        assert self.rebuild_coordinator is not None, \
+            "Dedicated migration process requires run_migrations=True"
+        del self.cache  # delete unused TTLCache to avoid confusion
+        self.migration_cache = MigrationCache(self.iter_adapters)
+        self.migration_cache.get_adapters()  # prime cache
+
+    def run_migrations(self):
+        """Run migrations for the dedicated migration process
+
+        SQL tables are rebuilt if the data source changes or at least
+        every `rebuild_coordinator.interval`.
+        """
+        # Unfortunately data source configs that changed since the last
+        # refresh cannot trigger rebuilds because the rebuild changes
+        # the data source, which would trigger another rebuild. The loop
+        # would probably not be infinite because the second rebuild
+        # should not find any table schema diffs to migrate, but it is
+        # inefficient to check for diffs again immediately after a
+        # rebuild. Ideally the rebuild process would record its status
+        # in some other model than the data source config so the
+        # circular dependency could be avoided, and rebuilds could
+        # be change driven rather than strictly time based.
+        self.migration_cache.refresh()
+
+        all_adapters = self.migration_cache.get_adapters()
+        needs_rebuild = self.rebuild_coordinator.should_run
+        adapters = [a for a in all_adapters if needs_rebuild(a.config_id)]
+        rebuild_sql_tables(adapters)
+
+    def refresh_cache(self):
+        self.cache.refresh()
+
+    def get_adapters(self, domain):
+        """Get the list of table adapters for the given domain.
+
+        This is only called by non-migration processes.
+        """
+        adapters = self.cache.get_adapters(domain)
+        self._rebuild(adapters)
+        return adapters
+
+    def _rebuild(self, adapters):
+        """Periodically rebuild SQL tables"""
+        if not self.rebuild_coordinator:
+            return  # skip rebuild, handled by dedicated migration process
+        needs_rebuild = self.rebuild_coordinator.should_run
+        to_rebuild = [a for a in adapters if needs_rebuild(a.config_id)]
+        if to_rebuild:
+            rebuild_sql_tables(to_rebuild)
+
+    def remove_adapter(self, domain, adapter):
+        """Remove an adapter from the list of managed adapters.
+
+        This is called if there is an error writing to the adapter. The
+        adapter will get re-added the next time the adapter is yielded
+        by iter_configs_since (if/when the data source changes).
+        This is only called by non-migration processes.
+        """
+        self.cache.remove(domain, adapter)
+
+    def iter_adapters(self, domain=None, *, since=None):
+        """Generate (domain, adapter) tuples for domain *or* since timestamp
+
+        Generate adapters for every domain when both domain and since
+        are None. This is a special case used only by the migration
+        process.
+        """
+        def get_adapter(config):
+            adapter = seen.get(config._id)
+            if adapter is None:
+                adapter = seen[config._id] = _get_indicator_adapter_for_pillow(config)
+            return adapter
+
+        if since is None:
+            pairs = self.iter_configs(domain)
+        else:
+            assert domain is None, domain
+            pairs = self.iter_configs_since(since)
+
+        seen = {}
+        for domain, config in pairs:
+            yield domain, get_adapter(config)
+
+        if not seen and not since and self.rebuild_coordinator is not None:
+            pillow_logging.warning("UCR pillow has no configs to process")
+
+    @abstractmethod
+    def iter_configs(self, domain):
+        """Generate (domain, config) tuples for the domain
+
+        The yielded domain may differ from the provided domain. This
+        feature is needed for registry data sources only.
+
+        Note: any filtering done by this method should not be based on
+        dynamic attributes of entities other than data source configs.
+        For example, configs should not be filtered out based on domain
+        status because a domain status change will not cause the data
+        source to change, and therefore would not be seen until pillow
+        restart.
+        """
+
+    @abstractmethod
+    def iter_configs_since(self, timestamp):
+        """Generate (domain, config) tuples of configs that have changed since timestamp
+
+        The iter_configs note on filtering applies here as well.
+        """
+
+
+class ConfigurableReportTableManager(UcrTableManager):
+
+    def __init__(self, data_source_providers, ucr_division=None,
+                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=None,
+                 run_migrations=True, adapter_cache=None):
+        """Initializes the processor for UCRs
+
+        Keyword Arguments:
+        ucr_division -- two hexadecimal digits that are used to determine a subset of UCR
+                        datasources to process. The second digit should be higher than the
+                        first
+        include_ucrs -- list of ucr 'table_ids' to be included in this processor
+        exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
+        """
+        super().__init__(bootstrap_interval, run_migrations, adapter_cache)
+        self.data_source_providers = data_source_providers
+        self.ucr_division = ucr_division
+        self.include_ucrs = include_ucrs
+        self.exclude_ucrs = exclude_ucrs
+        if self.include_ucrs and self.ucr_division:
+            raise PillowConfigError("You can't have include_ucrs and ucr_division")
+
+    def iter_configs(self, domain):
+        for provider in self.data_source_providers:
+            configs = provider.get_data_sources(domain)
+            for config in self._filter_configs(configs):
+                yield (config.domain, config)
+
+    def iter_configs_since(self, timestamp):
+        # Note: deactivated data source configs are not yielded by this
+        # method because the Couch view excludes them. This results in
+        # stale adapters remaining in the cache after deactivation.
+        # Logic is present in the cache implementations to remove
+        # inactive adapters, so all that needs to change is the Couch
+        # view: userreports/data_sources_by_last_modified
+        for provider in self.data_source_providers:
+            configs = provider.get_data_sources_modified_since(timestamp)
+            for config in self._filter_configs(configs):
+                pillow_logging.info(f'updating modified data source: {config.domain}: {config._id}')
+                yield (config.domain, config)
+
+    def _filter_configs(self, configs):
+        if configs:
+            if self.exclude_ucrs:
+                configs = (config for config in configs if config.table_id not in self.exclude_ucrs)
+
+            if self.include_ucrs:
+                configs = (config for config in configs if config.table_id in self.include_ucrs)
+            elif self.ucr_division:
+                configs = _filter_by_hash(configs, self.ucr_division)
+
+            if self.is_dedicated_migration_process:
+                # Non-migration processes always fetch configs by domain,
+                # so do not need to discard configs for missing domains.
+                # This is only useful for static data sources, which do not change.
+                configs = _filter_domains_to_skip(configs)
+
+            configs = _filter_invalid_config(configs)
+
+        return configs
+
+
+class RegistryDataSourceTableManager(UcrTableManager):
+
+    def __init__(self, bootstrap_interval=None, run_migrations=True, adapter_cache=None):
+        """Initializes the processor for UCRs backed by a data registry
+        """
+        super().__init__(bootstrap_interval, run_migrations, adapter_cache)
+        self.data_source_provider = RegistryDataSourceProvider()
+
+    def iter_configs(self, domain):
+        configs = self.data_source_provider.get_data_sources(domain)
+        for config in _filter_invalid_config(configs):
+            for domain_ in config.data_domains:
+                yield (domain_, config)
+
+    def iter_configs_since(self, timestamp):
+        configs = self.data_source_provider.get_data_sources_modified_since(timestamp)
+        for config in _filter_invalid_config(configs):
+            pillow_logging.info(f'updating modified registry data source: {config.domain}: {config._id}')
+            for domain in config.data_domains:
+                yield domain, config
+
+
+class ConfigurableReportPillowProcessor(BulkPillowProcessor):
+    """Generic processor for UCR.
+
+    Reads from:
+      - SQLLocation
+      - Form data source
+      - Case data source
+
+    Writes to:
+      - UCR database
+    """
+
+    def __init__(self, table_manager):
+        self.table_manager = table_manager
+
+    domain_timing_context = Counter()
+
+    @time_ucr_process_change
+    def _save_doc_to_table(self, domain, table, doc, eval_context):
+        # best effort will swallow errors in the table
+        try:
+            table.best_effort_save(doc, eval_context)
+        except UserReportsWarning:
+            # remove it until the next bootstrap call
+            self.table_manager.remove_adapter(domain, table)
+
+    def process_changes_chunk(self, changes):
+        """
+        Update UCR tables in bulk by breaking up changes per domain per UCR table.
+            If an exception is raised in bulk operations of a set of changes,
+            those changes are returned to pillow for serial reprocessing.
+        """
+        self.table_manager.refresh_cache()
+        # break up changes by domain
+        changes_by_domain = defaultdict(list)
+        for change in changes:
+            if is_couch_change_for_sql_domain(change):
+                continue
+            if change.metadata.domain:
+                changes_by_domain[change.metadata.domain].append(change)
+
+        retry_changes = set()
+        change_exceptions = []
+        for domain, changes_chunk in changes_by_domain.items():
+            adapters = self.table_manager.get_adapters(domain)
+            if not adapters:
+                continue
+            with WarmShutdown():
+                failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk, adapters)
+            retry_changes.update(failed)
+            change_exceptions.extend(exceptions)
+
+        return retry_changes, change_exceptions
+
+    def _process_chunk_for_domain(self, domain, changes_chunk, adapters):
+        changes_by_id = {change.id: change for change in changes_chunk}
+        to_delete_by_adapter = defaultdict(list)
+        rows_to_save_by_adapter = defaultdict(list)
+        async_configs_by_doc_id = defaultdict(list)
+        to_update = {change for change in changes_chunk if not change.deleted}
+        with self._metrics_timer('extract'):
+            retry_changes, docs = bulk_fetch_changes_docs(to_update, domain)
+        change_exceptions = []
+
+        with self._metrics_timer('single_batch_transform'):
+            for doc in docs:
+                change = changes_by_id[doc['_id']]
+                doc_subtype = change.metadata.document_subtype
+                eval_context = EvaluationContext(doc)
+                with self._metrics_timer('single_doc_transform'):
+                    for adapter in adapters:
+                        with self._per_config_metrics_timer('transform', adapter.config._id):
+                            if adapter.config.filter(doc, eval_context):
+                                if adapter.run_asynchronous:
+                                    async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                                else:
+                                    try:
+                                        rows = adapter.get_all_values(doc, eval_context)
+                                        rows_to_save_by_adapter[adapter].extend(rows)
+                                    except Exception as e:
+                                        change_exceptions.append((change, e))
+                                    eval_context.reset_iteration()
+                            elif (not doc_subtype
+                                    or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
+                                # Delete if the subtype is unknown or
+                                # if the subtype matches our filters, but the full filter no longer applies
+                                to_delete_by_adapter[adapter].append(doc)
+
+        with self._metrics_timer('single_batch_delete'):
+            # bulk delete by adapter
+            to_delete = [{'_id': c.id} for c in changes_chunk if c.deleted]
+            for adapter in adapters:
+                delete_docs = to_delete_by_adapter[adapter] + to_delete
+                if not delete_docs:
+                    continue
+                with self._per_config_metrics_timer('delete', adapter.config._id):
+                    try:
+                        adapter.bulk_delete(delete_docs)
+                    except Exception:
+                        delete_ids = [doc['_id'] for doc in delete_docs]
+                        retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
+
+        with self._metrics_timer('single_batch_load'):
+            # bulk update by adapter
+            for adapter, rows in rows_to_save_by_adapter.items():
+                with self._per_config_metrics_timer('load', adapter.config._id):
+                    try:
+                        adapter.save_rows(rows)
+                    except Exception:
+                        retry_changes.update(to_update)
+
+        if async_configs_by_doc_id:
+            with self._metrics_timer('async_config_load'):
+                doc_type_by_id = {
+                    _id: changes_by_id[_id].metadata.document_type
+                    for _id in async_configs_by_doc_id.keys()
+                }
+                AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
+
+        return retry_changes, change_exceptions
+
+    def _metrics_timer(self, step, config_id=None):
+        tags = {
+            'action': step,
+            'index': 'ucr',
+        }
+        if config_id and settings.ENTERPRISE_MODE:
+            tags['config_id'] = config_id
+        return metrics_histogram_timer(
+            'commcare.change_feed.processor.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
+        )
+
+    def _per_config_metrics_timer(self, step, config_id):
+        tags = {
+            'action': step,
+        }
+        if settings.ENTERPRISE_MODE:
+            tags['config_id'] = config_id
+        return metrics_histogram_timer(
+            'commcare.change_feed.urc.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
+        )
+
+    def process_change(self, change):
+        self.table_manager.refresh_cache()
+
+        domain = change.metadata.domain
+        if not domain:
+            # if no domain we won't save to any UCR table
+            return
+        adapters = self.table_manager.get_adapters(domain)
+        if not adapters:
+            return
+
+        if change.deleted:
+            for table in adapters:
+                table.delete({'_id': change.metadata.document_id})
+
+        async_tables = []
+        doc = change.get_document()
+        ensure_document_exists(change)
+        ensure_matched_revisions(change, doc)
+
+        if doc is None:
+            return
+
+        with TimingContext() as timer:
+            eval_context = EvaluationContext(doc)
+            doc_subtype = change.metadata.document_subtype
+            for table in adapters:
+                if table.config.filter(doc, eval_context):
+                    if table.run_asynchronous:
+                        async_tables.append(table.config._id)
+                    else:
+                        self._save_doc_to_table(domain, table, doc, eval_context)
+                        eval_context.reset_iteration()
+                elif (doc_subtype is None
+                        or doc_subtype in table.config.get_case_type_or_xmlns_filter()):
+                    table.delete(doc)
+
+            if async_tables:
+                AsyncIndicator.update_from_kafka_change(change, async_tables)
+
+        self.domain_timing_context.update(**{
+            domain: timer.duration
+        })
+
+    def checkpoint_updated(self):
+        total_duration = sum(self.domain_timing_context.values())
+        duration_seen = 0
+        top_half_domains = {}
+        for domain, duration in self.domain_timing_context.most_common():
+            top_half_domains[domain] = duration
+            duration_seen += duration
+            if duration_seen >= total_duration // 2:
+                break
+
+        for domain, duration in top_half_domains.items():
+            metrics_counter('commcare.change_feed.ucr_slow_log', duration, tags={
+                'domain': domain
+            })
+        self.domain_timing_context.clear()
+
+    def configure_dedicated_migration_process(self):
+        self.table_manager.configure_dedicated_migration_process()
+
+    def run_migrations(self):
+        self.table_manager.run_migrations()
+
+
+class ConfigurableReportKafkaPillow(ConstructedPillow):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
+            is_dedicated_migration_process=False, processor_chunk_size=0):
+        change_feed = KafkaChangeFeed(
+            topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
+        )
+        checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
+        event_handler = KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+            checkpoint_callback=processor
+        )
+        super(ConfigurableReportKafkaPillow, self).__init__(
+            name=pillow_name,
+            change_feed=change_feed,
+            processor=processor,
+            checkpoint=checkpoint,
+            change_processed_event_handler=event_handler,
+            processor_chunk_size=processor_chunk_size
+        )
+        # set by the superclass constructor
+        assert self.processors is not None
+        assert len(self.processors) == 1
+        self._processor = self.processors[0]
+
+        # retry errors defaults to False because there is not a solution to
+        # distinguish between doc save errors and data source config errors
+        self.retry_errors = retry_errors
+
+
+def get_ucr_processor(data_source_providers,
+                      ucr_division=None,
+                      include_ucrs=None,
+                      exclude_ucrs=None,
+                      bootstrap_interval=None,
+                      run_migrations=True):
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=data_source_providers,
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        bootstrap_interval=bootstrap_interval,
+        run_migrations=run_migrations,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_ucr_processor],
+    )
+    return ConfigurableReportPillowProcessor(table_manager)
+
+
+def get_data_registry_ucr_processor(run_migrations):
+    table_manager = RegistryDataSourceTableManager(
+        run_migrations=run_migrations,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_data_registry_ucr_processor],
+    )
+    return ConfigurableReportPillowProcessor(table_manager)
+
+
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
+                         include_ucrs=None, exclude_ucrs=None, topics=None,
+                         num_processes=1, process_num=0, dedicated_migration_process=False,
+                         processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    topics = topics or KAFKA_TOPICS
+    topics = [t for t in topics]
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[DynamicDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        run_migrations=(process_num == 0),  # only first process runs migrations
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_kafka_ucr_pillow],
+    )
+    return ConfigurableReportKafkaPillow(
+        processor=ConfigurableReportPillowProcessor(table_manager),
+        pillow_name=pillow_id,
+        topics=topics,
+        num_processes=num_processes,
+        process_num=process_num,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0),
+        processor_chunk_size=processor_chunk_size,
+    )
+
+
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
+                                include_ucrs=None, exclude_ucrs=None, topics=None,
+                                num_processes=1, process_num=0, dedicated_migration_process=False,
+                                processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
+
+    Only processes `static` UCR datasources (configuration lives in the codebase instead of the database).
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    topics = topics or KAFKA_TOPICS
+    topics = [t for t in topics]
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[StaticDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
+        run_migrations=(process_num == 0),  # only first process runs migrations
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_kafka_ucr_static_pillow],
+    )
+    return ConfigurableReportKafkaPillow(
+        processor=ConfigurableReportPillowProcessor(table_manager),
+        pillow_name=pillow_id,
+        topics=topics,
+        num_processes=num_processes,
+        process_num=process_num,
+        retry_errors=True,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0),
+        processor_chunk_size=processor_chunk_size,
+    )
+
+
+def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
+                        num_processes=1, process_num=0, **kwargs):
+    """Processes updates to locations for UCR
+
+    Note this is only applicable if a domain on the environment has `LOCATIONS_IN_UCR` flag enabled.
+
+    Processors:
+      - :py:func:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
+    change_feed = KafkaChangeFeed(
+        [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
+    )
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[
+            DynamicDataSourceProvider('Location'),
+            StaticDataSourceProvider('Location')
+        ],
+        include_ucrs=include_ucrs,
+        adapter_cache=_SHARED_ADAPTER_CACHES[get_location_pillow],
+    )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
+    checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+        checkpoint_callback=ucr_processor
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        change_feed=change_feed,
+        checkpoint=checkpoint,
+        change_processed_event_handler=event_handler,
+        processor=[ucr_processor]
+    )
+
+
+def get_kafka_ucr_registry_pillow(
+    pillow_id='kafka-ucr-registry',
+    num_processes=1,
+    process_num=0,
+    dedicated_migration_process=False,
+    processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
+    **kwargs,
+):
+    """UCR pillow that reads from all 'case' Kafka topics and writes data into the UCR database tables
+
+    Only UCRs backed by Data Registries are processed in this pillow.
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
+    ucr_processor = get_data_registry_ucr_processor(
+        run_migrations=(process_num == 0),  # only first process runs migrations
+    )
+
+    return ConfigurableReportKafkaPillow(
+        processor=ucr_processor,
+        pillow_name=pillow_id,
+        topics=CASE_TOPICS,
+        num_processes=num_processes,
+        process_num=process_num,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0),
+        processor_chunk_size=processor_chunk_size,
+    )

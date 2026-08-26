@@ -1,0 +1,67 @@
+from datetime import timedelta
+from django.utils.translation import gettext_lazy as _
+
+from django.conf import settings
+from django.db.models import IntegerChoices
+
+MAX_RETRY_WAIT = timedelta(days=7)
+MIN_RETRY_WAIT = timedelta(minutes=60)
+MIN_REPEATER_RETRY_WAIT = timedelta(minutes=5)  # Repeaters back off slower
+RATE_LIMITER_DELAY_RANGE = (
+    timedelta(minutes=getattr(settings, 'MIN_REPEATER_RATE_LIMIT_DELAY', 0)),
+    timedelta(minutes=getattr(settings, 'MAX_REPEATER_RATE_LIMIT_DELAY', 15)),
+)
+CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
+CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
+CHECK_REPEATERS_KEY = 'check-repeaters-key'
+PROCESS_REPEATERS_INTERVAL = timedelta(minutes=1)
+ENDPOINT_TIMER = 'endpoint_timer'
+# Number of attempts to an online endpoint before cancelling payload
+MAX_ATTEMPTS = 3
+# Number of exponential backoff attempts to an offline endpoint
+# TODO: Drop MAX_BACKOFF_ATTEMPTS. We don't need MAX_BACKOFF_ATTEMPTS
+#       because we are using MAX_RETRY_WAIT, and MAX_BACKOFF_ATTEMPTS is
+#       being conflated with MAX_ATTEMPTS.
+MAX_BACKOFF_ATTEMPTS = 6
+
+COMMCARE_CONNECT_URL = 'https://connect.dimagi.com/api/receiver/'
+
+
+class State(IntegerChoices):
+    # powers of two to allow multiple simultaneous states (not currently used)
+    Pending = 1, _('Pending')
+    Fail = 2, _('Failed')  # Will be retried. Implies Pending.
+    Success = 4, _('Succeeded')
+    Cancelled = 8, _('Cancelled')
+    Empty = 16, _('Empty')  # There was nothing to send. Implies Success.
+    PayloadRejected = 32, _('Payload Rejected')  # Implies Cancelled.
+    ErrorGeneratingPayload = 64, _('Error Generating Payload')  # Unsent like Empty, but implies Cancelled
+
+
+STATE_GROUPS = {
+    'SUCCESS': (State.Success, State.Empty),
+    'PENDING': (State.Pending,),
+    'CANCELLED': (State.Cancelled,),
+    'FAIL': (State.Fail,),
+    'PAYLOADERROR': (State.PayloadRejected, State.ErrorGeneratingPayload),
+}
+
+
+def states_for_key(key):
+    return STATE_GROUPS.get(key.upper() if key else None)
+
+
+RECORD_QUEUED_STATES = (State.Pending, State.Fail)
+RECORD_FAILED_STATES = (
+    State.Fail,
+    State.Cancelled,
+    State.PayloadRejected,
+    State.ErrorGeneratingPayload,
+)
+
+
+class UCRRestrictionFFStatus(IntegerChoices):
+    Enabled = 1, _('Is enabled')
+    NotEnabled = 2, _('Is not enabled')
+    ShouldEnable = 3, _('Should be enabled')
+    CanDisable = 4, _('Can be disabled')

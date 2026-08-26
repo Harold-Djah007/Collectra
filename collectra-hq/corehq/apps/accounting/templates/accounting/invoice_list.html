@@ -1,0 +1,10 @@
+{% extends "accounting/report_filter_actions.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% block page_content %}
+  {% for adjust_balance_form in adjust_balance_forms %}
+    {% include 'accounting/partials/adjust_balance.html' %}
+  {% endfor %}
+  {{ block.super }}
+{% endblock %}

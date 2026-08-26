@@ -1,0 +1,48 @@
+{% load i18n %}
+
+<div class="submit-success" data-bind="visible: isSubmitSuccess">
+  <h2><i class="fa fa-check"></i> {% trans "Success!" %}</h2>
+  <p class="lead">
+    {% trans "An email was just sent to" %}
+    <span data-bind="text: email"></span>.
+  </p>
+  {% if request.user_agent.is_mobile %}
+    <p>
+      {% blocktrans %}
+        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,
+        so you can start using your new CommCare project!
+      {% endblocktrans %}
+    </p>
+  {% else %}
+    <p>
+      {% blocktrans %}
+        <strong>Please visit the link provided in the email to activate your account,</strong>
+        so you can start using your new CommCare project!
+      {% endblocktrans %}
+    </p>
+  {% endif %}
+  <hr />
+  <p>
+    {% url "registration_resend_domain_confirmation" as resend_url %}
+    {% blocktrans %}
+      If you can't find the email, you may
+      <a href="{{ resend_url }}">resend the confirmation email</a>.
+    {% endblocktrans %}
+  </p>
+</div>
+<div class="submit-success" data-bind="visible: isSsoSuccess">
+  <h2>
+    <i class="fa fa-spinner fa-spin"></i>
+    {% trans "Single Sign-On" %}
+  </h2>
+  <p class="lead">
+    {% blocktrans %}
+      We are now redirecting you to sign in with <span data-bind="text: ssoIdpName"></span>.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      Your account will be created after the next step.
+    {% endblocktrans %}
+  </p>
+</div>

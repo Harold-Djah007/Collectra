@@ -1,0 +1,185 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: "${DOCKERFILE}"
+    environment:
+      CI: "${CI}"
+      CODECOV_TOKEN: "${CODECOV_TOKEN}"
+      DATADOG_API_KEY: "${DATADOG_API_KEY}"
+      DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
+      DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
+      DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
+      DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
+      GITHUB_ACTIONS: "${GITHUB_ACTIONS}"
+      GITHUB_EVENT_NAME: "${GITHUB_EVENT_NAME}"
+      JS_SETUP: "${JS_SETUP}"
+      JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
+      DIVIDED_WE_RUN: "${DIVIDED_WE_RUN}"
+      REUSE_DB: "${REUSE_DB}"
+      STRIPE_PRIVATE_KEY: "${STRIPE_PRIVATE_KEY}"
+      TRAVIS: "${TRAVIS}"
+      TRAVIS_BRANCH: "${TRAVIS_BRANCH}"
+      TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
+      TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
+      TRAVIS_COMMIT: "${TRAVIS_COMMIT}"
+      TRAVIS_EVENT_TYPE: "${TRAVIS_EVENT_TYPE}"
+      TRAVIS_JOB_ID: "${TRAVIS_JOB_ID}"
+      TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
+      TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
+      TRAVIS_PULL_REQUEST_BRANCH: "${TRAVIS_PULL_REQUEST_BRANCH}"
+      TRAVIS_PULL_REQUEST_SHA: "${TRAVIS_PULL_REQUEST_SHA}"
+      TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
+    privileged: true  # allows mount inside container
+    depends_on:
+      postgres:
+        condition: service_healthy
+      couch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch6:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      zookeeper:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    volumes:
+      - ..:/mnt/commcare-hq-ro${RO}
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
+
+  formplayer:
+    image: docker.io/dimagi/formplayer
+    environment:
+      COMMCARE_HOST: "http://host.docker.internal:8000"
+      COMMCARE_ALTERNATE_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
+      AUTH_KEY: "secretkey"
+      EXTERNAL_REQUEST_MODE: "replace-host"
+    expose:
+      - "8080"
+      - "8081"
+
+  postgres:
+    extends:
+      file: "${COMPOSE_OS_FILE}"
+      service: postgres
+    environment:
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
+    expose:
+      - "5432"
+    healthcheck:
+      test: pg_isready -h postgres -U commcarehq
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
+
+  couch:
+    build:
+      context: ./files
+      dockerfile: Dockerfile.couch
+    command: ["--with-haproxy"]
+    expose:
+      - "5984"
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: commcarehq
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/couch/5984'
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/opt/couchdb/data
+
+  redis:
+    image: docker.io/redis:7
+    expose:
+      - "6379"
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/redis/6379'
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
+
+  elasticsearch6:
+    build:
+      context: .
+      dockerfile: ./files/Dockerfile.es.6
+    environment:
+      ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+    expose:
+      - "9200"
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/elasticsearch6/9200'
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch6:}/usr/share/elasticsearch/data
+      - ./files/elasticsearch_6.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+
+  zookeeper:
+    image: docker.io/zookeeper:3.7
+    environment:
+      ZOO_4LW_COMMANDS_WHITELIST: "ruok"
+    expose:
+      - "2181"
+    healthcheck:
+      test: echo ruok | nc localhost 2181
+      start_period: 15s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.7/data
+
+  kafka:
+    image: docker.io/confluentinc/cp-kafka:7.2.14  # Kafka v3.2.3
+    expose:
+      - "9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 1
+      KAFKA_INTER_BROKER_LISTENER_NAME: HQ_KAFKA
+      KAFKA_LISTENERS: HQ_KAFKA://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: HQ_KAFKA://${KAFKA_HOSTNAME:-localhost}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: HQ_KAFKA:PLAINTEXT
+      CUSTOM_INIT_SCRIPT: |
+        URL="https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh"
+        if curl --max-time 10 $$URL > wait.sh ; then
+          chmod +x ./wait.sh
+          ./wait.sh -t 30 zookeeper:2181 || exit 1
+        else
+          echo "Wait script download failed"
+        fi
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/kafka/9092'
+      start_period: 15s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${DOCKER_SOCK}:${DOCKER_SOCK}
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
+
+  minio:
+    image: docker.io/minio/minio
+    command: server --address :9980 --console-address :9981 /data
+    expose:
+      - "9980"
+      - "9981"
+    healthcheck:
+      # The docker image ships with the expectation that minio runs on port 9000.
+      # If we ran on port 9000, we wouldn't need to update the local alias,
+      # but we felt it was less disruptive to use this workaround
+      test: mc alias set local http://localhost:9980 "" "" >/dev/null && mc ready local
+      start_period: 15s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-conf:}/root/.minio
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-data:}/data
+    environment:
+      MINIO_ROOT_USER: admin-key
+      MINIO_ROOT_PASSWORD: admin-secret

@@ -1,0 +1,36 @@
+// x-cloak is used by Alpine.js to hide elements until they are fully loaded (recommended approach)
+[x-cloak] {
+  display: none !important;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.spacer {
+  height: 20px;
+  width: 100%;
+  display: block;
+}
+
+.ko-template {
+  display: none;
+}
+
+.break-all-words {
+    word-break: break-all;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fadeIn {
+  animation-name: fadeIn;
+  animation-duration: 1s;
+}

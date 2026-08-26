@@ -1,0 +1,41 @@
+apply plugin: 'jacoco'
+
+android {
+    testOptions {
+        unitTests.all {
+            jacoco {
+                includeNoLocationClasses = true
+                excludes = ['jdk.internal.*'] // https://github.com/gradle/gradle/issues/5184#issuecomment-391982009
+            }
+        }
+    }
+}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testCommcareDebugUnitTest']) {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    def fileFilter = ['**/R.class',
+                      '**/R$*.class',
+                      '**/BuildConfig.*',
+                      '**/Manifest*.*',
+                      '**/*Test*.*',
+                      'android/**/*.*',
+                      '**/data/models/*']
+    def javaClasses = fileTree(
+            dir: "${project.buildDir}/intermediates/javac/commcareDebug/compileCommcareDebugJavaWithJavac/classes/",
+            excludes: fileFilter)
+    def kotlinClasses = fileTree(
+            dir: "${project.buildDir}/tmp/kotlin-classes/commcareDebug/",
+            excludes: fileFilter)
+    getClassDirectories().setFrom(files([javaClasses, kotlinClasses]))
+
+    def sourceFiles = "${project.projectDir}/src/org/commcare"
+    getSourceDirectories().setFrom(files([sourceFiles]))
+    getExecutionData().setFrom(fileTree(
+            dir: project.buildDir,
+            includes: [
+                    'jacoco/testCommcareDebugUnitTest.exec',
+                    'outputs/code-coverage/connected/*coverage.ec']))
+}

@@ -1,0 +1,44 @@
+import $ from "jquery";
+import ko from "knockout";
+import assertProperties from "hqwebapp/js/assert_properties";
+
+var appTranslationsModel = function (options) {
+    assertProperties.assertRequired(options, ['baseUrl', 'format', 'lang']);
+    var self = {};
+
+    self.file = ko.observable();
+    self.format = ko.observable(options.format);
+    self.lang = ko.observable(options.lang);
+    self.url = ko.computed(function () {
+        return options.baseUrl + "?" + new URLSearchParams({
+            lang: self.lang(),
+            format: self.format(),
+        }).toString();
+    });
+
+    self.disableDownload = ko.computed(function () {
+        return self.format() === "single" && !self.lang();
+    });
+
+    return self;
+};
+
+$(function () {
+    // Bulk CommCare translations
+    var $commcareForm = $("#bulk_ui_translation_upload_form");
+    if ($commcareForm.length) {
+        $commcareForm.koApplyBindings({
+            file: ko.observable(),
+        });
+    }
+
+    // Bulk application translations
+    var $translationsPanel = $("#bulk-application-translations");
+    if ($translationsPanel.length) {
+        $translationsPanel.koApplyBindings(appTranslationsModel({
+            baseUrl: $translationsPanel.find("#download_link").attr("href"),
+            format: $translationsPanel.find("#sheet_format").val(),
+            lang: $translationsPanel.find("select").val() || '',
+        }));
+    }
+});

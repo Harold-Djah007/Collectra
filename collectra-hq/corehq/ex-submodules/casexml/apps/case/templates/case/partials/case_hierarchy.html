@@ -1,0 +1,76 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% comment %}
+    Depends on case/js/case_hierarchy.js and jquery-treetable/jquery.treetable.js
+{% endcomment %}
+
+<link rel="stylesheet" type="text/css" href="{% static "jquery-treetable/css/jquery.treetable.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "case/css/jquery.treetable.css" %}">
+
+<table id="related_cases" class="table table-striped case_history">
+  <thead>
+    <tr>
+      <th>{% trans "Name" %}</th>
+      {% if request|toggle_enabled:"SUPPORT" %}
+        <th>{% trans "Index" %}</th>
+      {% endif %}
+      {% for column in columns %}
+        <th>{{ column.name }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for case in case_list %}
+    {% if case == None %}
+      <tr>
+        <td>
+          {% trans "Parent case not found" %}
+        </td>
+      </tr>
+    {% else %}
+      <tr data-tt-id="{{ case.case_id }}"
+          class="{% if case.closed %}case-closed{% endif %}"
+        {% if case.treetable_parent_node_id %}
+          data-tt-parent-id="{{ case.treetable_parent_node_id }}"
+        {% endif %}>
+        <td>
+          {% if case.case_id == current_case.case_id %}
+            <strong>{{ case.name }}</strong>
+          {% else %}
+            {{ case.name }}
+          {% endif %}
+          {% if case.case_id != current_case.case_id %}
+            <div class="pull-right btn-group">
+              <a class="btn btn-sm btn-default view-related-case-link"
+                 href="{% url 'case_data' domain case.case_id %}">
+                <i class="fa-solid fa-eye"></i> {% trans "View" %}
+              </a>
+            </div>
+          {% endif %}
+        </td>
+        {% if request|toggle_enabled:"SUPPORT" %}
+          <td>
+            {% if case.case_id == current_case.case_id %}
+              <em>{% trans "(current case)" %}</em>
+            {% elif case.index_info.is_ancestor %}
+              <strong>{{ case.index_info.identifier }}</strong> / {{ case.index_info.relationship }}
+            {% elif case.index_info %}
+              {{ case.index_info.identifier }} / <strong>{{ case.index_info.relationship }}</strong>
+            {% endif %}
+          </td>
+        {% endif %}
+        {% for column in case.columns %}
+          <td>{{ column.value }}</td>
+        {% endfor %}
+      </tr>
+    {% endif%}
+
+  {% empty %}
+    <tr>
+      <td colspan="4" class="no_data">{% trans "No related cases" %}</td>
+    </tr>
+  {% endfor %}
+
+  </tbody>
+</table>

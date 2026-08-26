@@ -1,0 +1,912 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:cc="http://strings_namespace">
+    <item name="login_screen_hide_all_cutoff" type="integer">200</item>
+
+    <!-- string name="default_app_server">http://build.dimagi.com/commcare/pact/profile.xml</string -->
+    <item name="login_screen_hide_banner_cutoff" type="integer">250</item>
+    <item name="detail_size_cutoff" format="integer" type="integer">500</item>
+    <string name="title_bar_name">@string/application_name</string>
+    <!-- string name="PostURL">https://pact.dimagi.com/receiver/submit/pact</string -->
+    <!-- string name="ota_restore_url">https://pact.dimagi.com/provider/caselist</string -->
+    <string name="PostURL" translatable="false">https://staging.commcarehq.org/receiver/submit/pf</string>
+    <string name="ota_restore_url" translatable="false">https://staging.commcarehq.org/ota_restore</string>
+    <!-- string name="PostURL">https://pact.dimagi.com/receiver/submit/pact</string -->
+    <!-- string name="ota_restore_url">https://pact.dimagi.com/provider/caselist</string -->
+    <!-- region: All strings for multiple apps and app-agnostic properties -->
+
+    <string name="your_comment">Your comment</string>
+    <string name="support_email_address_default">commcarehq-support@dimagi.com</string>
+    <string name="manager_activity_name">App Manager</string>
+    <string name="install_app">Install an App</string>
+    <string name="uninstall_app">Uninstall</string>
+    <string name="archive_app">Archive</string>
+    <string name="unarchive_app">Unarchive</string>
+    <string name="update_app">Update</string>
+    <string name="update_canceled">Your update was paused</string>
+    <string name="verify_resources">Validate Multimedia</string>
+    <string name="skip_button_text">Skip For Now</string>
+    <string name="retry_button_text">Retry</string>
+    <string name="skipped_verification_warning">You did not validate multimedia resources for the app that was just
+         installed! This app will not be visible to users on the log-in screen until multimedia is validated.</string>
+    <string name="skipped_verification_warning_2">You did not validate multimedia resources for this app! The app will
+        not be visible to users on the log-in screen until multimedia is validated.</string>
+    <string name="manager_instructions">Select an app to view its management options, or install a new app.</string>
+    <string name="pre_multiple_apps_warning">Warning: The app you have installed is from an outdated build.
+        For full functionality of multiple application seating, please make a new build of your app.</string>
+    <string name="uninstall_reboot_warning">CommCare will uninstall your app and then reboot to save changes.</string>
+    <string name="logout_warning">In order to complete this action, CommCare must log out the currently logged-in app. Do you want to proceed?</string>
+    <string name="logging_out">Logging out your app</string>
+    <string name="uninstalling">Uninstalling your app</string>
+    <string name="media_not_verified">Media Not Verified</string>
+    <string name="media_verified">Media Validated!</string>
+    <string name="no_installation">No app was installed!</string>
+    <string name="migration_definite_failure">CommCare was unable to migrate your app data for an upgrade. To resolve this issue, please uninstall CommCare from your device and then relaunch it.</string>
+    <string name="migration_possible_failure">CommCare was unable to migrate all of your data during an application upgrade. Please restart CommCare to try to fix this. If this message persists, you may need to \'Clear data\' for CommCare in your device\'s Settings menu.</string>
+    <string name="migration_failure_title">Migration Error</string>
+    <string name="multiple_apps_limit_message">You have reached your limit of installed apps; you may only have up to %s apps installed at once.\n\nIf you would like to install a new app, you may uninstall an existing app first, which can be done from the app manager.</string>
+    <string name="back_to_manager">Back to App Manager</string>
+    <string name="go_to_manager">Go to App Manager</string>
+    <string name="claim_privilege_button_text">CLAIM PRIVILEGES</string>
+    <string name="privilege_enabled_text">The following privileges are enabled on your device:\n\n %s</string>
+    <string name="privilege_not_enabled_text">Special privileges are not enabled on your device.</string>
+    <string name="privilege_claim_failed">Could not claim privileges</string>
+    <string name="privilege_claim_bad_version">Didn\'t recognize the privilege activation code. Please update CommCare</string>
+    <string name="privilege_instructions">If you have a superuser account on HQ, you can enable certain privileges on your device by going to the \'Enable Privileges on Mobile\' tab of your \'My Account Settings\' page, and then scanning the barcode that appears there.</string>
+    <string name="see_available_apps">See Available Apps</string>
+    <!-- endregion -->
+
+    <string name="install_from_list_prompt">Log in as a mobile or web user to see a list of apps you can install</string>
+    <string name="legacy_failure">CommCare does not support upgrading from the previous CommCare version you were using. To resolve this issue, please uninstall CommCare from your device and then reinstall it.</string>
+    <string name="legacy_failure_title">Incompatible CommCare Upgrade</string>
+    <string name="app_version_string">version.id.long</string>
+    <string name="session_notification_title">Logged Into Commcare</string>
+    <string name="session_expire_notification">CommCare Login Expired</string>
+
+    <string name="submission_notification_title">Submitting Data</string>
+    <string name="submission_logs_title">Submitting CommCare Logs</string>
+    <string name="remote_form_payload_url" />
+
+    <string name="about_dialog" formatted="false" cc:translatable="true">%s\n\n_Copyright 2016, Dimagi inc, All rights reserved_ \n\n---------------- \n\n__Acknowledgements:__ \n\n%sSome images in CommCare are graciously used under Creative Commons Licensing from thenounproject.com collection:\n\n* “Door” symbol by Tak Imoto \n* “Pencil” symbol by Creologica \n* “Notebook” symbol by Carlo \n* “Antenna” symbol by Dima \n* “Map Marker” symbol by P.J. Onori \n* "List" by Landan Lloyd \n* broken screen by Sam Martin from the Noun Project \n\n
+
+</string>
+
+    <string name="hello_world">Please enter your issues below</string>
+    <string name="menu_settings">Settings</string>
+    <string name="permission_content_provider_label">Read Secure CommCare Data</string>
+    <string name="permission_content_provider_description">Allows this app to read data from CommCare while a user is logged in</string>
+    <string name="permission_external_action_label">Allow CommCare Actions</string>
+    <string name="permission_external_action_description">Allows this app to trigger operations like login, logout and sync in CommCare</string>
+    <string name="permission_commcare_logout_label">Allow Auto CommCare Logout</string>
+    <string name="permission_commcare_logout_description">Allows this app to logout a user from CommmCare App</string>
+    <string name="permission_protect_falsely_exposed_components_label">Protect internal components</string>
+    <string name="permission_protect_falsely_exposed_components_description">Restricts external apps from accessing internal components</string>
+
+    <string name="permission_group_internal_action_label">Permission group for CommCare Internal Actions</string>
+
+    <string name="title_activity_report_problem">Report Problem</string>
+    <string name="panes">one</string>
+
+    <string name="restore_session_prompt">Restore saved session upon login</string>
+
+    <string name="managed_configuration_username">Mobile Worker Username</string>
+    <string name="managed_configuration_password">Mobile Worker Password</string>
+
+    <string name="managed_configuration_profile_url">CommCare App Link</string>
+    <string name="managed_configuration_username_description">The username of the CommCare mobile worker to login and restore on the device</string>
+    <string name="managed_configuration_password_description">The password of the mobile user</string>
+    <string name="managed_configuration_profile_url_description">The URL to your CommCare Application from the CommCareHQ publish page</string>
+    <string name="about_cc" cc:translatable="true">About CommCare</string>
+    <string name="accept_location" cc:translatable="true">Record Location</string>
+    <string name="install_barcode_top">Welcome to CommCare!</string>
+    <string name="install_barcode_bottom">Please choose an installation method below</string>
+
+    <string name="install_keep_trying">Keep trying if connection is interrupted</string>
+    <string name="install_manual">Please enter the URL</string>
+    <string name="install_ready_top">Almost there!</string>
+    <string name="install_ready_bottom">Press the button below to install your app.</string>
+    <string name="install_netwarn">If you are attempting to install from a server, make sure you have an internet connection.</string>
+    <string name="install_button_enter">Enter Code</string>
+    <string name="install_button_startover">Start Over</string>
+    <string name="install_button_retry">Retry Installation</string>
+    <string name="install_button_start">Start Install</string>
+    <string name="install_bad_ref">You did not scan a valid URL. Please try again.</string>
+    <string name="install_bad_login">Login to Existing App</string>
+    <string name="install_appprofile">Enter your app code</string>
+    <string name="install_perms_rationale_message">CommCare requires at least external storage read &amp; write permissions in order to store form submissions.</string>
+    <string name="install_perms_denied_message">Crucial permissions denied %1$s times.\n\n If requesting permissions here fails, please enable permissions under Android\'s settings.</string>
+    <string name="install_choose_local_app">Available Apps</string>
+    <string name="install_wrong_code">The app code you have entered is incorrect. Please try scanning barcode or entering correct code.</string>
+    <string name="install_invalid_launch">Invalid CommCare launch, External applications should use a VIEW action to launch CommCare.</string>
+    <string name="menu_archive">Offline Install</string>
+    <string name="menu_sms">SMS Install</string>
+    <string name="menu_sms_not_found">Install link not found in your texts!</string>
+    <string name="menu_sms_ready">Found install link. Press \"Start\" to begin installation.</string>
+    <string name="menu_sms_not_verified">We found a valid looking text, but could not verify its authenticity.</string>
+    <string name="menu_sms_not_retrieved">We could not retrieve the installation link. Please check your connectivity and try again.</string>
+    <string name="updates_resources_initialization">Setting Up App</string>
+    <string name="updates_resources_profile">Locating application...</string>
+    <string name="archive_install_prompt">Install your CommCare application from a .ccz file</string>
+    <string name="archive_install_button">Install App</string>
+    <string name="install_version_mismatch">The application requires CommCare version %1$s. You are currently running %2$s.</string>
+    <string name="install_major_mismatch">Please uninstall your CommCare Application from the phone Settings Menu, navigate to the Google Playstore, and install CommCare again.</string>
+    <string name="install_minor_mismatch">Please update CommCare from the Google Playstore to run this application.</string>
+    <string name="update_version_mismatch" cc:translatable="true">This application update requires CommCare version %1$s. You are currently running %2$s.</string>
+    <string name="update_major_mismatch" cc:translatable="true">Please uninstall your CommCare Application from the phone Settings Menu, navigate to the Google Playstore, and install CommCare again.</string>
+    <string name="update_minor_mismatch" cc:translatable="true">Please update CommCare from the Google Playstore to update this application.</string>
+    <string name="app_manager_advanced_settings_title">App Manager &gt; Advanced Settings</string>
+    <string name="app_manager_advanced_settings_option">Advanced</string>
+    <string name="app_manager_menu_about">About CommCare</string>
+    <string name="app_manager_developer_options_title">App Manager &gt; Developer Options</string>
+    <string name="app_manager_advanced_developer_options">Developer Options</string>
+    <string name="app_manager_developer_options_enabled">CommCare Developer Mode Enabled</string>
+    <string name="menu_app_list_install">See Apps for My User</string>
+    <string name="menu_app_list_install_other_user">See Apps for Another User</string>
+    <string name="toggle_web_user_mode">Web User</string>
+    <string name="toggle_mobile_user_mode">Mobile User</string>
+    <string name="missing_fields">Please enter all required fields.</string>
+    <string name="email_address_invalid">Please enter a valid email address.</string>
+    <string name="get_app_list_user_error_mobile">An invalid username, domain, or password was provided. Please make sure all of the fields you entered are correct.</string>
+    <string name="get_app_list_user_error_web">An invalid email or password was provided. Please make sure all of the fields you entered are correct.</string>
+    <string name="get_app_list_unknown_error">An error occurred while trying to get your list of apps. Please try again, or contact support if the problem persists.</string>
+    <string name="no_apps_available">No apps are available for download for this user.</string>
+    <string name="could_not_refresh_apps">Sorry, there was an error refreshing your app list. Please re-enter a user.</string>
+
+    <string name="accuracy" cc:translatable="true">Accuracy</string>
+    <string name="activity_not_found" cc:translatable="true">No activity found to handle: %s</string>
+    <string name="altitude" cc:translatable="true">Altitude</string>
+
+    <string name="attachment_oversized" cc:translatable="true">Warning: attached large file of size %s mb. This could cause problems with submitting to the server depending on your network conditions.</string>
+    <string name="attachment_above_size_limit" formatted="false" cc:translatable="true">Media attachment too large (%1$s mb). Max allowed size is %2$s mb.</string>
+
+    <string name="audio_file_invalid" cc:translatable="true">File: %s is not a valid audio file.</string>
+    <string name="delete_audio_file" cc:translatable="true">Delete</string>
+    <string name="confirm_audio_file_deletion" cc:translatable="true">Yes, Delete</string>
+
+
+    <!-- Start Collect Strings -->
+
+    <string name="cancel" cc:translatable="true">CANCEL</string>
+    <string name="cancel_location" cc:translatable="true">Cancel</string>
+    <string name="start_recording" cc:translatable="true">Start recording</string>
+    <string name="start_recording_instructions" cc:translatable="true">Tap the microphone to begin. Recording saves automatically when you stop.</string>
+
+    <string name="capture_audio" cc:translatable="true">Record Sound</string>
+    <string name="capture_image" cc:translatable="true">Take Picture</string>
+    <string name="capture_video" cc:translatable="true">Record Video</string>
+    <string name="change_language" cc:translatable="true">Change Language</string>
+    <string name="clearanswer_confirm" cc:translatable="true">Remove the response to \"%s\"?</string>
+    <string name="clear_answer" cc:translatable="true">Remove response</string>
+    <string name="clear_answer_ask" cc:translatable="true">Remove This Response?</string>
+    <string name="clear_answer_no" cc:translatable="true">CANCEL</string>
+    <string name="discard_answer" cc:translatable="true">REMOVE RESPONSE</string>
+    <string name="discard_image" cc:translatable="true">Remove Image</string>
+    <string name="do_not_exit" cc:translatable="true">STAY IN FORM</string>
+    <string name="do_not_save" cc:translatable="true">EXIT WITHOUT SAVING</string>
+    <string name="error_occured" cc:translatable="true">Error Occurred</string>
+    <string name="file_invalid" cc:translatable="true">File: %s is invalid.</string>
+    <string name="file_missing" cc:translatable="true">File: %s is missing.</string>
+    <string name="get_location" cc:translatable="true">Record Location</string>
+    <string name="invalid_answer_error" cc:translatable="true">Sorry, this response is invalid!</string>
+    <string name="jump_to_beginning" cc:translatable="true">Go To Start</string>
+    <string name="jump_to_end" cc:translatable="true">Go To End</string>
+    <string name="jump_to_previous" cc:translatable="true">Go Up</string>
+    <string name="latitude" cc:translatable="true">Latitude</string>
+    <string name="loading_form" cc:translatable="true">Loading Form</string>
+    <string name="location_provider_accuracy" cc:translatable="true">Location accuracy: %1$s m.</string>
+    <string name="longitude" cc:translatable="true">Longitude</string>
+    <string name="no_items_display" cc:translatable="true">Nothing available to display.</string>
+    <string name="ok" cc:translatable="true">OK</string>
+    <string name="parse_error" cc:translatable="true">Sorry, unable to parse form.</string>
+    <string name="play_audio" cc:translatable="true">Play Sound</string>
+    <string name="play_video" cc:translatable="true">Play Video</string>
+    <string name="please_wait" cc:translatable="true">Please wait a few moments.</string>
+    <string name="please_wait_long" cc:translatable="true">Please wait. This could take a few minutes.</string>
+    <string name="quit_application" cc:translatable="true">Exit %s</string>
+    <string name="quit_form_title" cc:translatable="true">Exit Form?</string>
+    <string name="refresh" cc:translatable="true">Refresh</string>
+    <string name="replace_location" cc:translatable="true">Replace Location</string>
+    <string name="required_answer_error" cc:translatable="true">Sorry, this response is required!</string>
+    <string name="review" cc:translatable="true">Continue</string>
+    <string name="save_all_answers" cc:translatable="true">Save Form</string>
+    <string name="saving_form" cc:translatable="true">Saving Form</string>
+    <string name="trigger" cc:translatable="true">OK. Please continue.</string>
+    <string name="view_hierarchy" cc:translatable="true">Go To Prompt</string>
+    <string name="form_entry_settings" cc:translatable="true">Change Settings</string>
+    <string name="show_location" cc:translatable="true">Show Location</string>
+    <string name="keep_changes" cc:translatable="true">SAVE INCOMPLETE</string>
+    <string name="go_to_location" cc:translatable="true">Go to Location</string>
+    <string name="font_size" cc:translatable="true">Text Font Size</string>
+    <string name="change_font_size" cc:translatable="true">Text Font Size</string>
+    <string name="success" cc:translatable="true">Success</string>
+    <string name="choose_sound" cc:translatable="true">Choose Sound</string>
+    <string name="choose_video" cc:translatable="true">Choose Video</string>
+    <string name="choose_image" cc:translatable="true">Choose Image</string>
+    <string name="choose_document" cc:translatable="true">Choose Document</string>
+    <string name="selected" cc:translatable="true">Selected: </string>
+    <string name="select_answer" cc:translatable="true">Select Answer</string>
+    <string name="edit_prompt" cc:translatable="true">Edit Prompt</string>
+    <string name="no_gps_title" cc:translatable="true">Location Data Disabled</string>
+    <string name="no_gps_message" cc:translatable="true">The location providers on this device are currently disabled. Do you want to change those settings?</string>
+    <string name="change_settings" cc:translatable="true">Change Settings</string>
+    <string name="finding_location" cc:translatable="true">Finding Location...</string>
+    <string name="found_location" cc:translatable="true">Location Found!</string>
+    <string name="preference_help_mode_tray" cc:translatable="true">Display Rich Help Inline</string>
+    <string name="reset_image" cc:translatable="true">Reset</string>
+    <string name="save_and_close" cc:translatable="true">Save and Close</string>
+    <string name="sign_button" cc:translatable="true">Gather Signature</string>
+    <string name="markup_image" cc:translatable="true">Markup Image</string>
+    <string name="draw_image" cc:translatable="true">Sketch Image</string>
+    <string name="share" cc:translatable="true">Share</string>
+    <string name="title_data_change_logs_activity" cc:translatable="true">Data Change Logs</string>
+    <string name="commcare_logs" cc:translatable="true">CommCare Data Change Logs</string>
+    <string name="clear_user_data_delete_form" cc:translatable="true">Delete Forms</string>
+    <string name="target_mismatch_lts_required" cc:translatable="true">App Requires CommCare LTS</string>
+    <string name="target_mismatch_lts_required_install" cc:translatable="true">Install CommCare LTS</string>
+    <string name="target_mismatch_lts_open" cc:translatable="true">Open CommCare LTS</string>
+    <string name="target_mismatch_lts_required_info" cc:translatable="true">Follow the link below to install CommCare LTS from the Play Store, and then try installing your app again.</string>
+    <string name="target_mismatch_lts_available_info" cc:translatable="true">This app requires CommCare LTS. Click the button below to open CommCare LTS, and then try installing your app again.</string>
+    <string name="target_mismatch_commcare_required" cc:translatable="true">App Requires CommCare(Non LTS)</string>
+    <string name="target_mismatch_commcare_required_install" cc:translatable="true">Install CommCare</string>
+    <string name="target_mismatch_commcare_open" cc:translatable="true">Open CommCare</string>
+
+    <string name="target_mismatch_commcare_required_info" cc:translatable="true">Follow the link below to install CommCare(Non LTS) from the Play Store, and then try installing your app again.</string>
+    <string name="target_mismatch_commcare_available_info" cc:translatable="true">This app requires CommCare(Non LTS). Click the button below to open CommCare, and then try installing your app again.</string>
+    <string name="incorrect_time_dialog_title" cc:translatable="true">Incorrect Time</string>
+
+    <!--Clear User Data-->
+    <string name="incorrect_time_dialog_message" cc:translatable="true">Your device time is incorrectly set. Please click the Correct Time button below to change your time settings.</string>
+
+    <!--Incorrect Target Screen-->
+    <string name="incorrect_time_dialog_correct_time" cc:translatable="true">Correct Time</string>
+    <string name="incorrect_time_dialog_cancel" cc:translatable="true">Cancel</string>
+    <string name="recovery_mode_title" cc:translatable="true">CommCare Recovery Mode</string>
+    <string name="recovery_mode_detail" cc:translatable="true">CommCare has entered recovery mode due to a problem with your app. We are trying to recover your app. Please wait...</string>
+    <string name="recovery_resource_progress" cc:translatable="true">Recovered %1$s out of %2$s resources</string>
+    <string name="recovery_error_unknown" cc:translatable="true">Recovery failed due to an unknown reason. Please try again or reinstall your app by going to App Manager</string>
+    <string name="recovery_success" cc:translatable="true">App recovery has been successful. Please press back to resume your work</string>
+    <string name="recovery_forms_send_progress" cc:translatable="true">Submitting form(s) to the server...</string>
+    <string name="recovery_forms_send_session_expired" cc:translatable="true">Log-in expired during send</string>
+
+    <!--Incorrect Time Dialog-->
+    <string name="recovery_forms_send_successful" cc:translatable="true">Send successful. All %s forms were submitted</string>
+    <string name="recovery_forms_send_failure" cc:translatable="true">There were errors submitting the forms.</string>
+    <string name="recovery_forms_send_parital_success" cc:translatable="true">There were errors submitting the forms. Only %s were submitted. Please try again later</string>
+    <string name="recovery_forms_send_network_error" cc:translatable="true">Forms submissing failed due to poor network</string>
+
+    <!--Recovery Activity-->
+    <string name="recovery_forms_send_error" cc:translatable="true">Error while sending forms</string>
+    <string name="recovery_forms_state_unavailable" cc:translatable="true">Forms are not available. Make sure your phone storage is available</string>
+    <string name="recovery_network_unavailable" cc:translatable="true">No network connection. Please check your internet and try again.</string>
+    <string name="recovery_network_outdated" cc:translatable="true">This app is outdated. Please update the app on the Google Play Store in order to proceed.</string>
+    <string name="personalid_token_unavailable">There was a network issue. Please try again.</string>
+    <string name="personalid_token_request_rejected">Lost PersonalID configuration with server, please recover your PersonalID account and retry</string>
+    <string name="recovery_network_unauthorized">You are not authorized to make this request.</string>
+    <string name="recovery_network_server_error">There was an error processing your request.</string>
+    <string name="recovery_network_cooldown">Too many request attempts. Please try again after an hour.</string>
+    <string name="recovery_network_unknown">Something went wrong. Please try again.</string>
+    <string name="recovery_unable_to_claim_opportunity">Unable to claim the opportunity. Please try again or contact support.</string>
+    <string name="notification_channel_errors_description">Notifications for error messages when something breaks say on installing a CommCare app or while syncing forms with server</string>
+    <string name="recovery_app_manager" cc:translatable="true">Go to App Manager</string>
+    <string name="recovery_retry" cc:translatable="true">Retry Recovery</string>
+    <string name="notification_channel_errors_title" cc:translatable="true">Errors</string>
+    <string name="notification_channel_user_session_title" cc:translatable="true">User Session</string>
+    <string name="notification_channel_user_session_description" cc:translatable="true">Notification containing information around current user session like when the current session is scheduled to expire</string>
+    <string name="notification_channel_server_communication_title" cc:translatable="true">Server Communications</string>
+    <string name="notification_channel_server_communication_description" cc:translatable="true">Notifications for status of any background server communication happening at the moment like CommCare App updates, log submission etc.</string>
+    <string name="notification_channel_push_notfications_title" cc:translatable="true">Priority notifications from Server</string>
+    <string name="notification_channel_push_notfications_description" cc:translatable="true">Notifications sent from server directly to notify user of priority tasks</string>
+    <string name="notification_channel_messaging_title" cc:translatable="true">Messages from CommCare</string>
+    <string name="notification_channel_messaging_description" cc:translatable="true">Notifications sent from server directly to notify user of incoming messages and new channels</string>
+    <string name="recovery_measure_reinstall_method" cc:translatable="true">Choose Reinstall Method</string>
+    <string name="recovery_measure_reinstall_detail" cc:translatable="true">Your app needs to be reinstalled due to a problem, please select a method for reinstalling.</string>
+    <string name="recovery_measure_reinstall_online_method" cc:translatable="true">Online Reinstall</string>
+    <string name="recovery_measure_reinstall_offline_method" cc:translatable="true">Reinstall Using CCZ</string>
+
+    <string name="recovery_measure_detail" cc:translatable="true">Recovery procedures have been initiated for your CommCare App due to a problem with it. Please wait...</string>
+    <string name="recovery_measure_faiure" cc:translatable="true">An error occurred when CommCare tried to execute a recovery measure. We will try again later. If the problem persists please contact helpdesk</string>
+    <string name="recovery_measure_retry" cc:translatable="true">Retry Recovery</string>
+    <string name="recovery_measure_app_reinstall_progress" cc:translatable="true">Reinstalling %1$s out of %2$s resources</string>
+    <string name="recovery_measure_app_update_progress" cc:translatable="true">Updating %1$s out of %2$s resources</string>
+    <string name="recovery_measure_known_error" cc:translatable="true">An error occurred during recovery. Error details - \n %1$s</string>
+
+    <!--Recovery Measures-->
+    <string name="recovery_measure_reinstall" cc:translatable="true">Reinstall</string>
+    <string name="recovery_measure_select_ccz" cc:translatable="true">Select CCZ</string>
+    <string name="recovery_measure_select_ccz_no_file_browser" cc:translatable="true">You need a file manager to access the files on this device. You have not installed a file manager, please go to the Google Play Store and download a file manager, then return to this screen.</string>
+    <string name="recovery_measure_invalid_ccz_path" cc:translatable="true">Unable to process the CCZ file you selected. Please retry</string>
+    <string name="recovery_measure_unzip_error" cc:translatable="true">An error occurred while installing the app from CCZ file. Please retry or locate CCZ file manually by clicking \"Select CCZ\" button below.</string>
+    <string name="recovery_measure_update_cancelled" cc:translatable="true">Update cancelled</string>
+    <string name="recovery_measure_offline_install_cancelled" cc:translatable="true">Offline install cancelled</string>
+    <string name="recovery_measure_unzip_progress" cc:translatable="true">Processing CCZ File.. %1$s</string>
+    <string name="reinstall_prompt_title" cc:translatable="true">Reinstall of %1$s is Required</string>
+    <string name="install_error_file_not_found" cc:translatable="true">No file found for resource %1$s</string>
+    <string name="update_blocked_on_sync_message" cc:translatable="true">Sync is required to install this update. Auto initiating sync...</string>
+    <string name="media_download_failed" cc:translatable="true">An error occurred while downloading the requested media. Please try again</string>
+    <string name="media_download_in_progress" cc:translatable="true">Download in Progress, Please wait...</string>
+    <string name="media_download_started" cc:translatable="true">Download started</string>
+    <string name="media_download_completed" cc:translatable="true">Download completed</string>
+    <string name="video_download_prompt" cc:translatable="true">Video file is missing for this question, click the download button above to download</string>
+    <string name="image_download_prompt" cc:translatable="true">Image file is missing for this question, Click the download button above to download</string>
+    <string name="audio_download_prompt" cc:translatable="true">Audio file is missing for this question, click the download button above to download</string>
+    <string name="media_not_found_error" cc:translatable="true">Media not found in the application</string>
+
+    <string name="wait_for_location_fix" cc:translatable="true">CommCare is still trying to get your location. Please wait or click Cancel to abort.</string>
+    <string name="invalid_case_property_length" cc:translatable="true">Invalid %1s, value must be 255 characters or less</string>
+    <string name="invalid_case_graph_error" cc:translatable="true">This form introduces an invalid case relationship</string>
+    <string name="root_detected_title" cc:translatable="true">Rooted Device Detected</string>
+    <string name="root_detected_message" cc:translatable="true">You are not allowed to run CommCare on a rooted device. Please use a non rooted device</string>
+    <string name="session_endpoint_unavailable" cc:translatable="true">No endpoint exist with id %1$s. Valid endpoints are %2$s</string>
+    <string name="session_endpoint_invalid_arguments" cc:translatable="true">Incorrect arguments supplied for endpoint %1$s. Supplied arguments: %2$s. Expected arguments: %3$s.</string>
+
+    <string name="playback_start_time">00:00</string>
+    <string name="dependency_missing_dialog_title" cc:translatable="true">Get Required App</string>
+    <string name="dependency_missing_dialog_title_plural" cc:translatable="true">Get Required Apps</string>
+    <string name="dependency_missing_dialog_message" cc:translatable="true">CommCare needs %s application to be installed on your device before you can continue</string>
+    <string name="dependency_missing_dialog_message_plural" cc:translatable="true">CommCare needs below applications to be installed on your device before you can continue-</string>
+    <string name="dependency_missing_dialog_go_to_store" cc:translatable="true">Install from Store</string>
+    <string name="dependency_missing_dialog_playstore_not_found" cc:translatable="true">No Play Store found on your device</string>
+
+    <string name="fcm_default_notification_channel">notification-channel-push-notifications</string>
+
+    <string name="entity_map_markers" cc:translatable="true">Markers</string>
+    <string name="entity_map_polygons" cc:translatable="true">Polygons</string>
+    <string name="entity_map_geopoints" cc:translatable="true">Geopoints</string>
+    <string name="entity_map_error_message" cc:translatable="true">There was an error in app configuration due to which not all markers on the map are loaded correctly</string>
+
+    <!-- PersonalID strings -->
+    <string name="personalid_login_via">Via PersonalID (or press here)</string>
+    <string name="connect_button_logged_in">Go to Connect menu</string>
+    <string name="connect_cta_progress_percent">%1$d%%</string>
+    <string name="connect_registration_title">Get Started with PersonalID</string>
+    <string name="connect_registration_subtitle">Enter your Phone Number</string>
+
+    <string name="personalid_welcome_user">Welcome %s!</string>
+    <string name="personalid_choice_or">___________    OR    ___________</string>
+
+    <string name="connect_consent_message_1">I have read and agree to Dimagi\'s <a href="https://www.dimagi.com/terms/latest/privacy/">Privacy Policy</a>, <a href="https://www.dimagi.com/terms/latest/tos/">Terms of Service</a>, <a href="https://www.dimagi.com/terms/latest/ba/">Business Agreement</a> and <a href="https://www.dimagi.com/terms/latest/aup/">Acceptable Use Policy</a>.</string>
+
+    <string name="connect_phone_country_code_default">+1</string>
+    <string name="connect_phone_number_hint">0000000000</string>
+
+    <string name="connect_otp_sent">A 6-digit passcode has been sent to your phone number.</string>
+    <string name="connect_otp_verified">Success! Your phone number has been verified.</string>
+    <string name="connect_enter_otp">Please enter the 6-digit passcode that was sent to your phone number.</string>
+
+    <string name="connect_backup_code_title_set">Backup Code</string>
+    <string name="connect_backup_code_title_confirm">Confirm Backup Code</string>
+    <string name="connect_backup_code_message_title">PersonalId Backup Code</string>
+    <string name="connect_backup_code_message">Enter your 6-digit Backup Code</string>
+    <string name="connect_backup_code_remember">Please be sure to remember your backup code! It must be %d digits. Keep it in a safe place as you will need it to access your account again.</string>
+    <string name="connect_backup_code_mismatch">The backup codes you enter must match.</string>
+
+    <string name="connect_backup_fail_title">Wrong Backup Code</string>
+    <string name="personalid_network_response_parsing_error">Error parsing data from server. Please contact customer support.</string>
+
+    <string name="personalid_continue_label">Continue</string>
+    <string name="personalid_email_appbar_title">Email</string>
+    <string name="personalid_email_title">Add your email (optional)</string>
+    <string name="personalid_email_description">Your email helps you recover your account if you lose access to your phone.</string>
+    <string name="personalid_email_hint">Email address</string>
+    <string name="personalid_email_skip">Skip for now</string>
+    <string name="personalid_email_skip_confirm_title">Skip email?</string>
+    <string name="personalid_email_skip_confirm_message">Are you sure you want to skip?</string>
+    <string name="personalid_email_invalid_format">Please enter a valid email address.</string>
+    <string name="personalid_email_verification_appbar_title">Verify Email</string>
+    <string name="personalid_email_verification_title">Verify your email</string>
+    <string name="personalid_email_verification_description">Enter the 6-digit code sent to %1$s</string>
+    <string name="personalid_email_verify_button">Verify</string>
+    <string name="personalid_email_otp_failed_title">Verification unsuccessful</string>
+    <string name="personalid_email_otp_failed_message">Looks like you\'re having trouble verifying your email. You can skip this for now and try again later, or keep trying.</string>
+    <string name="personalid_email_otp_failed_retry">Try again</string>
+    <string name="personalid_email_otp_failed_skip">Proceed without email</string>
+    <string name="personalid_email_added_title">Email Added</string>
+    <string name="personalid_email_added_message">Your email has been added successfully.</string>
+    <string name="personalId_email_otp_sent">A 6-digit passcode has been sent to your email address.</string>
+    <string name="personalid_email_offer_title">Add your email address</string>
+    <string name="personalid_email_offer_message">Add an email to help recover your account if you lose access to your phone.</string>
+    <string name="personalid_email_offer_yes">Add email</string>
+    <string name="personalid_email_offer_no">Not now</string>
+    <string name="connect_recovery_success_title">Account Recovered</string>
+    <string name="connect_recovery_success_message">Your account has been recovered! You may resume using PersonalID.</string>
+    <string name="connect_unlock_title">Unlock PersonalID</string>
+    <string name="connect_unlock_message">Please unlock to continue</string>
+    <string name="connect_unlock_unavailable">Please configure a screen unlock mechanism</string>
+
+    <string name="connect_biometric_enroll_fail_title">Biometric Issue</string>
+    <string name="connect_biometric_enroll_fail_message">PersonalID requires biometrics to be enabled. Please configure biometrics in the Android System Settings before proceeding.</string>
+
+    <string name="connect_biometric_enroll_fail_button">Go to Settings</string>
+    <string name="connect_register_name">Name</string>
+    <string name="connect_register_success_title">Account Created</string>
+
+    <string name="connect_register_success_message">Your account has been created, and is ready for you to use!</string>
+    <string name="connect_register_success_button">OK</string>
+    <string name="connect_verify_title">Unlock Options</string>
+    <string name="connect_verify_message">Please configure a method below to unlock both your device and PersonalID account</string>
+    <string name="connect_verify_message_pin">Please configure a PIN or pattern below to unlock both your device and PersonalID account</string>
+    <string name="connect_verify_message_fingerprint">Please configure your fingerprint below to unlock both your device and PersonalID account</string>
+    <string name="connect_verify_use_fingerprint_long">Use Fingerprint to Connect</string>
+    <string name="connect_verify_fingerprint_configured">Your fingerprint has already been configured and will be used to unlock PersonalID.</string>
+    <string name="connect_verify_configure_fingerprint">Configure Fingerprint</string>
+    <string name="connect_verify_use_pin_long">Use PIN to Connect</string>
+
+    <string name="connect_verify_configure_pin">Configure PIN</string>
+    <string name="connect_verify_agree">Agree &amp; Continue</string>
+
+    <string name="connect_verify_phone_title">Verification Code</string>
+    <string name="connect_verify_phone_label">We attempted to send an SMS to your phone number ending with %s.</string>
+    <string name="connect_verify_phone_resend">Didn\'t receive your code? Resend</string>
+    <string name="connect_verify_phone_resend_code">Resend Code</string>
+    <string name="connect_verify_skip_phone_number">I see you\'re a demo user, so we\'ll skip the OTP</string>
+
+    <string name="connect_verify_phone_resend_wait">Didn\'t receive your code? Resend in %d s</string>
+    <string name="connect_verify_phone_change">Change Number</string>
+
+    <string name="connect_verify_phone_verify">Verify code</string>
+
+    <string name="connect_messaging_title">Messaging</string>
+    <string name="connect_messaging_channel_list_title">Channels</string>
+    <string name="connect_messaging_message_notification_title">🔔 New Message 🔔</string>
+    <string name="connect_messaging_message_notification_message">You received a new message from %s, press here to view.</string>
+    <string name="connect_messaging_channel_notification_title">🔔 New Channel 🔔</string>
+    <string name="connect_messaging_channel_notification_message">A new messaging channel is available from %s, press here to view</string>
+    <string name="connect_messaging_send_message_fail_msg">Fail to send message</string>
+    <string name="connect_messaging_retrieve_messages_fail">Failed to retrieve messages</string>
+    <string name="connect_messaging_resubscribe_dialog_title">Resubscribe to %s</string>
+    <string name="connect_messaging_resubscribe_dialog_body">Are you sure you want to resubscribe to the %s messaging channel?</string>
+    <string name="connect_messaging_resubscribe_dialog_resubscribe">Resubscribe</string>
+    <string name="connect_messaging_resubscribe_dialog_cancel">Cancel</string>
+    <string name="connect_messaging_unsubscribe_dialog_title">Unsubscribe from %s</string>
+    <string name="connect_messaging_unsubscribe_dialog_body">Are you sure you want to unsubscribe from this channel? You will no longer receive messages from this opportunity.</string>
+    <string name="connect_messaging_unsubscribe_dialog_unsubscribe">Unsubscribe</string>
+    <string name="connect_messaging_unsubscribe_dialog_cancel">Cancel</string>
+    <string name="connect_messaging_channel_unsubscribe_error">Failed to unsubscribe</string>
+    <string name="connect_messaging_channel_resubscribe_error">Failed to resubscribe</string>
+    <string name="connect_messaging_channel_unsubscribe_success">Successfully unsubscribed</string>
+    <string name="connect_messaging_channel_resubscribe_success">Successfully resubscribed</string>
+    <string name="connect_messaging_channel_list_item_unsubscribed">unsubscribed</string>
+    <string name="connect_messaging_channel_list_not_subscribed">You are not subscribed to this messaging channel.</string>
+    <string name="connect_messaging_channel_menu_item_resubscribe">Resubscribe</string>
+    <string name="connect_messaging_channel_menu_item_unsubscribe">Unsubscribe</string>
+    <string name="connect_send_message_hint">Type message</string>
+    <string name="connect_send_message_btn_desc">Press here to send message</string>
+    <string name="connect_messaging_pn_wrong_channel">Sorry, something went wrong, showing all available messaging channels</string>
+    <string name="connect_message_you">You</string>
+    <string name="connect_message_them">Them</string>
+    <string name="fcm_sync_failed_body_text">Click here to know more</string>
+
+    <string name="connect_last_update">Updated: %s</string>
+    <string name="connect_last_synced">Last synced: %s</string>
+    <string name="connect_sync_successful">Last synced: Just Now</string>
+    <string name="connect_sync_failed">Sync Failed, last synced: %s</string>
+    <string name="connect_app_launch_dialog_title">Launching App</string>
+    <string name="connect_app_launch_dialog_seating_message">Loading your app…</string>
+    <string name="connect_app_launch_dialog_signing_in_message">Logging in…</string>
+    <string name="connect_app_launch_dialog_syncing_message">Communicating with server…</string>
+    <string name="connect_app_launch_failed_dialog_title">Couldn\'t open the app</string>
+    <string name="connect_app_launch_failed_dialog_message">Something went wrong while opening the app. Would you like to try again?</string>
+    <string name="connect_app_launch_failed_dialog_retry">Retry</string>
+    <string name="connect_app_launch_failed_dialog_cancel">Cancel</string>
+    <string name="connect_app_launch_failed_dialog_persistent_error_message">We couldn\'t open the app after several tries. Please check your connection and try again later.</string>
+    <string name="connect_app_launch_failed_dialog_ok">OK</string>
+    <string name="connect_offline">Offline</string>
+    <string name="connect_back_online">Back Online</string>
+    <string name="connect_never">Never</string>
+    <string name="connect_title">Connect</string>
+    <string name="connect_no_jobs">You haven’t been invited to any opportunities yet. Once you’ve been invited to an opportunity, it will appear in this list.</string>
+    <string name="connect_corrupt_job_text">Failed to load this opportunity</string>
+
+
+
+    <string name="connect_learn_complete_by">Complete Project by %s</string>
+    <string name="connect_job_ended">Task ended on %s</string>
+
+    <string name="connect_learn_title">Learning Progress</string>
+    <string name="connect_fetch_learning_progress_error">Failed to fetch the learning progress</string>
+    <string name="connect_sms_invite_opportunity_not_found">Opportunity not found</string>
+
+    <string name="connect_learn_complete">Complete</string>
+    <string name="connect_learn_certificate">Certificate</string>
+
+    <string name="connect_learn_completed">Completed on %s</string>
+    <string name="connect_learn_cert_score">Score: %s</string>
+    <string name="connect_learn_complete_footer_start_visits">Start Visits</string>
+    <string name="connect_learn_warning_ended">The job has ended. You will not earn any progress for additional work.</string>
+    <string name="connect_learn_continue">Continue Learning</string>
+    <string name="connect_learn_modules_completed_label">Modules Completed</string>
+    <string name="connect_learn_unlock_assessment_caption">Complete all modules to unlock assessment.</string>
+    <string name="connect_learn_up_next_label">Up Next</string>
+    <string name="connect_learn_completed_module_label">Completed Module</string>
+    <string name="connect_learn_assessment_name">Assessment</string>
+    <string name="connect_learn_assessment_description">Pass the assessment to earn your certificate.</string>
+    <string name="connect_learn_assessment_failed_banner">You didn\'t pass the assessment. You can try again.</string>
+    <string name="connect_learn_cta_complete_assessment">Complete assessment</string>
+    <string name="connect_learn_cta_take_assessment">Take assessment</string>
+    <string name="connect_learn_cta_start">Start</string>
+    <string name="connect_delivery_earn_multi">Pay per visit:</string>
+
+    <string name="connect_delivery_go">Go To App</string>
+    <string name="connect_progress_delivery">Delivery</string>
+    <string name="connect_progress_title">Delivery Progress</string>
+    <string name="connect_progress_status">You have completed %d of %d visits.</string>
+    <string name="semi_circle_progress_value_format" cc:translatable="true">%1$d of %2$d</string>
+    <string name="connect_progress_count_format" cc:translatable="true">%1$d of %2$d</string>
+
+    <string name="connect_progress_warning_ended">The job has ended. You will not earn any progress for additional work.</string>
+    <string name="connect_progress_warning_not_started">The job has not started yet. You will not earn any progress for work.</string>
+    <string name="connect_progress_ready_for_transition_to_delivery">You have passed the assessment and are ready to deliver. View job status to proceed.</string>
+    <string name="connect_progress_warning_max_reached_single">You have completed the maximum number of visits. You will not earn any progress for additional work.</string>
+    <string name="connect_progress_warning_daily_max_reached_single">You have reached the maximum number of visits for today. You may not earn any progress for additional work.</string>
+    <string name="connect_progress_warning_max_reached_multi">You have reached the maximum number of visits for %s. </string>
+    <string name="connect_progress_warning_daily_max_reached_multi">You have reached your daily limit for %s.</string>
+    <string name="connect_progress_warning_relearn_tasks_pending">Complete assigned tasks to continue delivering services.</string>
+    <string name="connect_open_conversation_button_text">Open Conversation</string>
+    <string name="connect_progress_relearn_tasks_completed">All required tasks have been completed. You may continue with delivery activities.</string>
+    <string name="connect_download_learn">Download Learn App</string>
+    <string name="connect_downloading_learn">Downloading Learn App</string>
+    <string name="connect_downloading_delivery">Downloading Delivery App</string>
+    <string name="connect_results_summary_all">All</string>
+    <string name="connect_results_summary_pending">Pending</string>
+    <string name="connect_results_summary_rejected">Rejected</string>
+    <string name="connect_results_summary_approved">Approved</string>
+    <string name="connect_results_summary_earned">Earned</string>
+    <string name="connect_results_summary_remaining">Remaining</string>
+    <string name="connect_results_summary_remaining_days">%d in %d days</string>
+    <string name="connect_results_summary_remaining_tomorrow">%d by tomorrow</string>
+    <string name="connect_results_summary_remaining_today">%d by today</string>
+    <string name="connect_results_summary_visits_done">All Visits Done</string>
+    <string name="connect_results_summary_days_over">Days Over</string>
+
+    <string name="connect_results_summary_transferred">Transferred</string>
+    <string name="connect_payment_confirm_text">Have you been paid %d %s for %s Opportunity?</string>
+    <string name="connect_payment_confirm_yes">Yes!</string>
+    <string name="connect_payment_confirm_no">Ask later</string>
+    <string name="personalid_login_with">Login with PersonalId</string>
+    <string name="personalid_link_app_title">Link to PersonalId?</string>
+    <string name="personalid_link_app_message">Do you want to link this login to your PersonalId account? You will not need to type your password in the future.</string>
+    <string name="personalid_unlink_app_title">Unlink PersonalId?</string>
+    <string name="personalid_unlink_app_message">I see you logged in with your password although PersonalId was configured for auto-login. Would you like to sever this login from PersonalId?</string>
+    <string name="personalid_link_app_yes">Yes</string>
+    <string name="personalid_link_app_no">No</string>
+    <string name="personalid_signup">Sign up for PersonalID</string>
+
+    <string name="connect_refresh_opportunities">Refresh Opportunities</string>
+
+    <string name="connect_app_install_unknown_error">App install failed due to an unknown error</string>
+    <string name="connect_app_installed">App installed</string>
+
+    <string name="app_with_id_not_found">Required CommCare App is not installed on device</string>
+    <string name="user_suspended">User is Suspended. Please contact admin.</string>
+
+
+    <string name="enter_otp">Enter One Time Password</string>
+    <string name="create_a_new_recovery_code">Create a new Backup Code</string>
+    <string name="confirm_code">Confirm Code</string>
+    <string name="code">Code</string>
+    <string name="choose_a_6_digit_recovery_code">Choose a 6 Digit Backup Code</string>
+    <string name="sync">Sync</string>
+    <string name="back">Back</string>
+
+    <string-array name="frequency_vals">
+        <item>freq-never</item>
+        <item>freq-daily</item>
+        <item>freq-weekly</item>
+    </string-array>
+    <string-array name="frequency_vals_labels">
+        <item>Never</item>
+        <item>Daily</item>
+        <item>Weekly</item>
+    </string-array>
+    <string-array name="pref_enabled_vals">
+        <item>yes</item>
+        <item>no</item>
+    </string-array>
+    <string-array name="pref_enabled_labels">
+        <item>Enabled</item>
+        <item>Disabled</item>
+    </string-array>
+    <string-array name="pref_password_show_options_labels">
+        <item>Always Hidden</item>
+        <item>Default Show</item>
+        <item>Default Hide</item>
+    </string-array>
+    <string-array name="pref_load_form_payload_as_vals">
+        <item>incomplete</item>
+        <item>unsent</item>
+        <item>saved</item>
+    </string-array>
+    <string-array name="pref_load_form_payload_as_labels">
+        <item>Incomplete</item>
+        <item>Unsent</item>
+        <item>Saved</item>
+    </string-array>
+    <string-array name="pref_audio_quality_profile_vals">
+        <item>smallest</item>
+        <item>balanced</item>
+        <item>default</item>
+    </string-array>
+    <string-array name="pref_audio_quality_profile_labels">
+        <item>Smallest</item>
+        <item>Balanced</item>
+        <item>System Default</item>
+    </string-array>
+    <string-array name="pref_password_show_options">
+        <item>always_hidden</item>
+        <item>default_show</item>
+        <item>default_hide</item>
+    </string-array>
+    <string-array name="update_target_labels">
+        <item>Latest starred version</item>
+        <item>Latest version</item>
+        <item>Latest saved state</item>
+    </string-array>
+    <string-array name="update_target_vals">
+        <item>release</item>
+        <item>build</item>
+        <item>save</item>
+    </string-array>
+
+    <string name="micro_image_activity_title">Take Profile Photo</string>
+    <string name="image_capture_activity_title" cc:translatable="true">Take Photo</string>
+    <string name="face_capture_activity_title" cc:translatable="true">Take Face Photo</string>
+    <string name="image_capture_failed" cc:translatable="true">Failed to save photo, please try again</string>
+    <string name="camera_start_failed" cc:translatable="true">Camera failed to start</string>
+    <string name="camera_permission_denied" cc:translatable="true">Go to settings and enable camera permission to use this feature</string>
+    <string name="microimage_face_detection_mode_failed" cc:translatable="true">Face detection mode failed, switching to manual mode</string>
+    <string name="microimage_cropping_failed" cc:translatable="true">Image cropping failed, make sure the target is inside the capture area</string>
+    <string name="microimage_saving_failed" cc:translatable="true">Image couldn\'t be saved. Please try again</string>
+
+    <string name="personalid_user_photo_update_dialog_title">Update Profile Photo</string>
+    <string name="personalid_user_photo_update_dialog_message">Would you like to take a new profile photo?</string>
+    <string name="personalid_user_photo_update_dialog_continue">Continue</string>
+    <string name="personalid_user_photo_update_dialog_cancel">Cancel</string>
+    <string name="personalid_user_photo_update_success">Your profile photo has been updated successfully.</string>
+
+    <string name="personalid_manage_profile"><u>Manage Profile</u></string>
+    <string name="personalid_profile_title">Profile</string>
+    <string name="personalid_profile_edit_title">Edit Profile</string>
+    <string name="personalid_profile_section_personal_information">Personal Information</string>
+    <string name="personalid_profile_field_name">Name</string>
+    <string name="personalid_profile_field_phone">Phone Number</string>
+    <string name="personalid_profile_field_email">Email Address</string>
+    <string name="personalid_profile_forget_account">Forget PersonalID Account</string>
+    <string name="personalid_profile_edit_error_email_invalid">Enter a valid email address.</string>
+    <string name="personalid_profile_edit_error_email_required">Email is required.</string>
+    <string name="personalid_profile_edit_email_otp_notice">Updating your email address will require an OTP verification.</string>
+    <string name="personalid_profile_forget_confirm_title">Forget PersonalID?</string>
+    <string name="personalid_profile_forget_confirm_message">This will remove your PersonalID account, and you\'ll need to sign back in again before using Connect.</string>
+    <string name="personalid_profile_edit_discard_title">Discard your changes?</string>
+    <string name="personalid_profile_edit_discard_message">Your unsaved changes will be lost.</string>
+    <string name="personalid_profile_edit_discard_positive">Discard</string>
+    <string name="personalid_profile_edit_discard_negative">Keep editing</string>
+    <string name="personalid_profile_edit_otp_confirm_title">Verify your new email</string>
+    <string name="personalid_profile_edit_otp_confirm_message">We\'ll send a 6-digit code to %1$s. Enter it on the next screen to verify.</string>
+    <string name="personalid_profile_edit_otp_confirm_positive">Send Code</string>
+    <string name="personalid_profile_edit_otp_confirm_negative">Cancel</string>
+    <string name="personalid_profile_edit_save">Save</string>
+    <string name="personalid_profile_edit_cancel">Cancel</string>
+    <string name="personalid_profile_edit_save_success">Your profile has been updated successfully.</string>
+
+    <string name="connect_job_info_delivery_detail">Delivery Details</string>
+    <string name="connect_job_info_review_delivery">Review the delivery details</string>
+    <string name="connect_job_info_visit">%d maximum Visits</string>
+    <string name="connect_job_info_days">%d Days to complete</string>
+    <string name="connect_job_info_max_visit">Maximum visits per day %d</string>
+    <string name="connect_job_info_visit_charge">Earn up to %s for visit</string>
+    <string name="connect_job_info_delivery_hours">Delivery Hours</string>
+    <string name="connect_job_info_view_more">View More</string>
+    <string name="connect_job_info_download_delivery">Download Delivery </string>
+    <string name="connect_job_info_view_opportunity">View Opportunity</string>
+    <string name="connect_job_info_view_info">View Info</string>
+    <string name="connect_job_info_view_resume">Resume</string>
+    <string name="connect_job_info_view_review">Review</string>
+    <string name="connect_job_info_view_proceed">Proceed</string>
+
+    <string name="connect_opportunity_badge_new">New Opportunity</string>
+    <string name="connect_opportunity_expiry_label">Expires on</string>
+    <string name="connect_opportunity_max_earnings_label">Maximum Earnings</string>
+    <string name="connect_opportunity_learn_section_title">Learn</string>
+    <string name="connect_opportunity_learn_section_subtitle">Complete training to begin visits</string>
+    <plurals name="connect_opportunity_learn_modules_label">
+        <item quantity="one">Learn Module</item>
+        <item quantity="other">Learn Modules</item>
+    </plurals>
+    <plurals name="connect_opportunity_estimated_hours">
+        <item quantity="one">Estimated time: %d hour</item>
+        <item quantity="other">Estimated time: %d hours</item>
+    </plurals>
+    <string name="connect_opportunity_delivery_section_title">Delivery</string>
+    <string name="connect_opportunity_delivery_section_subtitle">Complete visits and submit forms to receive payment</string>
+    <string name="connect_opportunity_max_visits_label">Total Visits</string>
+    <string name="connect_opportunity_visits_per_day">Up to %d per day</string>
+    <string name="connect_opportunity_days_to_complete_label">Days to complete</string>
+    <string name="connect_opportunity_max_earnings_card_label">Maximum earnings</string>
+    <plurals name="connect_opportunity_payment_units">
+        <item quantity="one">%d payment unit</item>
+        <item quantity="other">%d payment units</item>
+    </plurals>
+    <string name="connect_opportunity_footer_start_learning">Start Learning</string>
+    <string name="connect_opportunity_footer_download_learn_app">Download Learn</string>
+    <string name="connect_opportunity_modules_footer_note">Complete the modules, pass the assessment, and earn your certificate</string>
+    <string name="connect_opportunity_footer_download_app">Download App</string>
+
+    <string name="connect_progress">Progress</string>
+    <string name="connect_payment">Payment</string>
+    <string name="connect_dashboard">Dashboard</string>
+    <string name="connect_visits">Visits</string>
+    <string name="connect_more">More</string>
+    <string name="connect_delivery_start">Start</string>
+    <string name="connect_delivery_continue_visits">Continue your visits</string>
+    <string name="connect_delivery_continue_visits_subtitle">Submit delivery forms</string>
+    <string name="connect_delivery_progress_description">You haven’t completed any lessons. Start learning to earn your certificate.</string>
+    <string name="connect_delivery_visit_progress_title">Visit Progress</string>
+    <string name="connect_delivery_total_visits_completed">total visits completed</string>
+    <string name="connect_delivery_daily_visits">Daily Visits</string>
+    <string name="connect_delivery_your_progress">Your Progress</string>
+    <string name="connect_delivery_total_earnings">Total earnings</string>
+    <string name="connect_delivery_amount_each">%1$s each</string>
+    <plurals name="connect_delivery_visits_remaining_today">
+        <item quantity="one">%1$d visit remaining today</item>
+        <item quantity="other">%1$d visits remaining today</item>
+    </plurals>
+    <string name="connect_click_to_sync_progress">Click to sync progress</string>
+    <string name="connect_visit_type_title">%s Visits</string>
+
+    <string name="connect_payment_received">Received</string>
+    <string name="connect_payment_transferred">Transferred</string>
+    <string name="connect_payment_confirm_transferred">Confirm Transferred Payment</string>
+    <string name="connect_payment_revoke_transferred">Revoke Payment Confirmation</string>
+    <string name="connect_payment_dialog_no">No</string>
+    <string name="connect_payment_dialog_yes">Yes</string>
+    <string name="connect_payment_revert">Revert</string>
+
+    <string name="connect_deactivate_account">Deactivate Account</string>
+
+    <string name="connect_job_tile_daily_limit_description">Daily Limit reached. No Payment for submitting forms</string>
+    <string name="connect_job_tile_daily_visits">Daily Visits</string>
+    <string name="connect_appbar_title_app_lock">App Lock</string>
+    <string name="connect_in_progress">In Progress</string>
+    <string name="connect_new_opportunities">New Opportunities</string>
+    <string name="connect_completed">Completed</string>
+
+    <!--    Entity List Progresss Indicators-->
+
+    <string name="entity_list_initializing" cc:translatable="true">Initializing list…</string>
+    <string name="entity_list_loading" cc:translatable="true">Loading list: %s</string>
+    <string name="entity_list_finishing" cc:translatable="true">Finishing list calculations…</string>
+
+    <string name="personalid_generic_error">A problem occurred, please configure your PersonalID account again by selecting Sign Up for PersonalID from the menu.</string>
+    <string name="personalid_generic_error_title">Logged out of PersonalID</string>
+    <string name="personalid_login_via_connect">Ready to login!\n</string>
+    <string name="personalid_failed_to_login_with_connectid">We are facing an unrecoverable error when trying to login using your PersonalID. Please login with your password or restore your PersonalID login</string>
+    <string name="personalid_name_fragment_subtitle">Please enter your name as it appears on your government-issued identification</string>
+    <string name="personalid_configuration_process_failed_title">Process Failed</string>
+    <string name="personalid_configuration_locked_account">Your account has been locked. Please contact support</string>
+    <string name="personalid_configuration_process_failed_subtitle">Unfortunately, this device did not pass the security checks required to sign up for PersonalID. Please try again on a different device.</string>
+    <string name="personalid_configuration_process_failed_play_services">Please make sure Play Store is available on your device and is updated.</string>
+    <string name="personalid_configuration_process_failed_temporary_unavailable">Temporary error in establishing your device eligibility. Please try again after a day.</string>
+    <string name="personalid_configuration_process_failed_network_error">Network error in establishing your device eligibility. Please make sure you have a good network connection and try again.</string>
+    <string name="personalid_configuration_process_failed_unexpected_error">Unable to establish device eligibility due to an unexpected error. Please contact customer support if the problem persists</string>
+    <string name="personalid_configuration_process_pin_unavailable_message">The PIN on this device is currently unavailable. Please try again later.</string>
+    <string name="personalid_configuration_process_biometric_unavailable_message">Biometrics is not currently enabled on this device. Please configure biometrics in the Android System Settings to proceed.</string>
+    <string name="personalid_configuration_process_pin_needs_update_message">The PIN on this device requires an update. Please apply any available system updates, or try again on a different device.</string>
+    <string name="personalid_configuration_process_biometric_needs_update_message">Biometrics on this device is out of date. Please apply any available system updates, or try again with a different device.</string>
+    <string name="personalid_configuration_process_biometric_no_hardware_message">PersonalID requires your device to have a fingerprint scanner. Please try again on a different device.</string>
+    <string name="personalid_photo_capture_title">Welcome %1$s</string>
+    <string name="personalid_photo_capture_subtitle">Please take a photo of yourself to complete your account setup</string>
+    <string name="personalid_photo_capture_take_photo_button">Take Photo</string>
+    <string name="personalid_photo_capture_save_photo_button">Save Photo</string>
+    <string name="personalid_this_is_not_me"><u>This is not me</u></string>
+    <string name="personalid_welcome_back_msg">Welcome back %s</string>
+    <string name="personalid_wrong_backup_message">You have entered the wrong Backup Code. Please try again. Your account will be locked after %d more incorrect attempts.</string>
+    <string name="personalid_second_device_login_title">Login on Second Device</string>
+    <string name="personalid_second_device_login_message">Logged out of %s, last used %s. PersonalID can only be logged in on one device at a time.</string>
+    <string name="personalid_second_device_login_message_no_date">Logged out of %s. PersonalID can only be logged in on one device at a time.</string>
+    <string name="personalid_error_title_login_different_device">Account in use on another device</string>
+    <string name="personalid_error_message_login_different_device">Please continue on the new device, or configure your account again.</string>
+    <string name="personalid_reconfigure">Reconfigure</string>
+    <string name="personalid_dismiss">Dismiss</string>
+    <string name="camera_permission_title" cc:translatable="true">Permission for camera</string>
+    <string name="camera_permission_msg" cc:translatable="true">In order to take a picture, CommCare needs permission to use your device camera.</string>
+    <string name="personalid_capture_photo">Capture Photo</string>
+    <string name="personalid_incorrect_otp">You have entered the wrong 6-digit passcode. Please try again.</string>
+    <string name="personalid_email_already_in_use">This email is already linked to another account. Please use a different email address.</string>
+    <string name="personalid_too_many_otp_attempts">You have made too many attempts to send OTP. Please wait and try again whenever the resend button is visible.</string>
+    <string name="personalid_otp_verification_failed_generic">Something went wrong verifying your phone number. Please try again.</string>
+    <string name="personalid_otp_verification_failed">Something went wrong. Please try again.</string>
+    <string name="personalid_location_permission_error">PersonalID requires your device to have Location Services enabled. Please enable this in your phone\'s settings before proceeding.</string>
+    <string name="personalid_grant_location_permission">Grant Location Permission</string>
+    <string name="personalid_grant_location_service">Enable Location Service</string>
+    <string name="personalid_sync_menu_title">Sync</string>
+
+    <string name="personalid_work_history_title">My Work History</string>
+    <string name="personalid_work_history">Work History</string>
+    <string name="personalid_work_history_learn_more">Learn More About Work History</string>
+    <string name="personalid_work_history_no_records_available">No work records are currently available. Click refresh, or check back later.</string>
+    <string name="personalid_work_history_earned">Earned</string>
+    <string name="personalid_work_history_pending">Pending</string>
+    <string name="personalid_work_history_sync">Sync</string>
+
+    <string name="nav_drawer_signin_register">Sign In / Register</string>
+    <string name="nav_drawer_help">Help</string>
+    <string name="nav_drawer_not_signed_in_to_personal_id">You are not signed in to PersonalID</string>
+    <string name="nav_drawer_opportunities">Opportunities</string>
+    <string name="nav_drawer_commcare_apps">CommCare Apps</string>
+    <string name="nav_drawer_switch_app_dialog_title">Log out of this app?</string>
+    <string name="nav_drawer_switch_app_dialog_message">You\'ll be logged out of this app and returned to the login screen, where you can choose another app.</string>
+    <string name="nav_drawer_switch_app_dialog_confirm">Continue</string>
+    <string name="nav_drawer_switch_app_dialog_cancel">Cancel</string>
+
+    <string name="personalid_work_history_level_1_month_active">1 Month of\nActivity</string>
+    <string name="personalid_work_history_level_2_month_active">2 Months of\nActivity</string>
+    <string name="personalid_work_history_level_3_month_active">3 Months of\nActivity</string>
+    <string name="personalid_work_history_level_6_month_active">6 Months of\nActivity</string>
+    <string name="personalid_work_history_level_9_month_active">9 Months of\nActivity</string>
+    <string name="personalid_work_history_level_12_month_active">12 Months of\nActivity</string>
+    <string name="personalid_work_history_no_pending_records">There are no pending records at the moment</string>
+
+    <string name="personalid_notification">Notifications</string>
+    <string name="pn_no_notification_available">No notifications available</string>
+
+    <string name="play_service_update_error">To use PersonalID, you need to update Google Play Services. Tap here to go to the Google Play Store to check for updates</string>
+    <string name="nav_drawer_open">Open navigation drawer</string>
+    <string name="nav_drawer_close">Close navigation drawer</string>
+
+    <string name="setup_refresh_opportunities_no_jobs">No Opportunities found</string>
+    <string name="setup_refresh_opportunities_with_jobs">New opportunities found, click on Opportunities to learn more.</string>
+
+    <string name="personalid_not_login_from_fcm_error">Please login to PersonalId to view the details</string>
+
+    <string name="just_now">Just now</string>
+    <string name="minutes_ago">%1$d minutes ago</string>
+    <string name="hours_ago">%1$d hours ago</string>
+    <string name="yesterday">Yesterday %1$s</string>
+
+    <string name="personalid_authentication_failed">Authenticating the biometrics on your Android device has failed. Please apply any available system updates, or try again with a different device</string>
+    <string name="no_channel_msg">You\'re not subscribed to any messaging channels. Once you have been added to a channel, it will appear in this list</string>
+
+    <string name="personalid_using_your_location">Using your location</string>
+    <string name="personalid_no_location_found">We can\'t find your location</string>
+    <string name="personalid_tooltip_location_failure_message">We use location data to ensure secure usage of this application.\n\nTo continue, please enable location permissions in settings, or try again later.</string>
+    <string name="personalid_tooltip_location_success_message">We use location data to ensure secure usage of this application.\n\n<a href="https://www.dimagi.com/terms/latest/privacy/">Click here for more info</a>.</string>
+
+    <string name="network_forbidden_error">Access denied. Please contact customer support if the problem persists.</string>
+    <string name="error">Error</string>
+    <string name="failed_to_start_learning">Failed to start learning</string>
+    <string name="failed_to_update_payment">Failed to update payment</string>
+
+    <string name="personalid_biometric_error_cancelled">Biometric setup was cancelled. Please contact customer support if the problem persists.</string>
+    <string name="personalid_biometric_error_lockout">Too many attempts. Please wait and try again.</string>
+    <string name="personalid_biometric_error_lockout_permanent">Too many failed attempts. Please unlock your device and try again.</string>
+    <string name="personalid_biometric_error_timeout">Biometric operation timed out. Please contact customer support if the problem persists.</string>
+    <string name="personalid_biometric_error_cannot_configure">We couldn’t configure biometrics on your device. Please contact customer support if the problem persists.</string>
+
+    <string name="connect_complete_by">Task ends on %s</string>
+    <string name="connect_expired_on">Task ended on %s</string>
+
+    <string name="network_notification_service_starting">Starting network service</string>
+    <string name="network_notification_service_running">Running network requests...</string>
+    <string name="network_notification_service_downloading_files">Downloading application files...</string>
+    <string name="form_attachment_limit_reached_title" cc:translatable="true">Attachment limit reached</string>
+    <string name="form_attachment_limit_reached" cc:translatable="true">This form has reached the maximum of %s attachments. To add a new one, remove an existing attachment first.</string>
+
+    <string name="cannot_navigate_during_form_save" cc:translatable="true">Can\'t leave page while saving form</string>
+
+    <string name="recording_in_progress" cc:translatable="true">RECORDING</string>
+    <string name="recording_paused" cc:translatable="true">PAUSED</string>
+    <string name="recording_notification_save_action" cc:translatable="true">Save</string>
+    <string name="recording_notification_pause_action" cc:translatable="true">Pause</string>
+    <string name="recording_notification_resume_action" cc:translatable="true">Resume</string>
+
+    <string name="clear_search_button_description">Clear query</string>
+    <string name="face_capture_manual_instructions" cc:translatable="true">Center a face inside the green outline then tap the white button to take the picture</string>
+    <string name="face_capture_auto_instructions" cc:translatable="true">Center a face inside the green outline and hold still, the photo will capture automatically</string>
+    <string name="face_capture_auto_mode" cc:translatable="true">Auto capture</string>
+    <string name="face_capture_manual_mode" cc:translatable="true">Manual capture</string>
+    <string name="face_capture_front_camera_unavailable" cc:translatable="true">Front-facing camera is not available, the option to switch cameras will be disabled</string>
+    <string name="face_capture_retake_photo" cc:translatable="true">Retake photo</string>
+  
+    <string name="permission_microphone_title" cc:translatable="true">Permission for Microphone</string>
+    <string name="permission_microphone_message" cc:translatable="true">In order to record an audio, CommCare needs permission to use your microphone.</string>
+    <string name="permission_microphone_denial_message" cc:translatable="true">CommCare doesn\'t have the permission to use your microphone. Please enable via Android\'s settings.</string>
+</resources>

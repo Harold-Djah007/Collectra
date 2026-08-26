@@ -1,0 +1,5 @@
+couchdbkit
+
+# simple memoize decorator with support for kwargs
+-e git+git://github.com/rlgomes/memoize.git#egg=memoize
+

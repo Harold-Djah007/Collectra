@@ -1,0 +1,20 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% js_entry "motech/js/connection_settings_detail" %}
+
+{% block page_content %}
+  {% if form.instance.pk %}
+    {% registerurl "test_connection_settings" domain form.instance.pk %}
+  {% else %}
+    {% registerurl "test_connection_settings" domain %}
+  {% endif %}
+
+  <h2>{% trans "Add Connection Settings" %}</h2>
+  <div class="spacer"></div>
+
+  {% crispy form %}
+
+{% endblock %}

@@ -1,0 +1,299 @@
+import datetime
+import logging
+from contextlib import contextmanager
+
+from ddtrace import tracer
+from django.conf import settings
+
+from corehq.form_processor.exceptions import MissingFormXml
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import Attachment, XFormInstance
+from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.form_processor.utils.metadata import scrub_form_meta
+from corehq.util.soft_assert.api import soft_assert
+from couchforms import XMLSyntaxError
+from couchforms.exceptions import MissingXMLNSError
+from dimagi.utils.couch import release_lock
+
+
+@contextmanager
+def locked_form(xform, interface):
+    """Context manager that locks a form and checks/prepares for duplicates
+
+    The lock is acquired on context manager enter and released on exit.
+
+    Historically this locked both the new (possibly duplicate) form ID
+    as well as any new ID generated in the process of handling a
+    duplicate form ID. The submitted form ID is still locked, but the
+    newly generated ID is not since it should be globally unique.
+    """
+    context = [xform]
+    lock = interface.acquire_lock_for_xform(xform.form_id)
+    try:
+        if interface.is_duplicate(xform.form_id):
+            new_form, dup_form = _handle_id_conflict(xform, xform.domain)
+            if dup_form:
+                assert dup_form.form_id != new_form.form_id, (new_form, dup_form)
+                context = [new_form, dup_form]
+            else:
+                assert new_form is xform, (new_form, xform)
+        yield context
+    finally:
+        release_lock(lock, degrade_gracefully=True)
+
+
+class FormProcessingResult(object):
+
+    def __init__(self, submitted_form):
+        self.submitted_form = submitted_form
+        self.interface = FormProcessorInterface(self.submitted_form.domain)
+
+    def get_locked_forms(self):
+        """Get a context manager whose context is a list of forms
+
+        The first form in the list is the newly submitted form, and will
+        always be present. The second is a form with a duplicate form ID
+        (if one exists); it will be omitted if there is no duplicate.
+        """
+        return locked_form(self.submitted_form, self.interface)
+
+
+@tracer.wrap(name='submission.process_form_xml')
+def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None, instance_json=None):
+    """
+    Create a new xform to ready to be saved to a database in a thread-safe manner
+
+    attachments is a dictionary of the request.FILES that are not the xform;
+    key is parameter name, value is
+    `django.core.files.uploadedfile.UploadedFile` object.
+
+    :returns: FormProcessingResult containing the new XFormInstance
+    or raises an exception if anything goes wrong.
+    """
+    attachments = attachments or {}
+
+    try:
+        return _create_new_xform(
+            domain,
+            instance_xml,
+            attachments=attachments,
+            auth_context=auth_context,
+            instance_json=instance_json,
+        )
+    except (MissingXMLNSError, XMLSyntaxError) as e:
+        return _get_submission_error(domain, instance_xml, e, auth_context)
+
+
+def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None, instance_json=None):
+    """
+    create but do not save an XFormInstance from an xform payload (xml_string)
+    optionally set the doc _id to a predefined value (_id)
+    return doc _id of the created doc
+
+    `process` is transformation to apply to the form right before saving
+    This is to avoid having to save multiple times
+
+    If xml_string is bad xml
+      - raise couchforms.XMLSyntaxError
+      :param domain:
+
+    :returns: FormProcessingResult or raises an error
+    """
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    interface = FormProcessorInterface(domain)
+
+    assert attachments is not None
+    if instance_json is None:
+        instance_json = convert_xform_to_json(instance_xml)
+    if not instance_json.get('@xmlns'):
+        raise MissingXMLNSError("Form is missing a required field: XMLNS")
+
+    adjust_datetimes(instance_json)
+
+    xform = interface.new_xform(instance_json)
+    xform.domain = domain
+    xform.auth_context = auth_context
+
+    # Call flow:
+    #
+    #     SubmissionPost.run()
+    #     |
+    #     +-- process_xform_xml()
+    #     |   |
+    #     |   +-- _create_new_xform()  <-- you are here
+    #     |
+    #     +-- self._invalidate_caches()
+    #         |
+    #         +-- instance.metadata
+    #             |
+    #             +-- XFormInstance.form_data
+    #                 |
+    #                 +-- XFormInstance._form_json  <-- cached scrubbed instance_json
+    #
+    # Scrub and cache `instance_json` in `XFormInstance._form_json` the way
+    # that `XFormInstance.form_data` does, so that `XFormInstance.form_data`
+    # doesn't have to fetch the form XML and convert it to JSON again.
+    scrub_form_meta(xform.form_id, instance_json)
+    xform._form_json = instance_json
+
+    # Maps all attachments to uniform format and adds form.xml to list before storing
+    attachments = [
+        Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type)
+        for a in attachments.items()
+    ]
+    attachments.append(Attachment(name='form.xml', raw_content=instance_xml, content_type='text/xml'))
+    interface.store_attachments(xform, attachments)
+
+    assert xform.is_normal
+    return FormProcessingResult(xform)
+
+
+def _get_submission_error(domain, instance_xml, error, auth_context):
+    """
+    Handle's a hard failure from posting a form to couch.
+    :returns: xform error instance with raw xml as attachment
+    """
+    try:
+        message = str(error)
+    except UnicodeDecodeError:
+        message = str(str(error), encoding='utf-8')
+
+    xform = FormProcessorInterface(domain).submission_error_form_instance(instance_xml, message)
+    xform.auth_context = auth_context
+    return FormProcessingResult(xform)
+
+
+def _handle_id_conflict(xform, domain):
+    """
+    For id conflicts, we check if the files contain exactly the same content,
+    If they do, we just log this as a dupe. If they don't, we deprecate the
+    previous form and overwrite it with the new form's contents.
+
+    :returns: A two-tuple: `(<new form>, <duplicate form or None>)`
+    The new form may have a different `form_id` than `xform.form_id`.
+    """
+
+    assert domain
+    conflict_id = xform.form_id
+
+    interface = FormProcessorInterface(domain)
+    if interface.is_duplicate(conflict_id, domain):
+        # It looks like a duplicate/edit in the same domain so pursue that workflow.
+        logging.info('Handling duplicate doc id %s for domain %s', conflict_id, domain)
+        return _handle_duplicate(xform)
+    else:
+        # the same form was submitted to two domains, or a form was submitted with
+        # an ID that belonged to a different doc type. these are likely developers
+        # manually testing or broken API users. just resubmit with a generated ID.
+        interface.assign_new_id(xform)
+        logging.info('Reassigned doc id from %s to %s', conflict_id, xform.form_id)
+        return xform, None
+
+
+def _handle_duplicate(new_doc):
+    """
+    Handle duplicate xforms and xform editing ('deprecation')
+
+    existing doc *must* be validated as an XFormInstance in the right domain
+    and *must* include inline attachments
+
+    :returns: A two-tuple: `(<new form>, <duplicate form or None>)`
+    The new form may have a different `form_id` than `new_doc.form_id`.
+    """
+    interface = FormProcessorInterface(new_doc.domain)
+    conflict_id = new_doc.form_id
+    existing_doc = XFormInstance.objects.get_with_attachments(conflict_id, new_doc.domain)
+
+    is_icds = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+    try:
+        if is_icds and new_doc.metadata.deviceID == existing_doc.metadata.deviceID:
+            # ICDS does not use 'edit form' functionality via the web and form editing is not possible
+            # on mobile devices so it's safe to assume this is a duplicate without checking md5 etc.
+            duplicate = interface.deduplicate_xform(new_doc)
+            return duplicate, existing_doc
+
+        existing_md5 = existing_doc.xml_md5()
+    except MissingFormXml:
+        existing_md5 = new_md5 = None
+        if not existing_doc.is_error:
+            existing_doc.problem = 'Missing form.xml'
+    else:
+        # only do this if we need to do the comparison
+        new_md5 = new_doc.xml_md5()
+
+    if existing_md5 is None or existing_md5 != new_md5:
+
+        def _deprecate_old_form():
+            existing, new = apply_deprecation(existing_doc, new_doc, interface)
+            return new, existing
+
+        def _replace_old_form():
+            interface.assign_new_id(existing_doc)
+            existing_doc.orig_id = new_doc.form_id
+            existing_doc.save()
+            return new_doc, None
+
+        _soft_assert = soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)
+        if new_doc.xmlns != existing_doc.xmlns:
+            # if the XMLNS has changed this probably isn't a form edit
+            # it could be a UUID clash (yes we've had that before)
+            # Assign a new ID to the form and process as normal + notify_admins
+            xform = interface.assign_new_id(new_doc)
+            _soft_assert(
+                False, "Potential UUID clash", {
+                    'incoming_form_id': conflict_id,
+                    'existing_form_id': existing_doc.form_id,
+                    'new_form_id': xform.form_id,
+                    'incoming_xmlns': new_doc.xmlns,
+                    'existing_xmlns': existing_doc.xmlns,
+                    'domain': new_doc.domain,
+                }
+            )
+            return xform, None
+        else:
+            if existing_doc.is_error:
+                # edge case from ICDS where a form errors and then future re-submissions of the same
+                # form do not have the same MD5 hash due to a bug on mobile:
+                # see https://dimagi-dev.atlassian.net/browse/ICDS-376
+                if not existing_doc.initial_processing_complete:
+                    # since we have a new form and the old one was not successfully processed
+                    # we can effectively ignore this form and process the new one as normal
+                    return _replace_old_form()
+                elif not interface.form_has_case_transactions(existing_doc.form_id):
+                    # likely an error during saving
+                    return _replace_old_form()
+                else:
+                    return _deprecate_old_form()
+            else:
+                # if the form contents are not the same:
+                #  - "Deprecate" the old form by making a new document with the same contents
+                #    but a different ID and a doc_type of XFormDeprecated
+                #  - Save the new instance to the previous document to preserve the ID
+                return _deprecate_old_form()
+    else:
+        # follow standard dupe handling, which simply saves a copy of the form
+        # but a new doc_id, and a doc_type of XFormDuplicate
+        duplicate = interface.deduplicate_xform(new_doc)
+        return duplicate, existing_doc
+
+
+def apply_deprecation(existing_xform, new_xform, interface=None):
+    # if the form contents are not the same:
+    #  - "Deprecate" the old form by making a new document with the same contents
+    #    but a different ID and a doc_type of XFormDeprecated
+    #  - Save the new instance to the previous document to preserve the ID
+
+    interface = interface or FormProcessorInterface(existing_xform.domain)
+    interface.copy_attachments(existing_xform, new_xform)
+    interface.copy_form_operations(existing_xform, new_xform)
+    new_xform.form_id = existing_xform.form_id
+    existing_xform = interface.assign_new_id(existing_xform)
+    existing_xform.orig_id = new_xform.form_id
+
+    # and give the new doc server data of the old one and some metadata
+    new_xform.received_on = existing_xform.received_on
+    new_xform.deprecated_form_id = existing_xform.form_id
+    new_xform.edited_on = datetime.datetime.utcnow()
+    existing_xform.edited_on = new_xform.edited_on
+
+    return interface.apply_deprecation(existing_xform, new_xform)

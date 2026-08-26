@@ -1,0 +1,50 @@
+{% extends base_container_template|default:"registration/email/base_templates/_base.html"%}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    Almost there, {{ full_name }}--please activate your CommCare Account!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    You are almost in, {{ first_name }}!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ registration_link }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Activate My Account
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    Thanks for signing up for CommCare. Your new project space is
+    waiting for you!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% if request.user_agent.is_mobile %}
+    {% blocktrans %}
+      Please make sure to activate your account from your desktop computer,
+      as App Building is not optimized for mobile devices.
+    {% endblocktrans %}
+  {% else %}
+    {% blocktrans %}
+      Simply activate your account to start collecting better data
+      anywhere in the world.
+    {% endblocktrans %}
+  {% endif %}
+{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because we received a new user request
+  {% endblocktrans %}
+{% endblock %}

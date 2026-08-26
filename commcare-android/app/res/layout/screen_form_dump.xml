@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:viewBindingIgnore="true">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/screen_bulk_image1"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
+            android:paddingLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="0dp"
+            android:scaleType="fitStart"
+            android:maxHeight="83dp"
+            android:maxWidth="442dp"
+            app:srcCompat="@drawable/commcare_by_dimagi"
+            android:layout_marginEnd="8dp"
+            android:paddingStart="8dp"></ImageView>
+
+        <RelativeLayout
+            android:id="@+id/screen_bulk_form_frame_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp">
+
+            <TextView
+                android:id="@+id/screen_bulk_form_prompt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_margin="10dp"
+                android:gravity="center"
+                android:text="From here you can dump your forms to an SD card or submit the forms on your SD card"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/screen_bulk_form_dump"
+                android:layout_width="match_parent"
+                android:layout_margin="10dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/screen_bulk_form_prompt"
+                android:text="Dump Forms"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/screen_bulk_form_submit"
+                android:layout_margin="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/screen_bulk_form_dump"
+                android:text="Submit Forms"/>
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/screen_bulk_form_messages"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:text="Output Message"/>
+
+    </LinearLayout>
+</ScrollView>

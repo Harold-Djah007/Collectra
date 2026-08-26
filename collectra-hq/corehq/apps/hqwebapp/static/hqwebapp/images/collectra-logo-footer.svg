@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Collectra</title>
+  <desc id="desc">Collectra connected data mark</desc>
+  <circle cx="32" cy="32" r="25" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-dasharray="36 14" transform="rotate(-25 32 32)"/>
+  <circle cx="32" cy="32" r="14" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-dasharray="17 9" transform="rotate(20 32 32)"/>
+  <circle cx="32" cy="32" r="4.5" fill="#ffffff"/>
+  <circle cx="52" cy="20" r="3.5" fill="#ffffff"/>
+  <circle cx="15" cy="44" r="3.5" fill="#ffffff"/>
+</svg>

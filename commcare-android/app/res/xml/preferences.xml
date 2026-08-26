@@ -1,0 +1,16 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <androidx.preference.ListPreference
+        android:id="@+id/font_size"
+        android:defaultValue="21"
+        android:dialogTitle="@string/change_font_size"
+        android:entries="@array/font_size_entries"
+        android:entryValues="@array/font_size_entry_values"
+        android:key="font_size"
+        android:title="@string/font_size"/>
+
+    <CheckBoxPreference
+        android:id="@+id/tray_help"
+        android:defaultValue="false"
+        android:key="help_mode_tray"
+        android:title="@string/preference_help_mode_tray"/>
+</PreferenceScreen>

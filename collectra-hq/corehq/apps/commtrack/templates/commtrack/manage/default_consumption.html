@@ -1,0 +1,32 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block page_content %}
+  <div class="row">
+    <div class="col-md-6">
+      <p>
+        {% blocktrans %}
+          Use this page to edit the default monthly consumption
+          values for your products. These will be used if there
+          is not enough information to compute an accurate value.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <fieldset>
+      <legend>{% trans 'Edit Default Monthly Consumption' %}</legend>
+      {% crispy form %}
+    </fieldset>
+    <div class="form-actions row">
+      <div class="field-control">
+        <button type="submit" class="btn btn-primary">
+          {% trans "Update Default Consumption Info" %}
+        </button>
+      </div>
+    </div>
+  </form>
+{% endblock %}

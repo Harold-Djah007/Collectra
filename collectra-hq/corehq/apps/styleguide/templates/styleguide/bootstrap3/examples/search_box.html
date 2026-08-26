@@ -1,0 +1,11 @@
+<div id="search-box-example">
+  <search-box data-apply-bindings="false"
+              params="value: query,
+                        action: search,
+                        immediate: true,
+                        placeholder: 'Search...'"></search-box>
+  <br><br>
+  <ul class="list-group" data-bind="foreach: items">
+    <li class="list-group-item" data-bind="text: $data"></li>
+  </ul>
+</div>

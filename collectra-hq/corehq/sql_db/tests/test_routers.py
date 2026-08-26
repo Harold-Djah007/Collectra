@@ -1,0 +1,78 @@
+from django.db import DEFAULT_DB_ALIAS
+from django.test import SimpleTestCase
+from django.test.utils import override_settings
+
+from unittest.mock import patch
+
+from corehq.sql_db.routers import (
+    SYNCLOGS_APP,
+    allow_migrate,
+    get_load_balanced_app_db,
+)
+from corehq.sql_db.tests.test_connections import _get_db_config
+
+from .utils import ignore_databases_override_warning
+
+
+@ignore_databases_override_warning
+class AllowMigrateTest(SimpleTestCase):
+
+    @override_settings(
+        SYNCLOGS_SQL_DB_ALIAS=DEFAULT_DB_ALIAS,
+        USE_PARTITIONED_DATABASE=False,
+        DATABASES={
+            DEFAULT_DB_ALIAS: {},
+            'synclogs': {
+                'NAME': 'commcarehq_synclogs',
+                'USER': 'commcarehq',
+                'HOST': 'hqdb0', 'PORT': 5432
+            },
+        }
+    )
+    def test_synclogs_default(self):
+        self.assertIs(True, allow_migrate(DEFAULT_DB_ALIAS, SYNCLOGS_APP))
+        self.assertIs(False, allow_migrate('synclogs', SYNCLOGS_APP))
+
+    @override_settings(
+        SYNCLOGS_SQL_DB_ALIAS='synclogs',
+        USE_PARTITIONED_DATABASE=True,
+        DATABASES={
+            DEFAULT_DB_ALIAS: {},
+            'synclogs': {
+                'NAME': 'commcarehq_synclogs',
+                'USER': 'commcarehq',
+                'HOST': 'hqdb0', 'PORT': 5432
+            },
+        }
+    )
+    def test_synclogs_db(self):
+        self.assertIs(False, allow_migrate(DEFAULT_DB_ALIAS, SYNCLOGS_APP))
+        self.assertIs(True, allow_migrate('synclogs', SYNCLOGS_APP))
+
+    @override_settings(DATABASES={'default': {}, 'synclogs': {}})
+    def test_synclogs_non_partitioned(self):
+        self.assertIs(False, allow_migrate('synclogs', 'accounting'))
+        self.assertIs(True, allow_migrate(None, 'accounting'))
+        self.assertIs(True, allow_migrate(DEFAULT_DB_ALIAS, 'accounting'))
+
+
+@ignore_databases_override_warning
+@patch('corehq.sql_db.util.get_standby_databases', return_value=set())
+@patch('corehq.sql_db.util.get_standbys_with_acceptible_delay', return_value=set())
+def test_load_balanced_read_apps(_, __):
+    load_balanced_apps = {
+        'users': [
+            ('users_db1', 5),
+        ]
+    }
+
+    with override_settings(
+        LOAD_BALANCED_APPS=load_balanced_apps,
+        DATABASES={
+            DEFAULT_DB_ALIAS: _get_db_config('default'),
+            'users_db1': _get_db_config('users_db1')}):
+
+        assert get_load_balanced_app_db('users', default="default_option") == 'users_db1'
+
+    # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
+    assert get_load_balanced_app_db('users', default='default_option') == 'default_option'

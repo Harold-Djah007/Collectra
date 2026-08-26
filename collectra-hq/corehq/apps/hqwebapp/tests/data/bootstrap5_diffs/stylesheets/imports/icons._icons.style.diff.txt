@@ -1,0 +1,34 @@
+--- 
++++ 
+@@ -11,11 +11,11 @@
+     }
+     &:hover i,
+     &.on i {
+-        color: @cc-att-pos-mid;
++        color: $cc-att-pos-mid;
+     }
+     .popover {
+         width: 300px;
+-        color: @text-color;
++        color: $text-color;
+     }
+ }
+ 
+@@ -23,14 +23,14 @@
+   width: 100%;
+   line-height: 30px;
+   text-align: center;
+-  color: @cc-brand-mid;
++  color: $cc-brand-mid;
+   &:hover {
+-    color: @cc-brand-low;
++    color: $cc-brand-low;
+   }
+ }
+ 
+ // Make accordion icons display down/left depending on collapsed status
+-a[data-toggle="collapse"].collapsed {
++a[data-bs-toggle="collapse"].collapsed {
+   .fa-angle-double-down::before {
+     content: "\f101" !important;
+   }

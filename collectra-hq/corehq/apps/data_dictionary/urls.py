@@ -1,0 +1,35 @@
+from django.urls import path
+from django.urls import re_path as url
+
+from corehq.apps.data_dictionary.views import (
+    DataDictionaryView,
+    ExportDataDictionaryView,
+    UploadDataDictionaryView,
+    create_case_type,
+    data_dictionary_json_case_properties,
+    data_dictionary_json_case_types,
+    delete_case_type,
+    deprecate_or_restore_case_type,
+    update_case_property,
+    update_case_property_description,
+)
+from corehq.apps.hqwebapp.decorators import waf_allow
+
+urlpatterns = [
+    path("json/", data_dictionary_json_case_types, name='data_dictionary_json_case_types'),
+    # Due to lack of validation in some places, case_type_name may contain spaces
+    # and other special characters not normally allowed in case type names.
+    url(r"^json/(?P<case_type_name>.*)/$", data_dictionary_json_case_properties,
+        name='data_dictionary_json_case_properties'),
+    url(r"^create_case_type/$", create_case_type, name='create_case_type'),
+    url(r"^deprecate_or_restore_case_type/(?P<case_type_name>.*)/$", deprecate_or_restore_case_type,
+        name='deprecate_or_restore_case_type'),
+    url(r"^delete_case_type/(?P<case_type_name>.*)/$", delete_case_type, name='delete_case_type'),
+    url(r"^update_case_property/$", update_case_property, name='update_case_property'),
+    url(r"^update_case_property_description/$", update_case_property_description,
+        name='update_property_description'),
+    url(r"^export/$", ExportDataDictionaryView.as_view(), name=ExportDataDictionaryView.urlname),
+    url(r"^$", DataDictionaryView.as_view(), name=DataDictionaryView.urlname),
+    url(r"^import$", waf_allow('XSS_BODY')(UploadDataDictionaryView.as_view()),
+        name=UploadDataDictionaryView.urlname),
+]

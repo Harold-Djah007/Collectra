@@ -1,0 +1,313 @@
+
+/* Professional UI layer
+ * Visual-only polish: preserves existing structure, navigation, forms, tables and behavior.
+ */
+:root {
+  --pro-bg: #f6f8fb;
+  --pro-surface: #ffffff;
+  --pro-border: #e4e9f0;
+  --pro-text: #263445;
+  --pro-muted: #6f7d8d;
+  --pro-accent: #0aa6a6;
+  --pro-accent-dark: #087f7f;
+  --collectra-navy: #173b5f;
+  --collectra-green: #4bbf73;
+  --pro-radius: 10px;
+  --pro-shadow: 0 2px 10px rgba(28, 45, 72, .06);
+  --pro-shadow-hover: 0 8px 24px rgba(28, 45, 72, .10);
+}
+
+html, body {
+  background: var(--pro-bg);
+  color: var(--pro-text);
+}
+
+body {
+  font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hq-container {
+  min-height: 100vh;
+}
+
+/* Navigation: cleaner and lighter without changing its structure */
+.navbar,
+.hq-navbar,
+nav.navbar {
+  border-bottom: 1px solid var(--pro-border);
+  box-shadow: 0 1px 5px rgba(28, 45, 72, .05);
+}
+
+.navbar .nav > li > a,
+.navbar-nav > li > a {
+  transition: background-color .16s ease, color .16s ease;
+}
+
+.navbar .nav > li > a:hover,
+.navbar-nav > li > a:hover {
+  border-radius: 7px;
+}
+
+/* Common page containers/cards */
+.card,
+.well,
+.panel,
+.form-horizontal,
+.dataTables_wrapper,
+.report-container,
+.hq-card {
+  border-color: var(--pro-border);
+  border-radius: var(--pro-radius);
+}
+
+.card,
+.well,
+.panel {
+  background: var(--pro-surface);
+  box-shadow: var(--pro-shadow);
+}
+
+.card,
+.panel {
+  overflow: hidden;
+}
+
+.panel-heading,
+.card-header {
+  background: #fbfcfe;
+  border-bottom-color: var(--pro-border);
+  font-weight: 700;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--pro-text);
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+
+.text-muted,
+.help-block,
+.form-text {
+  color: var(--pro-muted) !important;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 7px;
+  font-weight: 600;
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  box-shadow: 0 2px 6px rgba(47, 111, 237, .18);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(47, 111, 237, .24);
+}
+
+/* Inputs/selects */
+.form-control,
+select.form-control,
+textarea.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="search"] {
+  border-color: #d8e0ea;
+  border-radius: 7px;
+  box-shadow: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus,
+input:focus {
+  border-color: var(--pro-accent);
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, .10);
+}
+
+/* Tables */
+.table {
+  background: var(--pro-surface);
+}
+
+.table > thead > tr > th {
+  background: #f8fafc;
+  color: #536274;
+  border-bottom: 1px solid var(--pro-border);
+  font-size: .86rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.table > tbody > tr > td {
+  border-top-color: #edf1f5;
+}
+
+.table-hover > tbody > tr:hover {
+  background: #f8fbff;
+}
+
+/* Tabs */
+.nav-tabs {
+  border-bottom-color: var(--pro-border);
+}
+
+.nav-tabs > li > a {
+  border-radius: 7px 7px 0 0;
+  font-weight: 600;
+}
+
+/* Dropdowns */
+.dropdown-menu {
+  border: 1px solid var(--pro-border);
+  border-radius: 9px;
+  box-shadow: 0 10px 30px rgba(28, 45, 72, .12);
+  padding: 6px;
+}
+
+.dropdown-menu > li > a,
+.dropdown-menu .dropdown-item {
+  border-radius: 6px;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 8px;
+  border-width: 1px;
+}
+
+/* Pagination */
+.pagination > li > a,
+.pagination > li > span {
+  border-color: var(--pro-border);
+  border-radius: 6px;
+  margin: 0 2px;
+}
+
+/* Data tables / report controls */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper select {
+  border-radius: 7px;
+}
+
+table.dataTable thead th {
+  border-bottom-color: var(--pro-border);
+}
+
+/* Modals */
+.modal-content {
+  border: 1px solid var(--pro-border);
+  border-radius: 12px;
+  box-shadow: 0 18px 55px rgba(28, 45, 72, .18);
+}
+
+.modal-header {
+  border-bottom-color: var(--pro-border);
+}
+
+.modal-footer {
+  border-top-color: var(--pro-border);
+}
+
+/* Breadcrumbs */
+.breadcrumb {
+  background: transparent;
+  padding-left: 0;
+  color: var(--pro-muted);
+}
+
+/* Small visual details */
+hr {
+  border-top-color: var(--pro-border);
+}
+
+a {
+  transition: color .12s ease;
+}
+
+.badge,
+.label {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* Keep legacy/functional UI intact; only improve presentation on narrow screens. */
+@media (max-width: 767px) {
+  .card, .panel, .well {
+    border-radius: 8px;
+  }
+
+  .btn {
+    max-width: 100%;
+  }
+}
+
+
+/* Collectra identity: small branding layer on top of the existing UI.
+ * Keeps the existing layout and interaction model intact.
+ */
+.navbar-hq-main-menu .collectra-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  text-decoration: none;
+}
+
+.navbar-hq-main-menu .collectra-brand-mark {
+  width: 38px;
+  height: 38px;
+  display: block;
+}
+
+.navbar-hq-main-menu .collectra-brand-name {
+  color: var(--collectra-navy);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.navbar-hq-main-menu .navbar-brand:hover .collectra-brand-name,
+.navbar-hq-main-menu .navbar-brand:focus .collectra-brand-name {
+  color: var(--pro-accent-dark);
+  text-decoration: none;
+}
+
+#hq-navigation .navbar-nav .nav-link:hover,
+#hq-navigation .navbar-nav .nav-link:focus {
+  color: var(--pro-accent-dark);
+}
+
+#hq-content h1 {
+  color: var(--collectra-navy);
+}
+
+#dashboard-tiles .card-header a,
+#dashboard-tiles .card-header span {
+  color: var(--collectra-navy);
+}
+
+#dashboard-tiles .card-dashboard .dashboard-icon {
+  color: var(--pro-accent);
+}
+
+/* Collectra navigation finishing touch */
+.navbar-hq-main-menu .collectra-brand-name {
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+.navbar-hq-main-menu {
+  box-shadow: 0 2px 12px rgba(20, 40, 70, .06);
+}

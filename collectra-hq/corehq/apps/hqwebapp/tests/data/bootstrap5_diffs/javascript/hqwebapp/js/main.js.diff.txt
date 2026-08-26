@@ -1,0 +1,135 @@
+--- 
++++ 
+@@ -2,8 +2,9 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ import googleAnalytics from "analytix/js/google";
++import { Modal } from "bootstrap5";
+ import "hqwebapp/js/hq_extensions.jquery";
+ import "jquery.cookie/jquery.cookie";
+ import "jquery-textchange/jquery.textchange";
+@@ -33,11 +34,11 @@
+     wrap = wrap === undefined ? true : wrap;
+     var el = $(
+         '<div class="hq-help">' +
+-            '<a href="#" tabindex="-1">' +
++            '<a href="#" tabindex="-1" data-bs-toggle="popover">' +
+                 '<i class="fa fa-question-circle icon-question-sign"></i></a></div>',
+     );
+     _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
+-        $('a', el).data(attr, opts[attr]);
++        $('a', el).attr('data-bs-' + attr, opts[attr]);
+     });
+     if (wrap) {
+         el.hqHelp();
+@@ -92,6 +93,7 @@
+ ko.virtualElements.allowedBindings.allowDescendantBindings = true;
+ 
+ var initBlock = function ($elem) {
++
+     $('.submit').click(function (e) {
+         var $form = $(this).closest('.form, form'),
+             data = $form.find('[name]').serialize(),
+@@ -101,8 +103,6 @@
+         $.postGo(action, $.unparam(data));
+     });
+ 
+-    $(".button", $elem).button().wrap('<span />');
+-    $("input[type='submit']", $elem).button();
+     $("input[type='text'], input[type='password'], textarea", $elem);
+     $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
+ 
+@@ -145,7 +145,7 @@
+                 }).addClass(cssClass),
+                 $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-primary disabled'),
+                 $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-primary disabled'),
+-                ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
++                ui: $('<div/>').addClass('float-end savebtn-bar ' + barClass),
+                 setStateWhenReady: function (state) {
+                     if (this.state === 'saving') {
+                         this.nextState = state;
+@@ -241,9 +241,7 @@
+                 if (lastParent) {
+                     var stillAttached = lastParent.tagName.toLowerCase() === 'html';
+                     if (button.state !== 'saved' && stillAttached) {
+-                        if ($('.js-unhide-on-unsaved').length > 0) {
+-                            $('.js-unhide-on-unsaved').removeClass('hide');
+-                        }
++                        if ($('.js-unhide-on-unsaved').length > 0) {$('.js-unhide-on-unsaved').removeClass('hide');}
+                         return options.unsavedMessage || "";
+                     }
+                 }
+@@ -353,7 +351,12 @@
+ $(function () {
+     initBlock($("body"));
+ 
+-    $('#modalTrial30Day').modal('show');
++    var trialModalElement = $('#modalTrial30Day'),
++        trialModal;
++    if (trialModalElement.length) {
++        trialModal = new Modal(trialModalElement);
++        trialModal.show();
++    }
+ 
+     $(document).on('click', '.track-usage-link', function (e) {
+         var $link = $(e.currentTarget),
+@@ -425,8 +428,14 @@
+     // EULA modal
+     var eulaCookie = "tos2025";
+     if (!$.cookie(eulaCookie)) {
+-        var $modal = $("#eulaModal");
+-        if ($modal.length) {
++        var eulaModalElement = $("#eulaModal"),
++            eulaModal;
++        if (eulaModalElement.length) {
++            eulaModal = new Modal(eulaModalElement, {
++                keyboard: false,
++                backdrop: 'static',
++            });
++            eulaModal.show();
+             $("body").addClass("has-eula");
+             $("#eula-agree").click(function () {
+                 $(this).disableButton();
+@@ -434,7 +443,7 @@
+                     url: initialPageData.reverse("agree_to_eula"),
+                     method: "POST",
+                     success: function () {
+-                        $("#eulaModal").modal('hide');
++                        eulaModal.hide();
+                         $("body").removeClass("has-eula");
+                     },
+                     error: function (xhr) {
+@@ -450,21 +459,22 @@
+                     },
+                 });
+             });
+-            $modal.modal({
+-                keyboard: false,
+-                backdrop: 'static',
+-            });
+         }
+     }
+ 
+     // CDA modal
+     _.each($(".remote-modal"), function (modal) {
+-        var $modal = $(modal);
+-        $modal.on("show show.bs.modal", function () {
++        var remoteModalElement = $(modal),
++            remoteModal;
++        if (remoteModalElement.length === 0) {
++            return;
++        }
++        remoteModal = new Modal(remoteModalElement);
++        remoteModal.on("show.bs.modal", function () {
+             $(this).find(".fetched-data").load($(this).data("url"));
+         });
+-        if ($modal.data("showOnPageLoad")) {
+-            $modal.modal('show');
++        if (remoteModalElement.data("showOnPageLoad")) {
++            remoteModal.show();
+         }
+     });
+ });

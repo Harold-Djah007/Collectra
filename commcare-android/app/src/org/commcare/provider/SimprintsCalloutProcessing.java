@@ -1,0 +1,121 @@
+package org.commcare.provider;
+
+import android.content.Intent;
+
+import androidx.annotation.NonNull;
+
+import android.util.Base64;
+
+import com.simprints.libsimprints.Constants;
+import com.simprints.libsimprints.FingerIdentifier;
+import com.simprints.libsimprints.Identification;
+import com.simprints.libsimprints.Registration;
+import com.simprints.libsimprints.Tier;
+
+import org.javarosa.core.model.FormDef;
+import org.javarosa.core.model.instance.TreeReference;
+import org.javarosa.core.services.locale.Localization;
+import org.javarosa.core.util.OrderedHashtable;
+import org.commcare.android.javarosa.IntentCallout;
+
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Vector;
+
+import static org.commcare.provider.IdentityCalloutHandler.storeValueFromCalloutInForm;
+
+/**
+ * Process simprints fingerprint registration and identification callout results.
+ *
+ * @author Phillip Mates (pmates@dimagi.com).
+ */
+public class SimprintsCalloutProcessing {
+    private static final String TAG = SimprintsCalloutProcessing.class.getSimpleName();
+
+    public static final String SIMPRINTS_IDENTITY_PROVIDER = "simprints-identitiy-provider";
+
+    /**
+     * Fingerprint lookup response from Simprints scanner app.
+     * Idenficiation responses contain a list of top matching Case IDs with an
+     * associated confidence score.
+     */
+    public static boolean isIdentificationResponse(Intent intent) {
+        return intent.hasExtra(Constants.SIMPRINTS_IDENTIFICATIONS);
+    }
+
+    /**
+     * Fingerprint registration response from Simprints scanner app.
+     * Registration responses contain fingerprint templates for the scanned fingerprints
+     */
+    public static boolean isRegistrationResponse(Intent intent) {
+        return intent.hasExtra(Constants.SIMPRINTS_REGISTRATION);
+    }
+
+    public static OrderedHashtable<String, String> getConfidenceMatchesFromCalloutResponse(Intent intent) {
+        List<Identification> idReadings = intent.getParcelableArrayListExtra(Constants.SIMPRINTS_IDENTIFICATIONS);
+
+        Collections.sort(idReadings);
+
+        OrderedHashtable<String, String> guidToConfidenceMap = new OrderedHashtable<>();
+        for (Identification id : idReadings) {
+            guidToConfidenceMap.put(id.getGuid(), getTierText(id.getTier()));
+        }
+
+        return guidToConfidenceMap;
+    }
+
+    private static String getTierText(@NonNull Tier tier) {
+        switch (tier) {
+            case TIER_1:
+                return Localization.get("fingerprint.match.100");
+            case TIER_2:
+                return Localization.get("fingerprint.match.75");
+            case TIER_3:
+                return Localization.get("fingerprint.match.50");
+            case TIER_4:
+                return Localization.get("fingerprint.match.25");
+            case TIER_5:
+                return Localization.get("fingerprint.match.0");
+            default:
+                return Localization.get("fingerprint.match.unknown");
+        }
+    }
+
+    private static Registration getRegistrationData(Intent intent) {
+        return intent.getParcelableExtra(Constants.SIMPRINTS_REGISTRATION);
+    }
+
+    public static boolean processRegistrationResponse(FormDef formDef, Intent intent, TreeReference intentQuestionRef,
+                                                      Hashtable<String, Vector<TreeReference>> responseToRefMap) {
+        Registration registration = getRegistrationData(intent);
+
+        // Store all the fingerprint responses
+        int numOfFingersScanned = 0;
+        for (FingerIdentifier fingerIdentifier : FingerIdentifier.values()) {
+            byte[] template = registration.getTemplate(fingerIdentifier);
+            boolean success = IdentityCalloutHandler.storeValueFromCalloutInForm(formDef, responseToRefMap, intentQuestionRef,
+                    fingerIdentifier.toString(),
+                    Base64.encodeToString(template, Base64.DEFAULT));
+            if (success) {
+                numOfFingersScanned += countTemplateScanned(template);
+            }
+        }
+
+        // Store the guid response
+        String guid = registration.getGuid();
+        storeValueFromCalloutInForm(formDef, responseToRefMap, intentQuestionRef, "guid", guid);
+
+        String resultMessage =
+                Localization.get("fingerprints.scanned", new String[]{"" + numOfFingersScanned});
+        IntentCallout.setNodeValue(formDef, intentQuestionRef, resultMessage);
+
+        return guid != null || numOfFingersScanned > 0;
+    }
+
+    private static int countTemplateScanned(byte[] template) {
+        return (template == null || template.length == 0) ? 0 : 1;
+    }
+
+
+}

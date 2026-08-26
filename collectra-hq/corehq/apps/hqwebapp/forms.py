@@ -1,0 +1,263 @@
+import json
+
+from django import forms
+from django.conf import settings
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.signals import user_login_failed
+from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
+
+from captcha.fields import ReCaptchaField
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.helper import FormHelper
+from oauth2_provider.forms import AllowForm
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+
+from corehq.apps.domain.forms import NoAutocompleteMixin
+from corehq.apps.hqwebapp.oauth_scopes import DOMAIN_SCOPE_PREFIX, domain_scope
+from corehq.apps.users.models import CouchUser
+from corehq.util.metrics import metrics_counter
+
+LOCKOUT_MESSAGE = mark_safe(_(  # nosec: no user input
+    'Sorry - you have attempted to login with an incorrect password too many times. '
+    'Please <a href="/accounts/password_reset_email/">click here</a> to reset your password '
+    'or contact the domain administrator.'))
+LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE = 3
+
+
+class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
+    username = forms.EmailField(label=_("Email Address"),
+                                widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
+        captcha = ReCaptchaField(label="")
+
+    def __init__(self, *args, can_select_server=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.can_select_server = can_select_server
+        if settings.ENFORCE_SSO_LOGIN:
+            self.fields['username'].widget = forms.TextInput(attrs={
+                'class': 'form-control',
+                'data-bind': 'textInput: authUsername, onEnterKey: continueOnEnter',
+                'placeholder': _("Enter email address"),
+            })
+            self.fields['password'].widget = forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder': _("Enter password"),
+            })
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').lower()
+        return username
+
+    def clean(self):
+        username = self.cleaned_data.get('username')
+        if username is None:
+            raise ValidationError(_('Please enter a valid email address.'))
+
+        password = self.cleaned_data.get('password')
+        if not password:
+            raise ValidationError(_("Please enter a password."))
+
+        if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
+            if not self.cleaned_data.get('captcha'):
+                raise ValidationError(_("Please enter valid CAPTCHA"))
+
+        try:
+            cleaned_data = super(EmailAuthenticationForm, self).clean()
+        except ValidationError:
+            if self.request:
+                self.request.session['login_attempts'] = self.request.session.get('login_attempts', 0) + 1
+            user = CouchUser.get_by_username(username)
+            if user and user.is_locked_out():
+                metrics_counter('commcare.auth.lockouts')
+                raise ValidationError(LOCKOUT_MESSAGE)
+            else:
+                raise
+        user = CouchUser.get_by_username(username)
+        if user and user.is_locked_out():
+            metrics_counter('commcare.auth.lockouts')
+            raise ValidationError(LOCKOUT_MESSAGE)
+
+        if self.request:
+            self.request.session['login_attempts'] = 0
+        return cleaned_data
+
+    def get_invalid_login_error(self):
+        if (
+            self.request
+            and self.request.session.get('login_attempts', 0) >= LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE
+            and self.can_select_server
+        ):
+            return ValidationError(
+                mark_safe(_(  # nosec: no user input
+                    "Still having trouble?"
+                    "<div class='spacer'></div>"
+                    "Make sure you have selected the correct Cloud Location from the menu above. "
+                    "Your account and project may be in a different location."
+                )),
+            )
+        return super().get_invalid_login_error()
+
+
+class CloudCareAuthenticationForm(EmailAuthenticationForm):
+    username = forms.CharField(label=_("Username"),
+                               widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+
+class BulkUploadForm(forms.Form):
+    bulk_upload_file = forms.FileField(label="")
+    action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
+
+    def __init__(self, plural_noun="", action=None, form_id=None, context=None, *args, **kwargs):
+        super(BulkUploadForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        if form_id:
+            self.helper.form_id = form_id
+        self.helper.form_method = 'post'
+        if action:
+            self.helper.form_action = action
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "",
+                *self.crispy_form_fields(context)
+            ),
+            StrictButton(
+                ('<i class="fa-solid fa-cloud-arrow-up"></i> Upload %s' % plural_noun),
+                css_class='btn-primary disable-on-submit',
+                data_bind='disable: !file()',
+                type='submit',
+            ),
+        )
+
+    def crispy_form_fields(self, context):
+        return [
+            crispy.Field(
+                'bulk_upload_file',
+                data_bind="value: file",
+            ),
+            crispy.Field(
+                'action',
+            ),
+        ]
+
+
+class AppTranslationsBulkUploadForm(BulkUploadForm):
+    language = forms.CharField(widget=forms.HiddenInput)
+    validate = forms.BooleanField(label="Just validate and not update translations", required=False,
+                                  initial=False)
+
+    def crispy_form_fields(self, context):
+        crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        if context.get('can_select_language'):
+            crispy_form_fields.extend([
+                InlineField('language', data_bind="value: lang")
+            ])
+        if context.get('can_validate_app_translations'):
+            crispy_form_fields.extend([
+                crispy.Div(InlineField('validate'))
+            ])
+        return crispy_form_fields
+
+
+class HQAuthenticationTokenForm(AuthenticationTokenForm):
+    def __init__(self, user, initial_device, request, **kwargs):
+        super().__init__(user, initial_device, **kwargs)
+        self.request = request
+
+    def clean(self):
+        try:
+            cleaned_data = super(HQAuthenticationTokenForm, self).clean()
+        except ValidationError:
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                request=self.request,
+                token_failure=True)
+            couch_user = CouchUser.get_by_username(self.user.username)
+            if couch_user and couch_user.is_locked_out():
+                metrics_counter('commcare.auth.token_lockout')
+                raise ValidationError(LOCKOUT_MESSAGE)
+            else:
+                raise
+
+        # Handle the edge-case where the user enters a correct token
+        # after being locked out
+        couch_user = CouchUser.get_by_username(self.user.username)
+        if couch_user and couch_user.is_locked_out():
+            metrics_counter('commcare.auth.lockouts')
+            raise ValidationError(LOCKOUT_MESSAGE)
+        return cleaned_data
+
+
+class HQBackupTokenForm(BackupTokenForm):
+
+    def __init__(self, user, initial_device, request, **kwargs):
+        super().__init__(user, initial_device, **kwargs)
+        self.request = request
+
+    def clean(self):
+        try:
+            cleaned_data = super(HQBackupTokenForm, self).clean()
+        except ValidationError:
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username},
+                request=self.request,
+                token_failure=True)
+            couch_user = CouchUser.get_by_username(self.user.username)
+            if couch_user and couch_user.is_locked_out():
+                metrics_counter('commcare.auth.token_lockout')
+                raise ValidationError(LOCKOUT_MESSAGE)
+            else:
+                raise
+
+        # Handle the edge-case where the user enters a correct token
+        # after being locked out
+        couch_user = CouchUser.get_by_username(self.user.username)
+        if couch_user and couch_user.is_locked_out():
+            metrics_counter('commcare.auth.lockouts')
+            raise ValidationError(LOCKOUT_MESSAGE)
+        return cleaned_data
+
+
+class HQAllowForm(AllowForm):
+    """
+    The OAuth2 consent form, extended with a project space choice.
+    """
+
+    domains = forms.MultipleChoiceField(
+        required=False,
+        label=_('On the project spaces:'),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'x-select2': json.dumps({'selectionCssClass': 'form-select p-1 pb-2 pe-4'}),
+            '@select2change': 'selectedDomains = $event.detail || []',
+            'x-ref': 'domains',
+        }),
+    )
+
+    def __init__(self, *args, domain_choices=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['domains'].choices = list(domain_choices or [])
+        self.fields['domains'].widget.attrs['data-placeholder'] = _("Choose project spaces")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('allow') and not cleaned_data.get('domains'):
+            self.add_error(
+                'domains', _("Choose which project spaces this application may access.")
+            )
+        cleaned_data['scope'] = self._scope_with_chosen_project_spaces(cleaned_data)
+        return cleaned_data
+
+    def _scope_with_chosen_project_spaces(self, cleaned_data):
+        """
+        Fold the chosen project spaces into the scope the grant will be made with.
+        """
+        scopes = [
+            scope for scope in (cleaned_data.get('scope') or '').split()
+            if not scope.startswith(DOMAIN_SCOPE_PREFIX)
+        ]
+        # Any project space the client asked for is dropped above: what the user
+        # picked here decides the grant, not what was requested.
+        scopes.extend(domain_scope(domain) for domain in cleaned_data.get('domains') or [])
+        return ' '.join(scopes)

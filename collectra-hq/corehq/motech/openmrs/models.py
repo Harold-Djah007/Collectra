@@ -1,0 +1,160 @@
+import re
+from datetime import datetime
+from functools import partial
+
+from memoized import memoized
+
+from dimagi.ext.couchdbkit import (
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    StringProperty,
+)
+
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DATE,
+    COMMCARE_DATA_TYPE_DATETIME,
+    COMMCARE_DATA_TYPES,
+    DATA_TYPE_UNKNOWN,
+    IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_DAILY,
+    IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
+)
+from corehq.motech.utils import b64_aes_cbc_decrypt
+from corehq.motech.openmrs.const import (
+    OPENMRS_DATA_TYPE_MILLISECONDS,
+    OPENMRS_DATA_TYPES,
+)
+from corehq.motech.openmrs.serializers import (
+    omrs_timestamp_to_date,
+    omrs_timestamp_to_datetime,
+    serializers,
+)
+from corehq.util.timezones.utils import (
+    coerce_timezone_value,
+    get_timezone_for_domain,
+)
+
+
+class ColumnMapping(DocumentSchema):
+    column = StringProperty()
+    property = StringProperty()
+    data_type = StringProperty(choices=OPENMRS_DATA_TYPES, required=False)
+    commcare_data_type = StringProperty(
+        required=False, choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,),
+        default=DATA_TYPE_UNKNOWN, exclude_if_none=True
+    )
+
+
+def deserialize(mapping, external_value, timezone=None):
+    """
+    Returns ``external_value`` as its CommCare data type.
+    """
+    # Update serializers with timezone
+    to_datetime_tz = partial(omrs_timestamp_to_datetime, tz=timezone)
+    to_date_tz = partial(omrs_timestamp_to_date, tz=timezone)
+    local_serializers = serializers.copy()
+    local_serializers.update({
+        (OPENMRS_DATA_TYPE_MILLISECONDS, None): to_datetime_tz,
+        (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): to_datetime_tz,
+        (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATE): to_date_tz,
+    })
+
+    serializer = (
+        local_serializers.get((mapping.data_type, mapping.commcare_data_type))
+        or local_serializers.get((None, mapping.commcare_data_type))
+    )
+    return serializer(external_value) if serializer else external_value
+
+
+class OpenmrsImporter(Document):
+    """
+    Import cases from an OpenMRS instance using a report
+    """
+    domain = StringProperty()
+
+    # TODO: (2020-03-06) Migrate to ConnectionSettings
+    server_url = StringProperty()  # e.g. "http://www.example.com/openmrs"
+    username = StringProperty()
+    password = StringProperty()
+
+    notify_addresses_str = StringProperty(default="")  # See also notify_addresses()
+
+    # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
+    location_id = StringProperty()
+
+    # How often should cases be imported
+    import_frequency = StringProperty(choices=IMPORT_FREQUENCY_CHOICES, default=IMPORT_FREQUENCY_MONTHLY)
+
+    log_level = IntegerProperty()
+
+    # Timezone name. If not specified, the domain's timezone will be used.
+    timezone = StringProperty()
+
+    # OpenMRS UUID of the report of patients to be imported
+    report_uuid = StringProperty()
+
+    # Can include template params, e.g. {"endDate": "{{ today }}"}
+    # Available template params: "today", "location"
+    report_params = DictProperty()
+
+    # The case type of imported cases
+    case_type = StringProperty()
+
+    # The ID of the owner of imported cases, if all imported cases are to have the same owner. To assign imported
+    # cases to different owners, see `location_type` below.
+    owner_id = StringProperty()
+
+    # If report_params includes "{{ location }}" then location_type_name is used to determine which locations to
+    # pull the report for. Those locations will need an "openmrs_uuid" param set. Imported cases will be owned by
+    # the first mobile worker assigned to that location. If this OpenmrsImporter.location_id is set, only
+    # sub-locations will be returned
+    location_type_name = StringProperty()
+
+    # external_id should always be the OpenMRS UUID of the patient (and not, for example, a national ID number)
+    # because it is immutable. external_id_column is the column that contains the UUID
+    external_id_column = StringProperty()
+
+    # Space-separated column(s) to be concatenated to create the case name (e.g. "givenName familyName")
+    name_columns = StringProperty()
+
+    column_map = ListProperty(ColumnMapping)
+
+    def __str__(self):
+        url = "@".join((self.username, self.server_url)) if self.username else self.server_url
+        return f"<{self.__class__.__name__} {self._id} {url}>"
+
+    @property
+    def notify_addresses(self):
+        return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
+
+    @property
+    def plaintext_password(self):
+        if self.password == '':
+            return ''
+        ciphertext = self.password.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
+
+    @memoized
+    def get_timezone(self):
+        if self.timezone:
+            return coerce_timezone_value(self.timezone)
+        else:
+            return get_timezone_for_domain(self.domain)
+
+    def should_import_today(self):
+        today = datetime.today()
+        return (
+            self.import_frequency == IMPORT_FREQUENCY_DAILY
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_WEEKLY
+                and today.weekday() == 1  # Tuesday
+            )
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_MONTHLY
+                and today.day == 1
+            )
+        )

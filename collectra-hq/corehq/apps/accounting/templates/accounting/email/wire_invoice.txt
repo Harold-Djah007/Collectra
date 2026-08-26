@@ -1,0 +1,39 @@
+{% load i18n %}
+
+{% blocktrans %}
+{{ greeting }}
+
+Please find attached the prepayment invoice for your CommCare subscription.
+{% endblocktrans %}
+
+{% trans 'Invoice No.' %}: {{ statement_number }}
+{% trans 'Project Space' %}: {{ domain }}
+{% trans 'Amount Due' %}: {{ amount_due }}
+{% if date_due %}
+    {% trans 'Due Date' %}: {{ date_due }}
+{% endif %}
+
+{% blocktrans %}
+Note: Any on-demand charges for excess users or SMS will be billed separately
+based on actual usage in the following month. If you prefer, you may also prepay for
+expected on-demand usage. Please contact us if you would like to explore this option.
+
+Instructions for Payment
+
+Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.
+If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:
+
+1. Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.
+
+2. Send an email to {{ accounts_email }} after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.
+
+Thank you for using CommCare. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
+
+Best Regards,
+The CommCare Team
+www.commcarehq.org
+
+Statement From:
+CommCare and the corporation Dimagi, Inc.
+245 Main Street, 2nd Floor, Cambridge, MA 02142 USA
+{% endblocktrans %}

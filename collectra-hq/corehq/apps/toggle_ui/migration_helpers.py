@@ -1,0 +1,24 @@
+from couchdbkit import ResourceNotFound
+
+from corehq.toggles.models import Toggle
+from corehq.toggles.shortcuts import parse_toggle
+
+
+def move_toggles(from_toggle_id, to_toggle_id):
+    """
+    Moves all enabled items from one toggle to another.
+    """
+    try:
+        from_toggle = Toggle.get(from_toggle_id)
+    except ResourceNotFound:
+        # if no source found this is a noop
+        return
+    to_toggle = Toggle.get_or_create(to_toggle_id, enabled_users=[])
+
+    for item in from_toggle.enabled_users:
+        if item not in to_toggle.enabled_users:
+            to_toggle.enabled_users.append(item)
+            namespace, item = parse_toggle(item)
+
+    to_toggle.save()
+    from_toggle.delete()

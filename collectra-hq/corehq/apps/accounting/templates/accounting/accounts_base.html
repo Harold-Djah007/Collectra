@@ -1,0 +1,10 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% js_entry_b3 'accounting/js/widgets' %}
+
+{% block page_content %}
+  {% crispy basic_form %}
+{% endblock %}

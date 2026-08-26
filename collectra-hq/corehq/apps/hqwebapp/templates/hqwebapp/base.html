@@ -1,0 +1,280 @@
+{% load menu_tags %}{% load i18n %}{% load tz %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+{% js_entry "hqwebapp/js/base" %}{# Do not change. See special handling of this module in webpack/generateDetails.js #}
+<!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html lang="{{ LANGUAGE_CODE }}"><!--<![endif]-->
+  <head>
+    {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+    {% captureas title_context_block %}{% block title_context %}{% endblock title_context %}{% endcaptureas %}
+    <title>
+      {% if title_block %}{{ title_block }}{% endif %}
+      {% if title_block %}{% if title_context_block.strip or not title_context_block %}- {{ title_context_block }}{% endif %}{% endif %}
+      {% if not title_context_block %}Collectra{% endif %}
+    </title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+
+    {# link tags #}
+    <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />
+    <link type="application/opensearchdescription+xml"
+          rel="search"
+          href="{% url 'osdd' %}"
+          title="Collectra{% if env %} - {{env}}{% endif %}" />
+
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
+    {% else %}
+      {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
+    {% endif %}
+
+    <link rel="apple-touch-icon" href="{% static 'hqwebapp/images/collectra-icon.png' %}"/>
+
+    {% block stylesheets %}{% endblock stylesheets %}
+
+    {# Optional visual polish layer. Does not change application structure or behavior. #}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/css/professional-ui.css' %}" />
+
+    {% compress css %}
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'select2/dist/css/select2.min.css' %}" />
+    {% endcompress %}
+
+    <script>
+      window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
+    </script>
+
+    {% block head %}
+    {% endblock %}
+  </head>
+  <body>
+
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
+
+    {# for setting up page-wide backgrounds #}
+    {% block background_content %}{% endblock %}
+
+    {# for banners, maintenance alerts, and any visible UI elements above any page navigation #}
+    {% block pre_navigation_content %}{% endblock %}
+
+    <div class="{% block container_class %}hq-container{% endblock %}">
+      {# for top-level navigation #}
+      {% block navigation %}{% endblock %}
+
+      {# for any alerts, banners to appear below page navigtion #}
+      {% block post_navigation_content %}{% endblock %}
+
+      {% block messages %}{% endblock %}
+
+      {% block content %}{% endblock content %}
+      {% if CHATBOT_ID and CHATBOT_TOKEN and request|feature_preview_enabled:"OCS_CHATBOT" %}
+        <div class="ocs-widget-container">
+          <open-chat-studio-widget
+            visible="false"
+            chatbot-id="{{ CHATBOT_ID }}"
+            embed-key="{{ CHATBOT_TOKEN }}"
+            icon-url="{% static 'hqwebapp/images/chatbot_avatar.png' %}"
+            position="right"
+            language="{{ LANGUAGE_CODE }}"
+            translations-url="{% static 'ocs-widget/' %}{{ LANGUAGE_CODE }}.json"
+            user-id="{{ request.couch_user.user_id }}"
+            user-name="{{ request.couch_user.username }}"
+            allow-attachments="true"
+            >
+          </open-chat-studio-widget>
+        </div>
+      {% endif %}
+    </div>
+
+    {% block footer %}{% endblock %}
+
+    {% block modals %}{% endblock %}
+
+    {# Report Issue #}
+    {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
+      {% if use_bootstrap5 %}
+        {% include 'hqwebapp/includes/bootstrap5/modal_report_issue.html' %}
+      {% else %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_report_issue.html' %}
+      {% endif %}
+    {% else %}
+      <style>
+        a[href='#modalReportIssue'] {
+          pointer-events: none;
+          cursor: text;
+          text-decoration: none;
+          color: inherit;
+        }
+      </style>
+    {% endif %}
+
+    {% if request.couch_user.is_dimagi %}
+      {% if use_bootstrap5 %}
+        {% include 'hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html' %}
+      {% else %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html' %}
+      {% endif %}
+    {% endif %}
+
+    {% if EULA_COMPLIANCE %}
+      {% if request.couch_user and not request.couch_user.is_eula_signed %}
+        {% registerurl 'agree_to_eula' %}
+        {% include 'hqwebapp/includes/modal_eula.html' %}
+      {% endif %}
+    {% endif %}
+
+    {% if request.user.is_authenticated and request.project and request.session.secure_session %}
+      {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
+    {% endif %}
+    {% registerurl 'login_new_window' %}
+    {% registerurl 'submit_hubspot_cta_form' %}
+
+    {# 30 Day Trial #}
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/includes/bootstrap5/modal_30_day_trial.html' %}
+    {% else %}
+      {% include 'hqwebapp/includes/bootstrap3/modal_30_day_trial.html' %}
+    {% endif %}
+
+    {% block additional_initial_page_data %}
+      {% comment %}
+        fallback place to put initial page data for templates where it's
+        awkward or impossible to include it in another block
+      {% endcomment %}
+    {% endblock %}
+    {% initial_page_data 'toggles_dict' toggles_dict %}
+    {% initial_page_data 'previews_dict' previews_dict %}
+    {% initial_page_data 'secure_cookies' secure_cookies %}
+    {% initial_page_data 'minimumZxcvbnScore' MINIMUM_ZXCVBN_SCORE %}
+    {% initial_page_data 'minimumPasswordLength' MINIMUM_PASSWORD_LENGTH %}
+    {% initial_page_data 'privileges' privileges %}
+
+    {% if request.couch_user and USERFLOW_TOKEN %}
+      {% initial_page_data 'userflow_token' USERFLOW_TOKEN %}
+      {% initial_page_data 'userflow_user_id' request.couch_user.user_id %}
+      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined|utc|date:'c' %}
+      {% initial_page_data 'userflow_server_env' server_environment %}
+      {% initial_page_data 'userflow_domain' domain %}
+      {% if request.subscription %}
+        {% initial_page_data 'userflow_subs_plan' request.subscription.plan_version.plan.edition %}
+      {% endif %}
+    {% endif %}
+
+    {# for get demo and get trial forms #}
+    {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
+
+    {% if demo_workflow_ab_v2 %}
+      {% initial_analytics_data 'hubspot.demoABv2' demo_workflow_ab_v2 %}
+    {% endif %}
+
+    <div class="initial-page-data hide">
+      {% block initial_page_data %}
+        {# do not override this block, use initial_page_data template tag to populate #}
+      {% endblock %}
+    </div>
+
+    {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
+    {% registerurl 'send_mobile_reminder' %}  {# used by mobile reminder popup below #}
+    {% if domain %}
+      {% registerurl 'submit_feedback' domain %}   {# used by feedback knockout widget #}
+      {% registerurl 'my_role' domain %}   {# used by hqwebapp/js/ocs_page_context.js #}
+    {% endif %}
+
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+
+    {% include 'analytics/initial/all.html' %}
+
+    <div class="initial-analytics-data hide">
+      {% block initial_analytics_data %}
+        {# do not override this block, use initial_analytics_data template tag to populate #}
+      {% endblock %}
+    </div>
+
+    <div class="analytics-ab-tests hide">
+      {% block analytics_ab_test %}
+        {# do not override this block, use analytics_ab_test template tag to populate #}
+      {% endblock %}
+    </div>
+
+    {% if is_demo_visible %}
+      {% if use_bootstrap5 %}
+        {% include "hqwebapp/partials/bootstrap5/get_demo_modals.html" %}
+      {% else %}
+        {% include "hqwebapp/partials/bootstrap3/get_demo_modals.html" %}
+      {% endif %}
+    {% endif %}
+
+    {# Knockout component templates #}
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
+    {% else %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
+    {% endif %}
+
+    {# javascript below this line #}
+
+    <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+    <script>
+      // Keep the application usable in local/demo environments even when the generated
+      // Django JS translation catalog has not been built yet.
+      window.gettext = window.gettext || function (message) { return message; };
+      window.ngettext = window.ngettext || function (singular, plural, count) {
+        return count === 1 ? singular : plural;
+      };
+      window.pgettext = window.pgettext || function (context, message) { return message; };
+      window.gettext_noop = window.gettext_noop || function (message) { return message; };
+    </script>
+    <script>
+      // Keep the application usable in local/demo environments even when the generated
+      // Django JS translation catalog has not been built yet.
+      window.gettext = window.gettext || function (message) { return message; };
+      window.ngettext = window.ngettext || function (singular, plural, count) {
+        return count === 1 ? singular : plural;
+      };
+      window.pgettext = window.pgettext || function (context, message) { return message; };
+      window.gettext_noop = window.gettext_noop || function (message) { return message; };
+    </script>
+    <script>
+      // Keep the application usable in local/demo environments even when the generated
+      // Django JS translation catalog has not been built yet.
+      window.gettext = window.gettext || function (message) { return message; };
+      window.ngettext = window.ngettext || function (singular, plural, count) {
+        return count === 1 ? singular : plural;
+      };
+      window.pgettext = window.pgettext || function (context, message) { return message; };
+      window.gettext_noop = window.gettext_noop || function (message) { return message; };
+    </script>
+
+    {% include "hqwebapp/partials/webpack.html" %} {# must come after statici18n above #}
+
+    {% if show_status_page %}
+      <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>
+    {% endif %}
+
+    {% block js %}{% endblock js %}
+
+    {% block js-inline %}{% endblock js-inline %}
+
+  </body>
+</html>

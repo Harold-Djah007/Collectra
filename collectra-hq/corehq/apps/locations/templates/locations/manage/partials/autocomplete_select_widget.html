@@ -1,0 +1,16 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<!--
+    Both B3 form-control and B5 form-select are used to avoid needing to split this template.
+    When USE_BOOTSTRAP5 is removed, form-control can be removed.
+-->
+<select id="{{ id }}" class="locations-widget-autocomplete form-control form-select" name="{{ name }}" value="{{ value }}" style="width: 30em;"
+  {% if attrs.disabled %}
+        disabled="disabled"
+  {% endif %}
+        attrs="{{ attrs }}"
+        data-placeholder="{% html_attr placeholder %}"
+        data-multiselect="{% html_attr multiselect %}"
+        data-query-url="{% html_attr query_url %}"
+        data-initial="{% html_attr initial_data %}">
+</select>

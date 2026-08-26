@@ -1,0 +1,962 @@
+package org.commcare.google.services.analytics;
+
+import android.os.Bundle;
+import android.os.Environment;
+import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
+import androidx.navigation.fragment.FragmentNavigator;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.commcare.CommCareApplication;
+import org.commcare.DiskUtils;
+import org.commcare.android.database.connect.models.ConnectReleaseToggleRecord;
+import org.commcare.android.logging.ReportingUtils;
+import org.commcare.connect.PersonalIdManager;
+import org.commcare.fragments.personalId.PersonalIdWorkflow;
+import org.commcare.dalvik.BuildConfig;
+import org.commcare.preferences.MainConfigurablePreferences;
+import org.commcare.suite.model.OfflineUserRestore;
+import org.commcare.util.EncryptionUtils;
+import org.commcare.utils.FormUploadResult;
+import org.commcare.utils.OtpAnalyticsMapper;
+import org.javarosa.core.services.Logger;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import static com.google.firebase.analytics.FirebaseAnalytics.Param.METHOD;
+import static com.google.firebase.analytics.FirebaseAnalytics.Param.VALUE;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.CORRUPT_APP_STATE;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.RSA_KEYSTORE_KEY_RETRIEVAL;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.STAGE_UPDATE_FAILURE;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.UPDATE_RESET;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.VIDEO_USAGE_FULL;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.VIDEO_USAGE_IMMEDIATE;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.VIDEO_USAGE_LENGTH_UNKNOWN;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.VIDEO_USAGE_MOST;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.VIDEO_USAGE_OTHER;
+import static org.commcare.google.services.analytics.AnalyticsParamValue.VIDEO_USAGE_PARTIAL;
+import static org.commcare.util.LogTypes.TYPE_ERROR_DESIGN;
+
+/**
+ * Created by amstone326 on 10/13/17.
+ */
+public class FirebaseAnalyticsUtil {
+
+    // constant to approximate time taken by an user to go to the video playing app after clicking on the video
+    private static final long VIDEO_USAGE_ERROR_APPROXIMATION = 3;
+    private static final int MAX_USER_PROPERTY_VALUE_LENGTH = 36;
+
+
+    private static void reportEvent(String eventName) {
+        reportEvent(eventName, new Bundle());
+    }
+
+    private static void reportEvent(String eventName, String paramKey, String paramVal) {
+        reportEvent(eventName, new String[]{paramKey}, new String[]{paramVal});
+    }
+
+    private static void reportEvent(String eventName, String[] paramKeys, String[] paramVals) {
+        try {
+            Bundle b = new Bundle();
+            for (int i = 0; i < paramKeys.length; i++) {
+                // https://firebase.google.com/docs/reference/android/com/google/firebase/analytics/FirebaseAnalytics.Param
+                // Param values can only be up to 100 characters.
+                if (paramVals[i].length() > 100) {
+                    paramVals[i] = paramVals[i].substring(0, 100);
+                }
+                b.putString(paramKeys[i], paramVals[i]);
+            }
+            reportEvent(eventName, b);
+        } catch (Exception e) {
+            Logger.exception("Error logging analytics event", e);
+        }
+    }
+
+    private static void reportEvent(String eventName, Bundle params) {
+        if (analyticsDisabled()) {
+            return;
+        }
+
+        FirebaseAnalytics analyticsInstance = CommCareApplication.instance().getAnalyticsInstance();
+        setUserProperties(analyticsInstance);
+        analyticsInstance.logEvent(eventName, params);
+    }
+
+    private static void setUserProperties(FirebaseAnalytics analyticsInstance) {
+        String deviceId = ReportingUtils.getDeviceId();
+        if (deviceId.length() > MAX_USER_PROPERTY_VALUE_LENGTH) {
+            deviceId = deviceId.substring(
+                    deviceId.length() - MAX_USER_PROPERTY_VALUE_LENGTH
+            );
+        }
+        analyticsInstance.setUserProperty(CCAnalyticsParam.DEVICE_ID, deviceId);
+
+        String domain = ReportingUtils.getDomain();
+        if (!TextUtils.isEmpty(domain)) {
+            analyticsInstance.setUserProperty(CCAnalyticsParam.CCHQ_DOMAIN, domain);
+        }
+
+        String appId = ReportingUtils.getAppId();
+        if (!TextUtils.isEmpty(appId)) {
+            analyticsInstance.setUserProperty(CCAnalyticsParam.CC_APP_ID, appId);
+        }
+
+        String buildProfileId = ReportingUtils.getAppBuildProfileId();
+        if (!TextUtils.isEmpty(buildProfileId)) {
+            analyticsInstance.setUserProperty(
+                    CCAnalyticsParam.CC_APP_BUILD_PROFILE_ID,
+                    buildProfileId
+            );
+        }
+
+        String serverName = ReportingUtils.getServerName();
+        if (!TextUtils.isEmpty(serverName)) {
+            analyticsInstance.setUserProperty(CCAnalyticsParam.SERVER, serverName);
+        }
+
+        String freeDiskBucket = getFreeDiskBucket();
+        if (!TextUtils.isEmpty(freeDiskBucket)) {
+            analyticsInstance.setUserProperty(CCAnalyticsParam.FREE_DISK, freeDiskBucket);
+        }
+
+        analyticsInstance.setUserProperty(
+                CCAnalyticsParam.CCC_ENABLED,
+                String.valueOf(PersonalIdManager.getInstance().isloggedIn())
+        );
+
+        String personalId = ReportingUtils.getPersonalID();
+        if (!TextUtils.isEmpty(personalId)) {
+            analyticsInstance.setUserProperty(CCAnalyticsParam.USER_CID, personalId);
+        }
+
+        analyticsInstance.setUserProperty(
+                CCAnalyticsParam.BUILD_NUMBER,
+                String.valueOf(BuildConfig.VERSION_CODE)
+        );
+
+        flagPersonalIDDemoUser(ReportingUtils.getIsPersonalIDDemoUser());
+
+        analyticsInstance.setUserProperty(CCAnalyticsParam.APP_FLAVOR, BuildConfig.FLAVOR);
+    }
+
+    private static String getFreeDiskBucket() {
+        long freeDiskInMb =
+                DiskUtils.calculateFreeDiskSpaceInBytes(Environment.getDataDirectory().getPath())
+                        / 1000000;
+        if (freeDiskInMb > 1000) {
+            return "gt_1000";
+        } else if (freeDiskInMb > 500) {
+            return "lt_1000";
+        } else if (freeDiskInMb > 300) {
+            return "lt_500";
+        } else if (freeDiskInMb > 100) {
+            return "lt_300";
+        } else {
+            return "lt_100";
+        }
+    }
+
+    /**
+     * Report a user event of selecting an item within an options menu
+     */
+    public static void reportOptionsMenuItemClick(Class location, String itemLabel) {
+        reportEvent(
+                CCAnalyticsEvent.SELECT_OPTIONS_MENU_ITEM,
+                FirebaseAnalytics.Param.ITEM_NAME,
+                location.getSimpleName() + "_" + itemLabel
+        );
+    }
+
+    public static void reportOptionsMenuOpened(String screenName) {
+        reportEvent(
+                CCAnalyticsEvent.OPTIONS_MENU_OPENED,
+                FirebaseAnalytics.Param.ITEM_NAME,
+                screenName
+        );
+    }
+
+    /**
+     * Report a user event of changing the value of a SharedPreference
+     */
+    public static void reportEditPreferenceItem(String preferenceKey, String value) {
+        reportEvent(
+                CCAnalyticsEvent.EDIT_PREFERENCE_ITEM,
+                new String[]{
+                        FirebaseAnalytics.Param.ITEM_NAME,
+                        FirebaseAnalytics.Param.ITEM_VARIANT
+                },
+                new String[]{preferenceKey, value}
+        );
+    }
+
+    public static void reportAdvancedActionSelected(String action) {
+        reportEvent(
+                CCAnalyticsEvent.ADVANCED_ACTION_SELECTED,
+                CCAnalyticsParam.ACTION_TYPE, action
+        );
+    }
+
+    public static void reportHomeButtonClick(String buttonName) {
+        reportEvent(
+                CCAnalyticsEvent.HOME_BUTTON_CLICK,
+                FirebaseAnalytics.Param.ITEM_NAME,
+                buttonName
+        );
+    }
+
+    public static void reportViewArchivedFormsList(boolean forIncomplete) {
+        String formType = forIncomplete
+                ? AnalyticsParamValue.INCOMPLETE
+                : AnalyticsParamValue.SAVED;
+        reportEvent(
+                CCAnalyticsEvent.VIEW_ARCHIVED_FORMS_LIST,
+                FirebaseAnalytics.Param.ITEM_LIST_NAME,
+                formType
+        );
+    }
+
+    public static void reportOpenArchivedForm(String formType) {
+        reportEvent(
+                CCAnalyticsEvent.OPEN_ARCHIVED_FORM,
+                FirebaseAnalytics.Param.ITEM_NAME,
+                formType
+        );
+    }
+
+    public static void reportAppInstall(String installMethod) {
+        reportEvent(CCAnalyticsEvent.APP_INSTALL, METHOD, installMethod);
+    }
+
+    public static void reportAppManagerAction(String action) {
+        reportEvent(CCAnalyticsEvent.APP_MANAGER_ACTION, CCAnalyticsParam.ACTION_TYPE, action);
+    }
+
+    public static void reportGraphViewAttached() {
+        reportGraphingAction(AnalyticsParamValue.GRAPH_ATTACH);
+    }
+
+    public static void reportGraphViewDetached() {
+        reportGraphingAction(AnalyticsParamValue.GRAPH_DETACH);
+    }
+
+    public static void reportGraphViewFullScreenOpened() {
+        reportGraphingAction(AnalyticsParamValue.GRAPH_FULLSCREEN_OPEN);
+    }
+
+    public static void reportGraphViewFullScreenClosed() {
+        reportGraphingAction(AnalyticsParamValue.GRAPH_FULLSCREEN_CLOSE);
+    }
+
+    private static void reportGraphingAction(String actionType) {
+        reportEvent(CCAnalyticsEvent.GRAPH_ACTION, CCAnalyticsParam.ACTION_TYPE, actionType);
+    }
+
+    public static void reportFormEntry(String formId) {
+        reportEvent(
+                CCAnalyticsEvent.FORM_ENTRY_ATTEMPT,
+                new String[]{CCAnalyticsParam.FORM_ID},
+                new String[]{formId}
+        );
+    }
+
+    public static void reportFormNav(String direction, String method, String formId) {
+        if (rateLimitReporting(.1)) {
+            reportEvent(
+                    CCAnalyticsEvent.FORM_NAVIGATION,
+                    new String[]{CCAnalyticsParam.DIRECTION, METHOD, CCAnalyticsParam.FORM_ID},
+                    new String[]{direction, method, formId}
+            );
+        }
+    }
+
+    public static void reportFormQuitAttempt(String method, String formId) {
+        reportEvent(
+                CCAnalyticsEvent.FORM_EXIT_ATTEMPT,
+                new String[]{METHOD, CCAnalyticsParam.FORM_ID},
+                new String[]{method, formId}
+        );
+    }
+
+    public static void reportFormFinishAttempt(
+            String saveResult,
+            String formId,
+            boolean userTriggered
+    ) {
+        String method = userTriggered
+                ? AnalyticsParamValue.USER_TRIGGERED
+                : AnalyticsParamValue.SYSTEM_TRIGGERED;
+        reportEvent(
+                CCAnalyticsEvent.FORM_FINISH_ATTEMPT,
+                new String[]{CCAnalyticsParam.FORM_ID, CCAnalyticsParam.RESULT, METHOD},
+                new String[]{formId, saveResult, method}
+        );
+    }
+
+    /**
+     * Report a user event of navigating backward out of the entity detail screen
+     */
+    public static void reportEntityDetailExit(String navMethod, int detailTabCount) {
+        reportEntityDetailNavigation(
+                AnalyticsParamValue.DIRECTION_BACKWARD,
+                navMethod,
+                detailTabCount
+        );
+    }
+
+    /**
+     * Report a user event of continuing forward past the entity detail screen
+     */
+    public static void reportEntityDetailContinue(String navMethod, int detailTabCount) {
+        reportEntityDetailNavigation(
+                AnalyticsParamValue.DIRECTION_FORWARD,
+                navMethod,
+                detailTabCount
+        );
+    }
+
+    private static void reportEntityDetailNavigation(
+            String direction,
+            String navMethod,
+            int detailTabCount
+    ) {
+        String detailUiState = detailTabCount > 1
+                ? AnalyticsParamValue.DETAIL_WITH_TABS
+                : AnalyticsParamValue.DETAIL_NO_TABS;
+
+        reportEvent(
+                CCAnalyticsEvent.ENTITY_DETAIL_NAVIGATION,
+                new String[]{CCAnalyticsParam.DIRECTION, METHOD, CCAnalyticsParam.UI_STATE},
+                new String[]{direction, navMethod, detailUiState}
+        );
+    }
+
+    public static void reportSyncResult(
+            boolean result,
+            String trigger,
+            String syncMode,
+            String failureReason
+    ) {
+        Bundle b = new Bundle();
+        b.putString(FirebaseAnalytics.Param.SOURCE, trigger);
+        b.putLong(FirebaseAnalytics.Param.SUCCESS, result ? 1 : 0);
+        b.putString(METHOD, syncMode);
+        b.putString(CCAnalyticsParam.REASON, failureReason);
+        reportEvent(CCAnalyticsEvent.SYNC_ATTEMPT, b);
+    }
+
+    public static void reportInAppUpdateResult(boolean result, String failureReason) {
+        Bundle bundle = new Bundle();
+        bundle.putLong(FirebaseAnalytics.Param.VALUE, result ? 1 : 0);
+        bundle.putString(CCAnalyticsParam.REASON, failureReason);
+        reportEvent(CCAnalyticsEvent.IN_APP_UPDATE_EVENT, bundle);
+    }
+
+    public static void reportFeatureUsage(String feature) {
+        if (analyticsDisabled()) {
+            return;
+        }
+        reportEvent(CCAnalyticsEvent.FEATURE_USAGE, FirebaseAnalytics.Param.ITEM_CATEGORY, feature);
+    }
+
+    private static void reportFeatureUsage(String feature, String mode) {
+        if (analyticsDisabled()) {
+            return;
+        }
+
+        reportEvent(
+                CCAnalyticsEvent.FEATURE_USAGE,
+                new String[]{FirebaseAnalytics.Param.ITEM_CATEGORY, CCAnalyticsParam.MODE},
+                new String[]{feature, mode}
+        );
+    }
+
+    public static void reportPracticeModeUsage(
+            OfflineUserRestore currentOfflineUserRestoreResource
+    ) {
+        reportFeatureUsage(
+                AnalyticsParamValue.FEATURE_PRACTICE_MODE,
+                currentOfflineUserRestoreResource == null
+                        ? AnalyticsParamValue.PRACTICE_MODE_DEFAULT
+                        : AnalyticsParamValue.PRACTICE_MODE_CUSTOM
+        );
+    }
+
+    public static void reportPrivilegeEnabled(String privilegeName, String usernameUsedToActivate) {
+        reportEvent(
+                CCAnalyticsEvent.ENABLE_PRIVILEGE,
+                new String[]{FirebaseAnalytics.Param.ITEM_NAME, CCAnalyticsParam.USERNAME},
+                new String[]{
+                        privilegeName,
+                        EncryptionUtils.getMd5HashAsString(usernameUsedToActivate)
+                }
+        );
+    }
+
+    public static void reportTimedSession(
+            String sessionType,
+            double timeInSeconds,
+            double timeInMinutes
+    ) {
+        if (rateLimitReporting(.25)) {
+            Bundle bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, sessionType);
+            bundle.putDouble(FirebaseAnalytics.Param.VALUE, timeInSeconds);
+            bundle.putDouble(CCAnalyticsParam.TIME_IN_MINUTES, timeInMinutes);
+        }
+    }
+
+    private static boolean analyticsDisabled() {
+        return !MainConfigurablePreferences.isAnalyticsEnabled();
+    }
+
+    private static boolean rateLimitReporting(double percentOfEventsToReport) {
+        return Math.random() < percentOfEventsToReport;
+    }
+
+    private static String getVideoUsage(long totalDuration, long playDuration) {
+        if (totalDuration == -1) {
+            return VIDEO_USAGE_LENGTH_UNKNOWN;
+        } else {
+            double timeSpendInFraction = playDuration / totalDuration;
+
+            if (timeSpendInFraction <= 0.25) {
+                return VIDEO_USAGE_IMMEDIATE;
+            } else if (timeSpendInFraction <= 0.5) {
+                return VIDEO_USAGE_PARTIAL;
+            } else if (timeSpendInFraction <= 0.75) {
+                return VIDEO_USAGE_MOST;
+            } else if (timeSpendInFraction <= 2) {
+                return VIDEO_USAGE_FULL;
+            } else {
+                return VIDEO_USAGE_OTHER;
+            }
+        }
+    }
+
+    public static void reportVideoPlayEvent(
+            String videoName,
+            long videoDuration,
+            long videoStartTime
+    ) {
+        long timeSpend = new Date().getTime() - videoStartTime;
+        timeSpend = timeSpend + VIDEO_USAGE_ERROR_APPROXIMATION;
+        String videoUsage = getVideoUsage(videoDuration, timeSpend);
+
+        reportEvent(
+                CCAnalyticsEvent.VIEW_QUESTION_MEDIA,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID, CCAnalyticsParam.USER_RETURNED},
+                new String[]{videoName, videoUsage}
+        );
+    }
+
+    public static void reportInlineVideoPlayEvent(
+            String videoName,
+            long totalDuration,
+            long playDuration
+    ) {
+        String videoUsage = getVideoUsage(totalDuration, playDuration);
+        reportEvent(
+                CCAnalyticsEvent.VIEW_QUESTION_MEDIA,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID, CCAnalyticsParam.USER_RETURNED},
+                new String[]{videoName, videoUsage}
+        );
+    }
+
+    public static void reportStageUpdateAttemptFailure(String reason) {
+        reportEvent(
+                CCAnalyticsEvent.COMMON_COMMCARE_EVENT,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID, CCAnalyticsParam.REASON},
+                new String[]{STAGE_UPDATE_FAILURE, reason}
+        );
+    }
+
+    public static void reportUpdateReset(String reason) {
+        reportEvent(
+                CCAnalyticsEvent.COMMON_COMMCARE_EVENT,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID, CCAnalyticsParam.REASON},
+                new String[]{UPDATE_RESET, reason}
+        );
+    }
+
+    public static void reportCorruptAppState() {
+        reportEvent(
+                CCAnalyticsEvent.COMMON_COMMCARE_EVENT,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID},
+                new String[]{CORRUPT_APP_STATE}
+        );
+    }
+
+    /**
+     * Report when an RSA key is successfully retrieved from the keystore. This is to assess how many devices
+     * are using RSA keys, to then plan the deprecation of the RsaKeyStoreHandler.
+     */
+    public static void reportRsaKeyUse() {
+        reportEvent(
+                CCAnalyticsEvent.COMMON_COMMCARE_EVENT,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID},
+                new String[]{RSA_KEYSTORE_KEY_RETRIEVAL}
+        );
+    }
+
+    public static void reportFormQuarantined(String quarantineReasonType) {
+        reportEvent(
+                CCAnalyticsEvent.FORM_QUARANTINE_EVENT,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID},
+                new String[]{quarantineReasonType}
+        );
+    }
+
+    public static void reportMenuItemClick(String commandId) {
+        reportEvent(
+                CCAnalyticsEvent.MENU_SCREEN_ITEM_CLICK,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID},
+                new String[]{commandId}
+        );
+    }
+
+    public static void reportFormUploadAttempt(FormUploadResult first, Integer second) {
+        reportEvent(
+                CCAnalyticsEvent.FORM_UPLOAD_ATTEMPT,
+                new String[]{CCAnalyticsParam.RESULT, FirebaseAnalytics.Param.VALUE},
+                new String[]{String.valueOf(first), String.valueOf(second)}
+        );
+    }
+
+    public static void reportPersonalIdConfigurationIntegritySubmission(String responseCode) {
+        String label = "PersonalID Configuration";
+        reportPersonalIdIntegritySubmission(label, label, responseCode);
+    }
+
+    public static void reportPersonalIdHeartbeatIntegritySubmission(
+            String requestId,
+            String responseCode
+    ) {
+        reportPersonalIdIntegritySubmission("Heartbeat", requestId, responseCode);
+    }
+
+    public static void reportPersonalIdIntegritySubmission(
+            String trigger,
+            String requestId,
+            String responseCode
+    ) {
+        if (responseCode == null || responseCode.equals("null")) {
+            Logger.exception(
+                    "Integrity Check",
+                    new Exception("Null response code in integrity check: " + responseCode)
+            );
+        }
+
+        Bundle b = new Bundle();
+        b.putString(CCAnalyticsParam.REQUEST_ID, requestId);
+        b.putString(CCAnalyticsParam.TRIGGER, trigger);
+        b.putString(CCAnalyticsParam.RESULT_CODE, responseCode);
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_INTEGRITY_REPORTED, b);
+    }
+
+    public static void reportPersonalIdAccountCreated() {
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_ACCOUNT_CREATED);
+    }
+
+    public static void reportPersonalIdAccountRecovered(boolean success, String method) {
+        Bundle b = new Bundle();
+        b.putLong(FirebaseAnalytics.Param.VALUE, success ? 1 : 0);
+        b.putString(METHOD, method);
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_ACCOUNT_RECOVERED, b);
+    }
+
+    public static void reportCccAppLaunch(String type, String appId) {
+        reportEvent(
+                CCAnalyticsEvent.CCC_LAUNCH_APP,
+                new String[]{
+                        CCAnalyticsParam.PARAM_CCC_LAUNCH_APP_TYPE,
+                        CCAnalyticsParam.PARAM_CCC_APP_NAME
+                },
+                new String[]{type, appId}
+        );
+    }
+
+    public static void reportCccAppAutoLoginWithLocalPassphrase(String app) {
+        reportEvent(
+                CCAnalyticsEvent.CCC_AUTO_LOGIN_LOCAL_PASSPHRASE,
+                new String[]{CCAnalyticsParam.PARAM_CCC_APP_NAME},
+                new String[]{app}
+        );
+    }
+
+    public static void reportCccAppFailedAutoLogin(String app) {
+        reportEvent(
+                CCAnalyticsEvent.CCC_AUTO_LOGIN_FAILED,
+                new String[]{CCAnalyticsParam.PARAM_CCC_APP_NAME},
+                new String[]{app}
+        );
+    }
+
+    public static void reportCccApiJobs(boolean success, int totalJobs, int newJobs) {
+        Bundle b = new Bundle();
+        b.putLong(CCAnalyticsParam.PARAM_API_SUCCESS, success ? 1 : 0);
+        b.putInt(CCAnalyticsParam.PARAM_API_NEW_JOBS, newJobs);
+        b.putInt(CCAnalyticsParam.PARAM_API_TOTAL_JOBS, totalJobs);
+        reportEvent(CCAnalyticsEvent.CCC_API_JOBS, b);
+    }
+
+    public static void reportExternalAppLaunchEvent(String launchType, boolean success, String error) {
+        Bundle bundle = new Bundle();
+        bundle.putString(CCAnalyticsParam.TYPE, launchType);
+        bundle.putBoolean(CCAnalyticsParam.SUCCESS, success);
+        if(!TextUtils.isEmpty(error)) {
+            bundle.putString(CCAnalyticsParam.ERROR, error);
+        }
+
+        reportEvent(CCAnalyticsEvent.EXTERNAL_APP_LAUNCH, bundle);
+    }
+
+    public static void reportCccApiStartLearning(boolean success) {
+        Bundle b = new Bundle();
+        b.putLong(CCAnalyticsParam.PARAM_API_SUCCESS, success ? 1 : 0);
+        reportEvent(CCAnalyticsEvent.CCC_API_START_LEARNING, b);
+    }
+
+    public static void reportCccApiLearnProgress(boolean success) {
+        Bundle b = new Bundle();
+        b.putLong(CCAnalyticsParam.PARAM_API_SUCCESS, success ? 1 : 0);
+        reportEvent(CCAnalyticsEvent.CCC_API_LEARN_PROGRESS, b);
+    }
+
+    public static void reportCccApiClaimJob(boolean success) {
+        Bundle b = new Bundle();
+        b.putLong(CCAnalyticsParam.PARAM_API_SUCCESS, success ? 1 : 0);
+        reportEvent(CCAnalyticsEvent.CCC_API_CLAIM_JOB, b);
+    }
+
+    public static void reportCccApiDeliveryProgress(
+            boolean success,
+            @Nullable String deliveryInfo
+    ) {
+        Bundle b = new Bundle();
+        b.putLong(CCAnalyticsParam.PARAM_API_SUCCESS, success ? 1 : 0);
+        if (deliveryInfo != null) {
+            b.putString(CCAnalyticsParam.PARAM_API_SUCCESS_DELIVERY_INFO, deliveryInfo);
+        }
+        reportEvent(CCAnalyticsEvent.CCC_API_DELIVERY_PROGRESS, b);
+    }
+
+    public static void reportCccApiPaymentConfirmation(boolean success) {
+        Bundle b = new Bundle();
+        b.putLong(CCAnalyticsParam.PARAM_API_SUCCESS, success ? 1 : 0);
+        reportEvent(CCAnalyticsEvent.CCC_API_PAYMENT_CONFIRMATION, b);
+    }
+
+    public static void reportCccPaymentConfirmationDisplayed() {
+        Bundle b = new Bundle();
+        reportEvent(CCAnalyticsEvent.CCC_PAYMENT_CONFIRMATION_DISPLAY, b);
+    }
+
+    public static void reportCccPaymentConfirmationInteraction(boolean positive) {
+        Bundle b = new Bundle();
+        b.putLong(CCAnalyticsParam.PARAM_API_SUCCESS, positive ? 1 : 0);
+        reportEvent(CCAnalyticsEvent.CCC_PAYMENT_CONFIRMATION_INTERACT, b);
+    }
+
+
+    public static void reportPersonalIdAccountForgotten(String reason) {
+        Bundle b = new Bundle();
+        b.putString(CCAnalyticsParam.REASON, reason);
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_ACCOUNT_FORGOTTEN, b);
+    }
+
+    public static void reportPersonalIdProfileAction(String action, @Nullable String outcome) {
+        Bundle params = new Bundle();
+        params.putString(CCAnalyticsParam.MANAGE_PROFILE_ACTION, action);
+        if (outcome != null) {
+            params.putString(CCAnalyticsParam.MANAGE_PROFILE_OUTCOME, outcome);
+        }
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_MANAGE_PROFILE_ACTION, params);
+    }
+
+    public static void reportLoginClicks() {
+        reportEvent(CCAnalyticsEvent.LOGIN_CLICK);
+    }
+
+    public static void reportPersonalIDContinueClicked(String screenName, @Nullable String info,
+            PersonalIdWorkflow workflow) {
+        Bundle params = new Bundle();
+        params.putString(FirebaseAnalytics.Param.SCREEN_NAME, screenName);
+        if (info != null) {
+            params.putString(CCAnalyticsParam.PERSONAL_ID_CONTINUE_CLICKED_INFO, info);
+        }
+        params.putString(CCAnalyticsParam.PERSONAL_ID_WORKFLOW, workflow.getAnalyticsValue());
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_CONTINUE_CLICKED, params);
+    }
+
+    public static void reportUserPromptEvent(String type, String action, String info) {
+        Bundle params = new Bundle();
+        params.putString(CCAnalyticsParam.USER_PROMPT_TYPE, type);
+        params.putString(CCAnalyticsParam.USER_PROMPT_ACTION, action);
+        params.putString(CCAnalyticsParam.USER_PROMPT_INFO, info);
+        reportEvent(CCAnalyticsEvent.USER_PROMPT, params);
+    }
+
+    public static void reportPersonalIDMessageSent() {
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_MESSAGE_SENT);
+    }
+
+    public static void reportPersonalIDLinking(String appId, String result) {
+        Bundle bundle = new Bundle();
+        bundle.putString(CCAnalyticsParam.CC_APP_ID, appId);
+        bundle.putString(CCAnalyticsParam.RESULT, result);
+        reportEvent(CCAnalyticsEvent.PERSONAL_ID_LINKING, bundle);
+    }
+
+    // logs screen view events when set to a navigation controller
+    public static NavController.OnDestinationChangedListener getNavControllerPageChangeLoggingListener() {
+        return (navController, navDestination, args) -> {
+            String currentFragmentClassName = "UnknownDestination";
+            NavDestination destination = navController.getCurrentDestination();
+            if (destination instanceof FragmentNavigator.Destination) {
+                currentFragmentClassName =
+                        ((FragmentNavigator.Destination)destination).getClassName();
+            }
+
+            Bundle bundle = new Bundle();
+            bundle.putString(
+                    FirebaseAnalytics.Param.SCREEN_NAME,
+                    navDestination.getLabel().toString()
+            );
+            bundle.putString(FirebaseAnalytics.Param.SCREEN_CLASS, currentFragmentClassName);
+            reportEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle);
+        };
+    }
+
+    public static void reportConnectTabChange(String tabName) {
+        reportEvent(
+                CCAnalyticsEvent.CCC_TAB_CHANGE,
+                new String[]{CCAnalyticsParam.PARAM_CCC_TAB_CHANGE_NAME},
+                new String[]{tabName}
+        );
+    }
+
+    public static void reportBiometricInvalidated() {
+        reportEvent(CCAnalyticsEvent.CCC_BIOMETRIC_INVALIDATED);
+    }
+
+    public static void reportPersonalIdConfigurationFailure(String failureCause) {
+        if (failureCause == null) {
+            failureCause = "UNKNOWN_ERROR";
+        }
+        reportEvent(
+                CCAnalyticsEvent.PERSONAL_ID_CONFIGURATION_FAILURE,
+                new String[]{CCAnalyticsParam.REASON},
+                new String[]{failureCause}
+        );
+    }
+
+    public static void reportNavDrawerOpen() {
+        reportEvent(CCAnalyticsEvent.NAV_DRAWER_OPEN);
+    }
+
+    public static void reportNavDrawerItemSelected(String selectedItem) {
+        reportEvent(
+                CCAnalyticsEvent.NAV_DRAWER_ITEM_SELECTED,
+                new String[]{FirebaseAnalytics.Param.ITEM_ID},
+                new String[]{selectedItem}
+        );
+    }
+
+    /**
+     * Reports the otp_requested event for a phone or email OTP request/verify call. Resolves the
+     * event type via {@link OtpAnalyticsMapper#getEventType} so callers pass the {@link
+     * OtpAnalyticsMapper.OtpOp} enum rather than a pre-mapped string.
+     *
+     * @param op             the OTP operation in flight; resolved to the event type. Logged under
+     *                       {@link CCAnalyticsParam#OTP_EVENT_TYPE}.
+     * @param outcome        one of {@link AnalyticsParamValue#OTP_OUTCOME_SUCCESS} /
+     *                       {@link AnalyticsParamValue#OTP_OUTCOME_FAILURE}.
+     * @param method         one of {@link AnalyticsParamValue#OTP_METHOD_FIREBASE} /
+     *                       {@link AnalyticsParamValue#OTP_METHOD_PERSONAL_ID} /
+     *                       {@link AnalyticsParamValue#OTP_METHOD_EMAIL}.
+     * @param reason         failure reason from {@link OtpAnalyticsMapper}; pass null for success
+     *                       events. Null reasons are omitted from the bundle (Firebase does not
+     *                       accept null string params). Logged under {@link CCAnalyticsParam#REASON}.
+     * @param requestCount   total number of times an OTP was sent/requested this session. Logged to
+     *                       {@link FirebaseAnalytics.Param#VALUE}.
+     * @param failedAttempts absolute number of failed OTP verifications this session. Logged to
+     *                       {@link CCAnalyticsParam#OTP_FAILED_ATTEMPTS}.
+     * @param workflow       the workflow string from {@link OtpAnalyticsMapper#workflowParam}.
+     *                       Logged to {@link CCAnalyticsParam#OTP_WORKFLOW}.
+     */
+    public static void reportOtpEvent(OtpAnalyticsMapper.OtpOp op,
+                                      String outcome,
+                                      String method,
+                                      @Nullable String reason,
+                                      int requestCount,
+                                      int failedAttempts,
+                                      String workflow) {
+        String eventType = OtpAnalyticsMapper.getEventType(op);
+        if (eventType == null) {
+            return;
+        }
+        Bundle bundle = new Bundle();
+        bundle.putString(CCAnalyticsParam.OTP_EVENT_TYPE, eventType);
+        bundle.putString(CCAnalyticsParam.OTP_OUTCOME, outcome);
+        bundle.putString(CCAnalyticsParam.OTP_METHOD, method);
+        if (reason != null) {
+            bundle.putString(CCAnalyticsParam.REASON, reason);
+        }
+        bundle.putLong(FirebaseAnalytics.Param.VALUE, requestCount);
+        bundle.putLong(CCAnalyticsParam.OTP_FAILED_ATTEMPTS, failedAttempts);
+        bundle.putString(CCAnalyticsParam.OTP_WORKFLOW, workflow);
+        reportEvent(CCAnalyticsEvent.OTP_REQUESTED, bundle);
+    }
+
+    public static void reportNotificationEvent(
+            String eventType,
+            String method,
+            @Nullable String actionType,
+            @Nullable String notificationId
+    ) {
+        Bundle bundle = new Bundle();
+        bundle.putString(CCAnalyticsParam.NOTIFICATION_EVENT_TYPE, eventType);
+        bundle.putString(METHOD, method);
+        if (actionType != null) {
+            bundle.putString(CCAnalyticsParam.NOTIFICATION_ACTION, actionType);
+        }
+        if (notificationId != null) {
+            bundle.putString(CCAnalyticsParam.NOTIFICATION_ID, notificationId);
+        }
+        reportEvent(CCAnalyticsEvent.CCC_NOTIFICATION_TYPE, bundle);
+    }
+
+    public static void flagPersonalIDDemoUser(Boolean isPersonalIDDemoUser) {
+        if (isPersonalIDDemoUser == null) {
+            return;
+        }
+
+        FirebaseAnalytics analyticsInstance = CommCareApplication.instance().getAnalyticsInstance();
+        analyticsInstance.setUserProperty(
+                CCAnalyticsParam.IS_PERSONAL_ID_DEMO_USER,
+                String.valueOf(isPersonalIDDemoUser)
+        );
+    }
+
+    public static void reportPersonalIdReleaseTogglesChanged(
+            List<ConnectReleaseToggleRecord> toggles
+    ) {
+        try {
+            if (toggles == null || toggles.isEmpty()) {
+                return;
+            }
+
+            Bundle bundle = new Bundle();
+
+            // Make sure that we don't cross Firebase's limit of 25 parameters.
+            int paramCount = 0;
+
+            // Sort the toggles by most recently modified so that we always report the most recent toggles.
+            List<ConnectReleaseToggleRecord> togglesToReport = new ArrayList<>(toggles);
+            Collections.sort(
+                    togglesToReport,
+                    (t1, t2) ->
+                            t2.getModifiedAt().compareTo(t1.getModifiedAt())
+            );
+
+            for (ConnectReleaseToggleRecord toggle : togglesToReport) {
+                if (paramCount >= 25) {
+                    Logger.log(
+                            TYPE_ERROR_DESIGN,
+                            "There are too many toggles to report to Firebase! Dropping the following toggle from analytics: "
+                                    + toggle.getSlug()
+                    );
+                    break;
+                }
+
+                String sanitizedKey = sanitizeParamName(toggle.getSlug());
+
+                if (sanitizedKey != null) {
+                    bundle.putLong(sanitizedKey, toggle.getActive() ? 1 : 0);
+                    paramCount++;
+                }
+            }
+
+            reportEvent(CCAnalyticsEvent.PERSONAL_ID_RELEASE_TOGGLES, bundle);
+        } catch (Exception e) {
+            Logger.exception(
+                    "Failed to report PersonalID release toggles to Firebase analytics!",
+                    e
+            );
+        }
+    }
+
+    /**
+     * Sanitizes a string to be a valid Firebase Analytics parameter name.
+     * Constraints: max 40 chars, alphanumeric/underscores only, starts with a letter,
+     * no reserved prefixes.
+     *
+     * @param param The parameter name to sanitize.
+     * @return A string representing the sanitized name, or null if the input param was null or empty.
+     */
+    private static String sanitizeParamName(String param) {
+        if (param == null || param.isEmpty()) {
+            Logger.exception(
+                    "An invalid empty parameter was passed to Firebase analytics!",
+                    new IllegalStateException()
+            );
+            return null;
+        }
+
+        // Replace invalid characters (anything not alphanumeric or underscore) with underscore.
+        String sanitizedParam = param.replaceAll("[^a-zA-Z0-9_]", "_");
+
+        // Ensure it starts with a letter (prepend 'p_' if it starts with a digit or underscore).
+        if (!Character.isLetter(sanitizedParam.charAt(0))) {
+            sanitizedParam = "p_" + sanitizedParam;
+        }
+
+        // Remove reserved prefixes.
+        String lower = sanitizedParam.toLowerCase();
+        if (lower.startsWith("firebase_") || lower.startsWith("google_") || lower.startsWith("ga_")) {
+            sanitizedParam = "p_" + sanitizedParam;
+        }
+
+        // Truncate to 40 characters.
+        if (sanitizedParam.length() > 40) {
+            sanitizedParam = sanitizedParam.substring(0, 40);
+        }
+
+        return sanitizedParam;
+    }
+
+    public static void reportConnectMessagingChannelEvent(
+            @NonNull String messagingEventType,
+            @NonNull String messageChannelId,
+            @Nullable Boolean consentApiSuccessful,
+            @Nullable Boolean desiredConsentStatus
+    ) {
+        Bundle bundle = new Bundle();
+        bundle.putString(CCAnalyticsParam.CCC_MESSAGING_EVENT_TYPE, messagingEventType);
+        bundle.putString(CCAnalyticsParam.CCC_MESSAGING_CHANNEL_ID, messageChannelId);
+
+        if (consentApiSuccessful != null) {
+            bundle.putLong(
+                    CCAnalyticsParam.CCC_MESSAGING_CONSENT_API_RESULT,
+                    consentApiSuccessful ? 1 : 0
+            );
+        }
+
+        if (desiredConsentStatus != null) {
+            bundle.putLong(
+                    CCAnalyticsParam.CCC_MESSAGING_DESIRED_CONSENT_STATUS,
+                    desiredConsentStatus ? 1 : 0
+            );
+        }
+
+        reportEvent(CCAnalyticsEvent.CCC_MESSAGING, bundle);
+    }
+}

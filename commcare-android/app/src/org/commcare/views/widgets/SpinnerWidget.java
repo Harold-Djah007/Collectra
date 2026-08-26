@@ -1,0 +1,200 @@
+package org.commcare.views.widgets;
+
+import android.content.Context;
+import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
+
+import org.commcare.dalvik.R;
+import org.javarosa.core.model.SelectChoice;
+import org.javarosa.core.model.data.IAnswerData;
+import org.javarosa.core.model.data.SelectOneData;
+import org.javarosa.core.model.data.helper.Selection;
+import org.javarosa.form.api.FormEntryPrompt;
+
+import java.util.Vector;
+
+/**
+ * SpinnerWidget handles select-one fields. Instead of a list of buttons it uses a spinner, wherein
+ * the user clicks a button and the choices pop up in a dialogue box. The goal is to be more
+ * compact. If images, audio, or video are specified in the select answers they are ignored.
+ *
+ * @author Jeff Beorse (jeff@beorse.net)
+ */
+public class SpinnerWidget extends QuestionWidget {
+    private final Vector<SelectChoice> mItems;
+    private final Spinner spinner;
+    private final String[] choices;
+
+
+    public SpinnerWidget(Context context, FormEntryPrompt prompt) {
+        super(context, prompt);
+
+        mItems = getSelectChoices();
+        spinner = new Spinner(context);
+        choices = new String[mItems.size()];
+
+        for (int i = 0; i < mItems.size(); i++) {
+            choices[i] = prompt.getSelectChoiceText(mItems.get(i));
+        }
+
+        // The spinner requires a custom adapter. It is defined below
+        SpinnerAdapter adapter =
+                new SpinnerAdapter(getContext(), android.R.layout.simple_spinner_item,
+                        getChoicesWithEmptyFirstSlot(choices),
+                        TypedValue.COMPLEX_UNIT_DIP, mQuestionFontSize);
+
+        spinner.setAdapter(adapter);
+        spinner.setPrompt(prompt.getQuestionText());
+        spinner.setEnabled(!prompt.isReadOnly());
+        spinner.setFocusable(!prompt.isReadOnly());
+
+        // Fill in previous answer
+        String s = null;
+        if (prompt.getAnswerValue() != null) {
+            s = ((Selection)prompt.getAnswerValue().getValue()).getValue();
+        }
+
+        if (s != null) {
+            for (int i = 0; i < mItems.size(); ++i) {
+                String sMatch = mItems.get(i).getValue();
+                if (sMatch.equals(s)) {
+                    // Workaround to a really weird spinner bug that triggers onItemSelected
+                    // in the initial selection of spinner even though no listener is set.
+                    // https://stackoverflow.com/a/17336944/6671572
+                    spinner.setSelection(i+1, false);
+                }
+            }
+        }
+
+        spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                widgetEntryChanged();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                //do nothing here
+            }
+
+        });
+
+        addView(spinner);
+
+    }
+
+    public static String[] getChoicesWithEmptyFirstSlot(String[] originalChoices) {
+        //Creates an empty option to be displayed the first time the widget is shown
+        String[] newChoicesList = new String[originalChoices.length+1];
+        newChoicesList[0] = "";
+        System.arraycopy(originalChoices, 0, newChoicesList, 1, originalChoices.length);
+        return newChoicesList;
+    }
+
+
+    @Override
+    public IAnswerData getAnswer() {
+        int i = spinner.getSelectedItemPosition();
+        if (i < 1) {
+            return null;
+        } else {
+            SelectChoice sc = mItems.elementAt(i-1);
+            return new SelectOneData(new Selection(sc));
+        }
+    }
+
+
+    @Override
+    public void clearAnswer() {
+        // It seems that spinners cannot return a null answer. This resets the answer
+        // to its original value, but it is not null.
+        spinner.setSelection(0);
+    }
+
+
+    @Override
+    public void setFocus(Context context) {
+        // Hide the soft keyboard if it's showing.
+        InputMethodManager inputManager =
+                (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputManager.hideSoftInputFromWindow(this.getWindowToken(), 0);
+
+    }
+
+    // Defines how to display the select answers
+    private class SpinnerAdapter extends ArrayAdapter<String> {
+        final Context context;
+        final String[] items;
+        final int textUnit;
+        final float textSize;
+
+
+        public SpinnerAdapter(final Context context, final int textViewResourceId,
+                              final String[] objects, int textUnit, float textSize) {
+            super(context, textViewResourceId, objects);
+            this.items = objects;
+            this.context = context;
+            this.textUnit = textUnit;
+            this.textSize = textSize;
+        }
+
+        @Override
+        // Defines the text view parameters for the drop down list entries
+        public View getDropDownView(int position, View convertView, ViewGroup parent) {
+
+            if (convertView == null) {
+                LayoutInflater inflater = LayoutInflater.from(context);
+                convertView = inflater.inflate(R.layout.custom_spinner_item, parent, false);
+            }
+
+            TextView tv = convertView.findViewById(android.R.id.text1);
+
+            tv.setText(items[position]);
+            tv.setTextSize(textUnit, textSize);
+            tv.setPadding(10, 10, 10, 10);
+
+            return convertView;
+        }
+
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                LayoutInflater inflater = LayoutInflater.from(context);
+                convertView = inflater.inflate(android.R.layout.simple_spinner_item, parent, false);
+            }
+
+            TextView tv = convertView.findViewById(android.R.id.text1);
+            tv.setText(items[position]);
+            tv.setTextSize(textUnit, textSize);
+            return convertView;
+        }
+
+    }
+
+    @Override
+    public void setOnLongClickListener(OnLongClickListener l) {
+        spinner.setOnLongClickListener(l);
+    }
+
+    @Override
+    public void unsetListeners() {
+        super.unsetListeners();
+        spinner.setOnLongClickListener(null);
+    }
+
+    @Override
+    public void cancelLongPress() {
+        super.cancelLongPress();
+        spinner.cancelLongPress();
+    }
+
+}

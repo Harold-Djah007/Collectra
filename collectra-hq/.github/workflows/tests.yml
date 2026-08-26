@@ -1,0 +1,89 @@
+name: commcare-hq tests
+on:
+  pull_request:
+    branches:
+    - master
+    - hotfix-deploy
+  schedule:
+    # see corehq/apps/hqadmin/management/commands/static_analysis.py
+    - cron: '47 12 * * *'
+  workflow_dispatch:
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - {TEST: python, DIVIDED_WE_RUN: '03'}
+        - {TEST: python, DIVIDED_WE_RUN: '47'}
+        - {TEST: python, DIVIDED_WE_RUN: '8b'}
+        - {TEST: python, DIVIDED_WE_RUN: 'cf'}
+        - {TEST: python-sharded-and-javascript}
+    env:
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
+      REUSE_DB: true  # do not drop databases on completion to save time
+    steps:
+    # Audit-only: records egress from the runner, never fails the build.
+    # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+    - name: Harden runner
+      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+
+      with:
+        submodules: recursive
+    - name: Docker info
+      run: |
+        docker version
+        docker compose version
+    - name: Docker login
+      env:
+        TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      if: env.TOKEN != ''
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
+      with:
+        username: dimagi
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Run tests
+      env:
+        TEST: ${{ matrix.TEST }}
+        DIVIDED_WE_RUN: ${{ matrix.DIVIDED_WE_RUN }}
+        JS_SETUP: yes
+        KAFKA_HOSTNAME: kafka
+        STRIPE_PRIVATE_KEY: ${{ secrets.STRIPE_PRIVATE_KEY }}
+      run: >-
+        scripts/docker test
+        --exitfirst
+        --verbosity=2
+        --reusedb=1
+        --no-migrations
+        --divided-we-run=${{ matrix.DIVIDED_WE_RUN }}
+        --showlocals
+        --max-test-time=29
+        --durations=50
+        -p no:cacheprovider
+    - name: "Codecov upload"
+      env:
+        TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      if: env.TOKEN != ''
+      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4.6.0
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage.xml
+        fail_ci_if_error: true
+    - name: Stop containers
+      if: always()
+      run: scripts/docker down
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      with:
+        name: test-artifacts
+        path: artifacts
+        if-no-files-found: ignore
+        retention-days: 7

@@ -1,0 +1,4 @@
+
+
+class BulkAppTranslationsException(Exception):
+    pass

@@ -1,0 +1,61 @@
+{% load i18n %}
+
+{# requires sso/js/edit_identity_provider #}
+
+<div id="sso-test-user-manager" class="ko-template">
+  <div class="card card-modern-gray card-form-only mb-3">
+    <div class="card-body">
+      <fieldset>
+        <legend>{% trans "SSO Test Users" %}</legend>
+        <p>
+          {% blocktrans %}
+            When the Identity Provider is in "Test" mode for Login Enforcement,
+            only the users in this list will be directed to sign in with SSO.
+          {% endblocktrans %}
+        </p>
+        <!-- ko if: showNoObjectsMessage -->
+        <p class="alert alert-info">
+          <i class="fa fa-warning"></i>
+          {% blocktrans %}
+            No users are marked as test users.
+          {% endblocktrans %}
+        </p>
+        <!-- /ko -->
+        <ul data-bind="foreach: linkedObjects">
+          <li>
+            <strong class="pe-2" data-bind="text: $data"></strong>
+            (<button type="button"
+                     class="btn btn-link"
+                     data-bind="click: $parent.removeObject">remove</button>)
+          </li>
+        </ul>
+        <p class="text-danger"
+           data-bind="text: asyncHandlerError,
+                      visible: asyncHandlerError"></p>
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="card card-modern-gray card-form-only">
+    <div class="card-body row align-items-center">
+      <div class="col-2">
+        <input
+          data-bind="textInput: newObject"
+          placeholder="jsmith@example.org"
+          type="email"
+          class="form-control"
+        />
+      </div>
+      <button type="button"
+              data-bind="click: addObject,
+                         enable: isNewObjectValid(),
+                         "
+              class="btn btn-primary col-auto">
+        {% trans "Add User" %}
+      </button>
+      <span class="text-danger col-auto"
+            data-bind="text: addObjectError,
+                       visible: addObjectError"></span>
+    </div>
+  </div>
+</div>

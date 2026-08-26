@@ -1,0 +1,39 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry "dhis2/js/dataset_map_json" %}
+
+{% block page_content %}
+{% initial_page_data 'dataset_map' dataset_map %}
+
+<h2>{% trans "DataSet Map" %}</h2>
+
+<script type="text/html" id="dataSetMap-config-template">
+  <fieldset>
+    <textarea name="dataSetMap"
+              class="jsonwidget form-control"
+              required=""
+              data-bind="value: dataSetMap"></textarea>
+  </fieldset>
+</script>
+
+<form id="dataset-map"
+      class="ko-template"
+      method="post"
+      data-bind="submit: submit">
+  <div data-bind="template: {
+                        name: 'dataSetMap-config-template',
+                        afterRender: initMapConfigTemplate
+                    }"></div>
+  <div data-bind="visible: isError()">
+      <pre data-bind="text: errorMessage()" class="alert message-alert alert-danger"></pre>
+  </div>
+
+  <button type="submit"
+          class="btn btn-outline-primary">
+    {% trans "Save DataSet map" %}
+  </button>
+</form>
+
+{% endblock %}

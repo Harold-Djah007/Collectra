@@ -1,0 +1,17 @@
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/font-workflow.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/app_manager.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/preview_app.less' %}"/>
+{% endcompress %}

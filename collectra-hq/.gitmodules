@@ -1,0 +1,21 @@
+[submodule "submodules/commcare-translations"]
+	path = submodules/commcare-translations
+	url = https://github.com/dimagi/commcare-translations.git
+[submodule "submodules/couchdbkit-aggregate"]
+	path = submodules/couchdbkit-aggregate
+	url = https://github.com/dimagi/couchdbkit-aggregate.git
+[submodule "submodules/django-digest-src"]
+	path = submodules/django-digest-src
+	url = https://github.com/dimagi/django-digest.git
+[submodule "submodules/django-no-exceptions"]
+	path = submodules/django-no-exceptions
+	url = https://github.com/dimagi/django-no-exceptions.git
+[submodule "submodules/langcodes"]
+	path = submodules/langcodes
+	url = https://github.com/dimagi/langcodes.git
+[submodule "submodules/python-digest"]
+	path = submodules/python-digest
+	url = https://github.com/dimagi/python-digest.git
+[submodule "submodules/xml2json"]
+	path = submodules/xml2json
+	url = https://github.com/dimagi/xml2json.git

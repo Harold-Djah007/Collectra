@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Text sizes -->
+    <dimen name="text_smaller">9sp</dimen>
+    <dimen name="text_small">14sp</dimen>
+    <dimen name="text_medium">18sp</dimen>
+    <dimen name="text_large">21sp</dimen>
+    <dimen name="text_larger">28sp</dimen>
+    <dimen name="text_largest">40sp</dimen>
+
+    <!-- Miscellaneous -->
+
+    <dimen name="title_round_bleed">-12dp</dimen>
+    <dimen name="title_padding">10dp</dimen>
+    <dimen name="detail_view_tab_indicator_height">3dp</dimen>
+    <dimen name="detail_view_tab_padding_horizontal">24dp</dimen>
+
+    <dimen name="spacer_small">5dp</dimen>
+    <dimen name="standard_spacer_half">4dp</dimen>
+    <dimen name="standard_spacer">8dp</dimen>
+    <dimen name="standard_spacer_one_and_half">12dp</dimen>
+    <dimen name="standard_spacer_double">16dp</dimen>
+    <dimen name="standard_spacer_large">24dp</dimen>
+    <dimen name="standard_spacer_extra_large">32dp</dimen>
+    <dimen name="standard_title_margin_bottom">20dp</dimen>
+    <dimen name="min_button_height">52dp</dimen>
+    <dimen name="min_button_width">88dp</dimen>
+    <dimen name="rounded_button_corner_radius">22dp</dimen>
+    <dimen name="action_icon_size">60dp</dimen>
+
+    <dimen name="list_text_height">48dp</dimen>
+    <dimen name="list_audio_height">52dp</dimen>
+    <dimen name="list_content_with_space_for_badge">58dp</dimen>
+    <dimen name="list_icon_size">48dp</dimen>
+    <dimen name="list_icon_bounding_dimen">60dp</dimen>
+    <dimen name="list_grid_bounding_dimension">180dp</dimen>
+
+    <dimen name="numeric_badge_width_for_list">28dp</dimen>
+    <dimen name="numeric_badge_font_size_list">10dp</dimen>
+
+    <dimen name="menu_grid_icon_size">120dp</dimen>
+    <dimen name="menu_grid_icon_size_with_badge">136dp</dimen>
+    <dimen name="numeric_badge_font_size_grid">15dp</dimen>
+    <dimen name="numeric_badge_width_for_grid">30dp</dimen>
+
+    <dimen name="widget_button_padding">10dp</dimen>
+
+    <dimen name="login_box_margins">30dp</dimen>
+
+    <dimen name="button_elevation">5dp</dimen>
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="font_size_small">10sp</dimen>
+    <dimen name="font_size_medium">14sp</dimen>
+    <dimen name="font_size_large">16sp</dimen>
+    <dimen name="font_size_xlarge">21sp</dimen>
+    <dimen name="font_size_xlarger">23sp</dimen>
+    <dimen name="font_size_40">40sp</dimen>
+    <dimen name="font_size_xxxxlarge">64sp</dimen>
+    <dimen name="font_size_dp_medium">15dp</dimen>
+    <dimen name="font_size_dp_large">18dp</dimen>
+    <dimen name="cell_padding_vertical">8dp</dimen>
+    <dimen name="cell_padding_horizontal">8dp</dimen>
+    <dimen name="row_padding_vertical">8dp</dimen>
+    <dimen name="row_padding_horizontal">8dp</dimen>
+
+    <!-- Form Entry -->
+
+    <dimen name="question_widget_side_padding">16dp</dimen>
+    <dimen name="question_widget_side_inv">-16dp</dimen>
+
+    <!-- Menu list row dimensions -->
+
+    <dimen name="content_min_margin">16dp</dimen>
+
+    <dimen name="entity_item_image_margins">8dp</dimen>
+
+    <dimen name="content_start">8dp</dimen>
+    <dimen name="content_start_quadruple">32dp</dimen>
+
+    <dimen name="help_text_padding">16dp</dimen>
+
+    <!-- New progressbar dimensions -->
+    <dimen name="new_progressbar_minheight">56dp</dimen>
+    <dimen name="new_progressbar_button_minheight">48dp</dimen>
+    <dimen name="new_progressbar_button_minwidth">32dp</dimen>
+    <dimen name="new_progressbar_button_padding">24dp</dimen>
+    <dimen name="modern_progressbar_radius">4dp</dimen>
+    <dimen name="progressbar_vertical_padding">16dp</dimen>
+
+    <dimen name="submission_progressbar_height">10dp</dimen>
+
+    <dimen name="form_label_padding">8dp</dimen>
+
+    <dimen name="entity_select_divider_left_inset">120dp</dimen>
+
+    <dimen name="min_button_padding">20dp</dimen>
+
+    <!-- Map layer Button -->
+    <dimen name="map_layer_padding">4dp</dimen>
+    <dimen name="map_layer_margin">16dp</dimen>
+
+    <!-- Custom Preferences Dialog -->
+    <dimen name="pref_dialog_margin_top">48dp</dimen>
+    <dimen name="pref_dialog_margin_bottom">48dp</dimen>
+    <dimen name="pref_dialog_content_padding">5dp</dimen>
+    <dimen name="pref_dialog_message_margin_bottom">48dp</dimen>
+
+    <!-- Question Widget -->
+    <dimen name="edit_text_question_widget_compact_width">80dp</dimen>
+    <dimen name="edit_text_question_widget_padding_horizontal">8dp</dimen>
+
+    <!-- Big Layout Button Dimensions -->
+    <!-- Should be font medium SP x 4, roughly -->
+    <dimen name="rectangle_button_height">40dp</dimen>
+
+    <!-- action button on center of screen -->
+    <dimen name="center_button_width">180dp</dimen>
+
+    <!-- Audio button -->
+    <dimen name="audio_button_size">55dp</dimen>
+
+    <dimen name="dp6">6dp</dimen>
+    <dimen name="dp60">60dp</dimen>
+    <dimen name="dp48">48dp</dimen>
+
+    <dimen name="progress_ring_thickness">5dp</dimen>
+
+    <dimen name="connect_message_input_corner_radius">50dp</dimen>
+    <dimen name="connect_message_input_stroke_width">0.5dp</dimen>
+    <dimen name="reticle_stroke_width">3dp</dimen>
+    <dimen name="reticle_outline_width">1dp</dimen>
+    <dimen name="connect_message_corner_radius">16dp</dimen>
+
+    <dimen name="corner_radius_small_5dp">5dp</dimen>
+    <dimen name="nav_drawer_width">264dp</dimen>
+
+    <dimen name="side_nav_horizontal_padding">10dp</dimen>
+    <dimen name="side_nav_sign_out_top_margin">32dp</dimen>
+
+    <dimen name="connect_badge_icon_size">20dp</dimen>
+
+    <dimen name="connect_info_card_corner_radius">8dp</dimen>
+    <dimen name="connect_info_card_elevation">0dp</dimen>
+
+    <dimen name="connect_sync_card_badge_size">40dp</dimen>
+    <dimen name="connect_sync_card_badge_icon_inset">9dp</dimen>
+    <dimen name="connect_sync_card_subtext_spacing">2dp</dimen>
+
+    <dimen name="semi_circle_progress_default_width">240dp</dimen>
+    <dimen name="semi_circle_progress_stroke_width">14dp</dimen>
+    <dimen name="semi_circle_progress_value_text_size">22sp</dimen>
+    <dimen name="semi_circle_progress_description_text_size">16sp</dimen>
+
+    <!-- Connect progress card -->
+    <!-- Keeps the main card above the info banner that tucks up behind it. Kept to a hairline so
+         the shadow stays within the card's bounds rather than needing reserved padding. -->
+    <dimen name="connect_progress_card_elevation">1dp</dimen>
+    <dimen name="connect_progress_card_semi_circle_inset">48dp</dimen>
+    <dimen name="connect_progress_card_bar_height">8dp</dimen>
+    <dimen name="connect_progress_card_info_overlap">-20dp</dimen>
+    <!-- Overlap (20dp) plus the 12dp the content sits below the banner's visible top edge. Keep in
+         step with connect_progress_card_info_overlap. -->
+    <dimen name="connect_progress_card_info_padding_top">32dp</dimen>
+
+    <!-- Connect/PersonalID shared tokens -->
+    <!-- Text -->
+    <dimen name="connect_text_caption">12sp</dimen>
+    <dimen name="connect_text_body">14sp</dimen>
+    <dimen name="connect_text_title">16sp</dimen>
+    <dimen name="connect_text_headline">22sp</dimen>
+    <dimen name="connect_text_metric">24sp</dimen>
+    <dimen name="connect_text_value">28sp</dimen>
+    <!-- Spacing / padding -->
+    <dimen name="connect_space_xs">4dp</dimen>
+    <dimen name="connect_space_sm">8dp</dimen>
+    <dimen name="connect_space_md">12dp</dimen>
+    <dimen name="connect_space_lg">16dp</dimen>
+    <dimen name="connect_chip_icon_size">20dp</dimen>
+    <!-- Half of the gap between grid cards; the full 16dp gap is two of these. -->
+    <dimen name="connect_grid_gutter_half">8dp</dimen>
+    <!-- Corner radii -->
+    <dimen name="connect_radius_sm">5dp</dimen>
+    <dimen name="connect_radius_card">8dp</dimen>
+    <dimen name="connect_radius_lg">16dp</dimen>
+    <dimen name="connect_radius_pill">24dp</dimen>
+    <!-- Strokes -->
+    <dimen name="connect_stroke_hairline">1dp</dimen>
+</resources>

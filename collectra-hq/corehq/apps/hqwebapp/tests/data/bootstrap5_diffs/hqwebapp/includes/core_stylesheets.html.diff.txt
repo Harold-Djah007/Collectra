@@ -1,0 +1,43 @@
+--- 
++++ 
+@@ -2,24 +2,20 @@
+ {% load hq_shared_tags %}
+ 
+ {% compress css %}
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'hqwebapp/less/bootstrap.less' %}" />
+-    <link type="text/css"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}" />
+-    <link type="text/scss"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'hqwebapp/font/style.scss' %}" />
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'hqwebapp/less/style.less' %}" />
+-    <link type="text/css"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'flag-icons/css/flag-icons.min.css' %}" />
++  <link type="text/css"
++        rel="stylesheet"
++        media="all"
++        href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}" />
++  <link type="text/scss"
++        rel="stylesheet"
++        media="all"
++        href="{% static 'hqwebapp/font/style.scss' %}" />
++  <link type="text/scss"
++        rel="stylesheet"
++        media="all"
++        href="{% static 'hqwebapp/scss/commcarehq.scss' %}" />
++  <link type="text/css"
++        rel="stylesheet"
++        media="all"
++        href="{% static 'flag-icons/css/flag-icons.min.css' %}" />
+ {% endcompress %}

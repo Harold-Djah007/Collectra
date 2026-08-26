@@ -1,0 +1,180 @@
+import datetime
+import inspect
+import logging
+
+from celery import current_app
+from celery.signals import after_task_publish, before_task_publish, task_postrun, task_prerun
+from dimagi.utils.parsing import string_to_utc_datetime
+from django.core.cache import cache
+from django.db import InterfaceError, close_old_connections
+
+from corehq.util.metrics import push_metrics
+from corehq.util.quickcache import quickcache
+
+CELERY_STATE_SENT = "SENT"
+
+
+@before_task_publish.connect
+def celery_add_time_sent(headers=None, body=None, **kwargs):
+    info = headers if 'task' in headers else body
+    task_id = info['id']
+    eta = info['eta']
+    if eta:
+        eta = TimeToStartTimer.parse_iso8601(eta)
+    TimeToStartTimer(task_id).start_timing(eta)
+
+
+@after_task_publish.connect
+def update_celery_state(sender=None, headers=None, **kwargs):
+    """Updates the celery task progress to "SENT"
+
+    When fetching an task from celery using the form AsyncResponse(task_id), if
+    task_id never exists, celery will not throw an error, it will just hang.
+    This function updates each task sent to celery to have a progress value of "SENT",
+    which means we can check that a task exists with the following pattern:
+    `AsyncResponse(task_id).status == "SENT"`
+
+    See
+    http://stackoverflow.com/questions/9824172/find-out-whether-celery-task-exists/10089358
+    for more info
+
+    """
+
+    task = current_app.tasks.get(sender)
+    backend = task.backend if task else current_app.backend
+
+    try:
+        backend.store_result(headers['id'], None, CELERY_STATE_SENT)
+    except InterfaceError:
+        close_old_connections()
+        backend.store_result(headers['id'], None, CELERY_STATE_SENT)
+
+
+@task_prerun.connect
+def celery_record_time_to_start(task_id=None, task=None, **kwargs):
+    from corehq.util.metrics import metrics_counter, metrics_gauge
+    from corehq.util.metrics.const import MPM_MAX
+
+    tags = {
+        'celery_task_name': task.name,
+        'celery_queue': task.queue,
+    }
+
+    timer = TimeToStartTimer(task_id)
+    try:
+        time_to_start = timer.stop_and_pop_timing()
+    except TimingNotAvailable:
+        metrics_counter('commcare.celery.task.time_to_start_unavailable', tags=tags)
+    else:
+        metrics_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags,
+            multiprocess_mode=MPM_MAX)
+        get_task_time_to_start.set_cached_value(task_id).to(time_to_start)
+
+    TimeToRunTimer(task_id).start_timing()
+
+
+@task_postrun.connect
+def celery_record_time_to_run(task_id=None, task=None, state=None, args=None, kwargs=None, **kw):
+    from corehq.util.metrics import (
+        DAY_SCALE_TIME_BUCKETS,
+        metrics_counter,
+        metrics_histogram,
+    )
+
+    try:
+        domain = get_domain_from_task(task, args, kwargs)
+    except Exception:
+        domain = None
+        logging.exception("Error while attempting to get the domain for a celery task")
+        metrics_counter('commcare.celery.task.time_to_run_domain_unavailable', tags={
+            'celery_task_name': task.name,
+        })
+
+    get_task_time_to_start.clear(task_id)
+
+    tags = {
+        'celery_task_name': task.name,
+        'celery_queue': task.queue,
+        'state': state,
+        'domain': domain or 'N/A',
+    }
+    timer = TimeToRunTimer(task_id)
+    try:
+        time_to_run = timer.stop_and_pop_timing()
+    except TimingNotAvailable:
+        metrics_counter('commcare.celery.task.time_to_run_unavailable', tags=tags)
+    else:
+        metrics_histogram(
+            'commcare.celery.task.time_to_run.seconds', time_to_run.total_seconds(),
+            bucket_tag='duration', buckets=DAY_SCALE_TIME_BUCKETS, bucket_unit='s',
+            tags=tags
+        )
+
+
+@task_postrun.connect
+def celery_push_metrics(**kwargs):
+    push_metrics()
+
+
+@quickcache(['task_id'])
+def get_task_time_to_start(task_id):
+    pass  # Actual values are set by the celery event hooks below
+
+
+class TimingNotAvailable(Exception):
+    pass
+
+
+class CeleryTimer(object):
+    def __init__(self, task_id, timing_type):
+        self.task_id = task_id
+        self.timing_type = timing_type
+
+    @property
+    def _cache_key(self):
+        return 'task.{}.{}'.format(self.task_id, self.timing_type)
+
+    def start_timing(self, eta=None):
+        cache.set(self._cache_key, eta or datetime.datetime.utcnow(), timeout=3 * 24 * 60 * 60)
+
+    def stop_and_pop_timing(self):
+        """
+        Return timedelta since running start_timing
+
+        Only the first call to stop_and_pop_timing will return a timedelta;
+        subsequent calls will return None until the next time start_timing is called.
+
+        This helps avoid double-recording timings (for example when a task is retried).
+        """
+        time_sent = cache.get(self._cache_key)
+        if time_sent is None:
+            raise TimingNotAvailable()
+
+        cache.delete(self._cache_key)
+
+        return datetime.datetime.utcnow() - time_sent
+
+    @staticmethod
+    def parse_iso8601(datetime_string):
+        return string_to_utc_datetime(datetime_string)
+
+
+class TimeToStartTimer(CeleryTimer):
+    def __init__(self, task_id):
+        super(TimeToStartTimer, self).__init__(task_id, timing_type='time_sent')
+
+
+class TimeToRunTimer(CeleryTimer):
+    def __init__(self, task_id):
+        super(TimeToRunTimer, self).__init__(task_id, timing_type='time_started')
+
+
+def get_domain_from_task(task, args, kwargs):
+    undecorated_task_function = inspect.unwrap(task)
+    call_args = inspect.getcallargs(undecorated_task_function, *args, **kwargs)
+    if 'domain' in call_args:
+        return call_args['domain']
+    elif 'domain_name' in call_args:
+        return call_args['domain_name']
+    else:
+        return None

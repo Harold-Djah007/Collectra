@@ -1,0 +1,13 @@
+[run]
+branch = True
+source = corehq
+
+[report]
+omit = 
+  */migrations/*
+  */tests/*
+  */static/*
+  */templates/*
+
+[html]
+directory = coverage-report

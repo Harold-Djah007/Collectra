@@ -1,0 +1,62 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ }
+ 
+ .col-hq-sidebar {
+-  background-color: darken(@cc-bg, 2);
++  background-color: darken($cc-bg, 2);
+   padding: 0;
+   padding-bottom: 20px;
+ }
+@@ -16,7 +16,7 @@
+   &.nav > li {
+     a {
+       padding: 3px 20px;
+-      .transition(background 1s);
++      transition: background 1s;
+     }
+     > a:hover {
+       background-color: #dbdbdb;
+@@ -26,9 +26,12 @@
+       width: 16px;
+     }
+   }
+-  &.nav li.active {
+-    > a, > a:link, > a:visited, > a:hover {
+-      background-color: @brand-primary;
++  &.nav li {
++    > a.active,
++    > a.active:link,
++    > a.active:visited,
++    > a.active:hover {
++      background-color: $brand-primary;
+       color: #ffffff;
+     }
+   }
+@@ -40,7 +43,7 @@
+     margin: 8px 10px;
+     overflow: hidden;
+     background-color: white;
+-    border-top: 1px solid @cc-neutral-hi;
++    border-top: 1px solid $cc-neutral-hi;
+   }
+   .nav-input {
+     padding: 3px 20px;
+@@ -58,6 +61,7 @@
+ .nav-main-icon {
+   font-size: 1.7em;
+   line-height: 0.7em;
++  color: $gray-light;
+ }
+ 
+ .text-hq-nav-header {
+@@ -72,7 +76,7 @@
+ }
+ 
+ .nav > li > a {
+-  color: @cc-brand-low;
++  color: $cc-brand-low;
+ }
+ 
+ .report-nav{

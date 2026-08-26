@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:gravity="center"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingEnd="@dimen/activity_horizontal_margin"
+                android:paddingStart="@dimen/activity_horizontal_margin"
+    tools:viewBindingIgnore="true">
+
+    <TextView
+        android:id="@+id/recovery_title"
+        android:layout_centerHorizontal="true"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/recovery_mode_detail"/>
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleLarge"
+        android:id="@+id/recovery_progress"
+        android:layout_below="@id/recovery_title"
+        android:layout_centerHorizontal="true"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:paddingTop="@dimen/help_text_padding"/>
+
+    <TextView
+        style="@style/TextInteractiveFreeFloating"
+        android:id="@+id/recovery_status"
+        android:layout_below="@id/recovery_progress"
+        android:layout_centerHorizontal="true"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/standard_spacer_double"
+        android:layout_width="wrap_content"
+        android:visibility="gone"
+        tools:text="Waiting"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/retry_button"
+        android:layout_below="@id/recovery_status"
+        android:layout_centerHorizontal="true"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/standard_spacer_double"
+        android:layout_width="wrap_content"
+        android:text="@string/recovery_retry"
+        android:visibility="gone"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/app_manager_button"
+        android:layout_below="@id/retry_button"
+        android:layout_centerHorizontal="true"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/standard_spacer_double"
+        android:layout_width="wrap_content"
+        android:text="@string/recovery_app_manager"
+        android:visibility="gone"/>
+
+</RelativeLayout>

@@ -1,0 +1,71 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.vanniktech.maven.publish'
+
+version '12.5'
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId 'org.commcarehq.commcare'
+                artifactId 'support-library'
+                version this.version
+
+                pom {
+                    name = 'CommCare Support Library'
+                    description = 'Provides a set of utility functions for using CommCare Android mobile APIs'
+                    url = 'https://github.com/dimagi/commcare-android/tree/master/commcare-support-library'
+                    licenses {
+                        license {
+                            name = 'The Apache Software License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'shubham1g5'
+                            name = 'Shubham Goyal'
+                            email = 'sgoyal@dimagi.com'
+                        }
+                    }
+                    scm {
+                        url = 'https://github.com/dimagi/commcare-android.git'
+                    }
+                }
+            }
+        }
+    }
+}
+
+android {
+    namespace "org.commcare.commcaresupportlibrary"
+    compileSdk 36
+    defaultConfig {
+        minSdkVersion 23
+        targetSdkVersion 35
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
+}

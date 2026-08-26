@@ -1,0 +1,52 @@
+from django.contrib import messages
+from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+
+from memoized import memoized
+
+from corehq import toggles
+from corehq.apps.domain.views import BaseAdminProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.integration.forms import SimprintsIntegrationForm
+
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+
+
+class BiometricIntegrationView(BaseAdminProjectSettingsView):
+    urlname = 'biometric_integration'
+    page_title = gettext_lazy("Biometric Integration")
+    template_name = 'integration/biometric.html'
+
+    @method_decorator(use_bootstrap5)
+    @method_decorator(require_permission(HqPermissions.edit_motech))
+    @method_decorator(toggles.BIOMETRIC_INTEGRATION.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(BiometricIntegrationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def simprints_form(self):
+        data = self.request.POST if self.request.method == 'POST' else None
+        return SimprintsIntegrationForm(
+            data, domain=self.domain
+        )
+
+    @property
+    def page_context(self):
+        return {
+            'simprints_form': self.simprints_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.simprints_form.is_valid():
+            self.simprints_form.save()
+            messages.success(
+                request, _("Biometric Integration settings have been updated.")
+            )
+        else:
+            messages.error(
+                request, _("Could not update Biometric Integration settings.")
+            )
+        return self.get(request, *args, **kwargs)

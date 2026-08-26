@@ -1,0 +1,44 @@
+.ko-inline-edit-with-help {
+    .hq-help {
+        vertical-align: middle;
+    }
+}
+
+.ko-inline-edit {
+    &.inline {
+        display: inline-block;
+    }
+
+    .hq-help {
+        margin: 3px 5px 0 5px;
+    }
+
+    .read-only {
+        padding: 8px;
+        @include clearfix();
+
+        &:hover {
+            cursor: pointer;
+            background-color: $light;
+            border-radius: 4px;
+        }
+
+        i {
+            color: $secondary;
+            display: inline-block;
+            margin-left: 5px;
+            margin-top: 2px;
+        }
+
+        .text {
+            white-space: pre-wrap;
+        }
+    }
+    .read-write {
+        min-width: 350px;
+    }
+}
+
+table .ko-inline-edit .read-only:hover {
+    background-color: $light;
+}

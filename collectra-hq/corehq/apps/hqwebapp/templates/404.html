@@ -1,0 +1,12 @@
+{% extends "error_base.html" %}
+{% load i18n %}
+{% block title %}404 {% trans "Not Found" %}{% endblock %}
+{% block tabs %}{% endblock tabs %}
+{% block page_name %}404 <small>{% trans "Sorry, we couldn't find that for you." %}</small>{% endblock %}
+{% block page_content %}
+  <p>
+    {% blocktrans %}
+      If you think there should be something here, please <a href="mailto:{{ SUPPORT_EMAIL }}">let us know</a>!
+    {% endblocktrans %}
+  </p>
+{% endblock %}

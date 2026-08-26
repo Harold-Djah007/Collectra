@@ -1,0 +1,117 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    tools:viewBindingIgnore="true">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_above="@+id/RestartCommCare"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/CommCareLogo"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/content_min_margin"
+            android:adjustViewBounds="true"
+            android:paddingBottom="@dimen/content_min_margin"
+            android:paddingLeft="@dimen/content_min_margin"
+            android:paddingTop="@dimen/content_min_margin"
+            android:scaleType="fitCenter"
+            app:srcCompat="@drawable/commcare_by_dimagi"
+            android:layout_marginEnd="@dimen/content_min_margin"
+            android:paddingStart="@dimen/content_min_margin" />
+
+        <!-- Shadow text box -->
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/content_min_margin"
+            android:background="@drawable/tile_drop_shadow_small_margins"
+            android:orientation="vertical"
+            android:padding="@dimen/content_min_margin">
+
+            <!-- Simple message and info button -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_gravity="end"
+                android:layout_width="fill_parent"
+                android:padding="@dimen/content_min_margin"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/SimpleWarningMessage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textColor="@color/cc_neutral_color"
+                    android:textSize="@dimen/text_medium"
+                    android:layout_weight="6"
+                    tools:context=".CrashWarningActivity"/>
+
+                <View
+                    android:layout_height="fill_parent"
+                    android:layout_width="1dp"
+                    android:layout_marginRight="@dimen/content_min_margin"
+                    android:layout_marginLeft="@dimen/content_min_margin"
+                    android:background="@android:color/darker_gray"
+                    android:layout_marginStart="@dimen/content_min_margin"
+                    android:layout_marginEnd="@dimen/content_min_margin" />
+
+                <ImageButton
+                    android:id="@+id/InfoButton"
+                    style="@style/TileButton"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/circle_button"
+                    app:srcCompat="@drawable/icon_info_fill_neutral"
+                    />
+            </LinearLayout>
+
+            <!-- Divider line and detailed error message text -->
+            <LinearLayout
+                android:id="@+id/Error"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_margin="@dimen/content_min_margin"
+                    android:background="@android:color/darker_gray"/>
+
+                <ScrollView
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:orientation="vertical"
+                    android:padding="@dimen/content_min_margin">
+
+                    <TextView
+                        android:id="@+id/ErrorText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:shadowColor="@color/grey_light"
+                        android:textColor="@color/cc_neutral_color"
+                        android:textSize="@dimen/text_medium"
+                        tools:context=".CrashWarningActivity"/>
+
+                </ScrollView>
+
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/RestartCommCare"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="@dimen/content_min_margin"/>
+</RelativeLayout>

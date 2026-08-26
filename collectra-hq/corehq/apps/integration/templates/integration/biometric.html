@@ -1,0 +1,15 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% js_entry 'integration/js/biometric' %}
+
+{% block page_content %}
+  {% initial_page_data 'simprintsFormData' simprints_form.initial_data %}
+
+  <div id="simprints-form">
+    {% crispy simprints_form %}
+  </div>
+
+{% endblock %}

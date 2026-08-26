@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_margin="@dimen/activity_horizontal_margin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:viewBindingIgnore="true">
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/screen_permission_frame_bottom"
+        android:layout_alignParentTop="true">
+
+        <TextView
+            android:id="@+id/screen_permission_grant_text_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Permission grant? A potentially multiline message"
+            android:layout_centerInParent="true"/>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:id="@+id/screen_permission_frame_bottom"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/screen_permission_request_button_grant"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Grant Access"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/screen_permission_request_button_deny"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Deny Access"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

@@ -1,0 +1,107 @@
+package org.commcare.util.cli;
+
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.commcare.util.engine.CommCareConfigEngine;
+import org.javarosa.core.util.externalizable.LivePrototypeFactory;
+import org.javarosa.core.util.externalizable.PrototypeFactory;
+
+public class CliPlayCommand extends CliCommand {
+
+    private String resourcePath;
+    private String username;
+    private String password;
+
+    public CliPlayCommand() {
+        super("play", "Play a CommCare app from the command line", "<commcare.ccz url/path> [<username> <password>]");
+    }
+
+    @Override
+    protected Options getOptions() {
+        Options options = super.getOptions();
+        Option restoreFile = Option.builder("r")
+                .argName("FILE")
+                .hasArg()
+                .desc("Restore user data from FILE instead of querying the server")
+                .longOpt("restore-file")
+                .required(false)
+                .optionalArg(false)
+                .build();
+        Option demoUser = Option.builder("d")
+                .argName("DEMO_USER")
+                .desc("Use the demo user restore in the app")
+                .longOpt("use-demo-user")
+                .required(false)
+                .optionalArg(false)
+                .build();
+        Option endpointId = Option.builder("e")
+                .argName("ENDPOINT")
+                .hasArg()
+                .desc("Begin session from given endpoint")
+                .longOpt("endpoint-id")
+                .required(false)
+                .optionalArg(false)
+                .build();
+        Option endpointArgs = Option.builder("a")
+                .argName("ENDPOINT_ARG")
+                .hasArg()
+                .desc("Arguments for endpoint")
+                .longOpt("endpoint-arg")
+                .required(false)
+                .optionalArg(false)
+                .build();
+        options.addOption(restoreFile).addOption(demoUser).addOption(endpointId).addOption(endpointArgs);
+
+        return options;
+    }
+
+    @Override
+    public void parseArguments(String[] args) throws ParseException {
+        super.parseArguments(args);
+        resourcePath = this.args[0];
+        if (this.args.length == 3) {
+            username = this.args[1];
+            password = this.args[2];
+        }
+    }
+
+    @Override
+    public void handle() {
+        super.handle();
+        PrototypeFactory prototypeFactory = new LivePrototypeFactory();
+        try {
+            CommCareConfigEngine engine = configureApp(resourcePath, prototypeFactory);
+            ApplicationHost host = new ApplicationHost(engine, prototypeFactory);
+
+            if (username != null && password != null) {
+                host.setUsernamePassword(username, password);
+            }
+
+            if (cmd.hasOption("r")) {
+                host.setRestoreToLocalFile(cmd.getOptionValue("r"));
+            } else if (cmd.hasOption("d")) {
+                host.setRestoreToDemoUser();
+            } else {
+                host.setRestoreToRemoteUser();
+            }
+
+            String endpointId = null;
+            String[] endpointArgs = null;
+            if (cmd.hasOption("e")) {
+                endpointId = cmd.getOptionValue("e");
+                endpointArgs = cmd.getOptionValues("a");
+            }
+            host.run(endpointId, endpointArgs);
+            System.exit(-1);
+        } catch (RuntimeException re) {
+            System.out.print("Unhandled Fatal Error executing CommCare app");
+            re.printStackTrace();
+            throw re;
+        } finally {
+            //Since the CommCare libs start up threads for things like caching, if unhandled
+            //exceptions bubble up they will prevent the process from dying unless we kill it
+            System.exit(0);
+        }
+    }
+}

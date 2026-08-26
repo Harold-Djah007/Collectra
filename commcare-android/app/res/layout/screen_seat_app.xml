@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    tools:viewBindingIgnore="true">
+
+    <ImageView
+        android:id="@+id/screen_login_top_banner"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        app:srcCompat="@mipmap/commcare_launcher"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/font_size_xlarger"
+        android:gravity="center"
+        android:layout_centerHorizontal="true"
+        android:paddingTop="@dimen/help_text_padding"
+        android:layout_below="@id/screen_login_top_banner"/>
+
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/text"
+        android:paddingTop="@dimen/help_text_padding"
+        style="?android:attr/progressBarStyleLarge"/>
+
+</RelativeLayout>

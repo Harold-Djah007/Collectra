@@ -1,0 +1,76 @@
+div.dataTables_wrapper div.dataTables_info {
+  padding-top: 9px !important;
+}
+
+div.dataTables_wrapper div.dataTables_length label {
+  padding-top: 6px !important;
+}
+
+table.dataTable.table-hq-report {
+  margin-top: 0 !important;
+}
+
+.table-hq-report {
+  thead th {
+    background-color: $blue-800;
+    color: $white;
+    white-space: nowrap;
+
+    &.sorting_asc,
+    &.sorting_desc {
+      background-color: $blue-600;
+    }
+
+    &:nth-child(odd) {
+      background-color: $blue-700;
+      &.sorting_asc,
+      &.sorting_desc {
+        background-color: $blue-500;
+      }
+    }
+
+    &.dtfc-fixed-left,
+    &.dtfc-fixed-right {
+      background-color: $purple !important;
+    }
+
+    &.sorting_asc::before,
+    &.sorting_desc::after {
+      opacity: 1.0 !important;
+      color: $white !important;
+    }
+
+    &::after,
+    &::before {
+      opacity: 0.3 !important;
+    }
+  }
+
+  tbody tr {
+    &.odd td.dtfc-fixed-left,
+    &.odd td.dtfc-fixed-right {
+      background-color: lighten($gray-200, 5%);
+    }
+
+    &.even td.dtfc-fixed-left {
+      background-color: $gray-100;
+    }
+  }
+
+  tbody tr td[class^="sorting_"] {
+    background-color: $gray-200;
+    &:nth-child(odd) {
+      background-color: lighten($gray-200, 5%);
+    }
+  }
+}
+
+
+.table-hq-report tfoot tr td {
+  background-color: $blue-800;
+  color: $white;
+}
+
+.dtfc-right-top-blocker:last-child {
+  display: none !important;
+}

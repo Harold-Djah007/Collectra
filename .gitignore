@@ -1,0 +1,122 @@
+# =========================================================
+# Collectra Mobile - Root Git Ignore
+# =========================================================
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+.pyre/
+
+# -------------------------
+# Django / CommCare HQ
+# -------------------------
+*.log
+*.sqlite
+*.sqlite3
+local_settings.py
+
+# Django generated files
+staticfiles/
+media/
+
+# -------------------------
+# Node / JavaScript
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# -------------------------
+# Android / Gradle
+# -------------------------
+.gradle/
+build/
+*/build/
+*/.gradle/
+
+# Android generated files
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# -------------------------
+# IDEs
+# -------------------------
+.idea/
+.vscode/
+*.iml
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------
+# Environment / secrets
+# -------------------------
+.env
+.env.*
+!.env.example
+
+*.keystore
+*.jks
+
+# -------------------------
+# Temporary files
+# -------------------------
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# -------------------------
+# Python packaging
+# -------------------------
+*.egg-info/
+dist/
+.eggs/
+pip-wheel-metadata/
+
+# -------------------------
+# Test / cache files
+# -------------------------
+.pytest_cache/
+.tox/
+.nox/
+
+# -------------------------
+# Local Docker overrides
+# -------------------------
+docker-compose.override.yml
+
+# Test/private keys
+commcare-android/test_assets/keys/key_for_tests.pem
+
+# Windows junction used by CommCare translations
+collectra-hq/submodules/commcare-translations/messages_en-2.txtcommcare-android/app/instrumentation-tests/resources/basic_tests.ccz
+commcare-hq/submodules/commcare-translations/messages_en-2.txt
+commcare-android/app/instrumentation-tests/resources/basic_tests.ccz
+collectra-hq/submodules/commcare-translations/messages_en-2.txt
