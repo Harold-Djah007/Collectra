@@ -76,7 +76,7 @@ def dashboard_tile_total(request, domain, slug):
 @location_safe
 class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):
     urlname = 'dashboard_domain'
-    page_title = gettext_noop("HQ Dashboard")
+    page_title = gettext_noop("Dashboard")
     template_name = 'dashboard/base.html'
 
     @property
@@ -108,9 +108,15 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
                         'has_item_list': True,
                     })
                 tile_contexts.append(tile_context)
+        couch_user = self.request.couch_user
+        welcome_name = (getattr(couch_user, 'first_name', None) or '').strip()
+        if not welcome_name:
+            welcome_name = couch_user.raw_username
         from corehq.apps.export.views.utils import user_can_view_odata_feed
         context = {
             'dashboard_tiles': tile_contexts,
+            'welcome_name': welcome_name,
+            'show_create_form': any(tile['slug'] == 'applications' for tile in tile_contexts),
             'user_can_view_odata_feed': user_can_view_odata_feed(
                 self.domain, self.request.couch_user
             ),
@@ -244,7 +250,7 @@ def _get_default_tiles(request):
             icon='fa fa-users',
             urlname=DefaultProjectUserSettingsView.urlname,
             visibility_check=can_view_users,
-            help_text=_('Manage accounts for mobile workers and CommCare HQ users'),
+            help_text=_('Manage accounts for mobile workers and web users'),
         ),
         Tile(
             request,
@@ -279,7 +285,7 @@ def _get_default_tiles(request):
             slug='help',
             icon='fa fa-question-circle',
             url='http://help.commcarehq.org/',
-            help_text=_("Visit CommCare's knowledge base"),
+            help_text=_("Guides and answers for Collectra"),
         ),
     ]
 

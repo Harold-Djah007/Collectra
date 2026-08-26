@@ -19,7 +19,14 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  margin: 4px 0 30px;
+  margin: 4px 0 18px;
+}
+
+.collectra-welcome {
+  margin: 0 0 2px;
+  color: #0aa6a6;
+  font-size: .92rem;
+  font-weight: 700;
 }
 
 .collectra-dashboard-mark {
@@ -50,9 +57,9 @@
 
 .collectra-tagline {
   margin: 4px 0 0;
-  color: #0aa6a6;
-  font-size: .98rem;
-  font-weight: 700;
+  color: #718096;
+  font-size: .9rem;
+  font-weight: 600;
 }
 
 .collectra-description {

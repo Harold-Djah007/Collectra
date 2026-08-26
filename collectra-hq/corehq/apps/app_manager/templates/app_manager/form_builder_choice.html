@@ -3,35 +3,29 @@
 {% block title %}{% trans "Create Form" %} - Collectra{% endblock %}
 {% block content %}
 <div class="container py-5 collectra-builder-page">
-  <div class="text-center mb-5">
-    <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="Collectra" style="height:56px; margin-bottom:18px;">
-    <h1 class="fw-semibold mb-2">{% trans "Create a new form" %}</h1>
-    <p class="text-muted mb-0">{% trans "Choose the way that works best for your team." %}</p>
+  <div class="mb-5">
+    <p class="collectra-builder-kicker">{% trans "New form" %}</p>
+    <h1 class="fw-semibold mb-2">{% trans "Choose how to build it" %}</h1>
+    <p class="text-muted mb-0">{% trans "Use the visual designer for full control, or start from an Excel spreadsheet." %}</p>
   </div>
-  <div class="row justify-content-center g-4">
-    <div class="col-md-5">
-      <article class="card h-100 border-0 shadow-sm p-4 collectra-builder-card">
-        <div class="collectra-builder-icon">✦</div>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <article class="card h-100 border-0 p-4 collectra-builder-card">
+        <div class="collectra-builder-icon" aria-hidden="true"><i class="fa fa-th-large"></i></div>
         <h2 class="h4 mt-3">{% trans "Visual Form Builder" %}</h2>
-        <p class="text-muted">{% trans "Build forms visually with the existing Collectra form designer. Best for teams that want full control over questions, logic and layout." %}</p>
-        <a href="{% url 'default_new_app' domain %}" class="btn btn-primary mt-auto">{% trans "Open Visual Builder" %}</a>
+        <p class="text-muted">{% trans "Build questions, logic and layout in the Collectra form designer." %}</p>
+        <a href="{% url 'default_new_app' domain %}" class="btn btn-outline-primary">{% trans "Open visual builder" %}</a>
       </article>
     </div>
-    <div class="col-md-5">
-      <article class="card h-100 border-0 shadow-sm p-4 collectra-builder-card collectra-builder-card-featured">
-        <div class="collectra-builder-icon">▦</div>
-        <h2 class="h4 mt-3">{% trans "Excel Form Builder" %}</h2>
-        <p class="text-muted">{% trans "Start from an Excel spreadsheet. Put your question names in the first row and Collectra will turn them into a simple form." %}</p>
-        <a href="{% url 'excel_form_builder' domain %}" class="btn btn-outline-primary mt-auto">{% trans "Upload Excel" %}</a>
+    <div class="col-md-6">
+      <article class="card h-100 border-0 p-4 collectra-builder-card collectra-builder-card-featured">
+        <div class="collectra-builder-icon" aria-hidden="true"><i class="fa fa-table"></i></div>
+        <p class="collectra-builder-kicker mt-3 mb-0">{% trans "Spreadsheet workflow" %}</p>
+        <h2 class="h4 mt-2">{% trans "Excel Form Builder" %}</h2>
+        <p class="text-muted">{% trans "Put question names in the first row of a spreadsheet. Collectra turns them into a form." %}</p>
+        <a href="{% url 'excel_form_builder' domain %}" class="btn btn-primary">{% trans "Upload Excel" %}</a>
       </article>
     </div>
   </div>
 </div>
-<style>
-.collectra-builder-page { max-width: 980px; }
-.collectra-builder-card { border-radius: 18px; min-height: 320px; display:flex; }
-.collectra-builder-card-featured { border:1px solid rgba(15,118,110,.18) !important; }
-.collectra-builder-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:700; color:#0f766e; background:#e8f6f2; }
-.collectra-builder-card .btn { align-self:flex-start; }
-</style>
 {% endblock %}

@@ -114,9 +114,7 @@
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
             {% if not enterprise_mode %}
                 <li class="dropdown-header nav-header">
-                    {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
-                        {{ cc_name }} Help
-                    {% endblocktrans %}
+                    {% trans "Collectra Help" %}
                 </li>
                 <li>
                     <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" class="track-usage-link" target="_blank"

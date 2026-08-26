@@ -27,11 +27,21 @@
         <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
       </div>
       <div>
+        <p class="collectra-welcome">
+          {% blocktrans with name=welcome_name %}Welcome back, {{ name }}{% endblocktrans %}
+        </p>
         <h1 class="collectra-brand-title">Collectra</h1>
         <p class="collectra-tagline">Turning collected data into smarter decisions.</p>
-        <p class="collectra-description">Manage your applications, reports, data and users from one place.</p>
       </div>
     </header>
+
+    {% if show_create_form %}
+      <div class="collectra-quick-actions">
+        <a class="collectra-quick-action" href="{% url 'form_builder_choice' domain %}">
+          {% trans "Create form" %}
+        </a>
+      </div>
+    {% endif %}
 
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
@@ -57,7 +67,7 @@
             <div class="collectra-card-body">
               <div class="collectra-card-loading" data-bind="visible:showSpinner">
                 <span class="collectra-spinner" aria-hidden="true"></span>
-                <span>Loading</span>
+                <span>{% trans "Loading" %}</span>
               </div>
 
               <div class="collectra-card-items list-group" data-bind="visible:showItemList, foreach:items">
@@ -68,11 +78,11 @@
               </div>
 
               <div class="collectra-card-error" data-bind="visible:hasError">
-                <span>Something went wrong.</span>
+                <span>{% trans "Something went wrong." %}</span>
               </div>
 
               <a class="collectra-card-open" data-bind="visible:showIconLink, attr:{href:url}">
-                <span>Open</span>
+                <span>{% trans "Open" %}</span>
                 <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -80,8 +90,6 @@
         </div>
       </div>
     </section>
-
-    <p class="collectra-footer-message">Thanks for using Collectra!</p>
   </div>
 </div>
 {% endblock content %}

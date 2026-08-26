@@ -131,7 +131,8 @@
     <style name="LoginEditTextV2">
         <item name="android:paddingLeft">8dp</item>
         <item name="android:drawablePadding">8dp</item>
-        <item name="android:textColor">@color/grey</item>
+        <item name="android:textColor">@color/cc_core_text</item>
+        <item name="android:textColorHint">@color/cc_neutral_color</item>
     </style>
 
     <style name="DefaultHorizontalPadding">
@@ -222,7 +223,7 @@
         <item name="android:letterSpacing">0</item>
         <item name="android:gravity">center</item>
         <item name="android:padding">12dp</item>
-        <item name="height">40dp</item>
+        <item name="android:minHeight">48dp</item>
         <item name="cornerRadius">@dimen/rounded_button_corner_radius</item>
         <item name="iconPadding">8dp</item>
         <item name="android:layout_margin">@dimen/spacer_small</item>
@@ -234,6 +235,7 @@
         <item name="android:letterSpacing">0</item>
         <item name="android:gravity">center</item>
         <item name="android:padding">12dp</item>
+        <item name="android:minHeight">48dp</item>
         <item name="cornerRadius">@dimen/rounded_button_corner_radius</item>
         <item name="iconPadding">8dp</item>
         <item name="android:layout_margin">@dimen/spacer_small</item>

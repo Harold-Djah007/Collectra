@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.views.utils import clear_app_cache, generate_xmlns
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 
 
 def _safe_xml_name(label, index):
@@ -60,43 +61,57 @@ def _build_xform(app_name, fields):
 '''
 
 
+def _builder_context(domain):
+    return {'domain': domain}
+
+
+def _headers_from_first_row(first_row):
+    if not first_row:
+        return []
+    return [str(value).strip() for value in first_row if value not in (None, '')]
+
+
+@use_bootstrap5
 @domain_admin_required
 def form_builder_choice(request, domain):
-    return render(request, 'app_manager/form_builder_choice.html', {'domain': domain})
+    return render(request, 'app_manager/form_builder_choice.html', _builder_context(domain))
 
 
+@use_bootstrap5
 @domain_admin_required
 def excel_form_builder(request, domain):
+    context = _builder_context(domain)
     if request.method == 'GET':
-        return render(request, 'app_manager/excel_form_builder.html')
+        return render(request, 'app_manager/excel_form_builder.html', context)
 
     upload = request.FILES.get('spreadsheet')
     app_name = (request.POST.get('app_name') or '').strip() or _('Untitled Excel Form')
     if not upload or not upload.name.lower().endswith(('.xlsx', '.xlsm')):
         messages.error(request, _('Please upload an Excel workbook (.xlsx or .xlsm).'))
-        return render(request, 'app_manager/excel_form_builder.html')
+        return render(request, 'app_manager/excel_form_builder.html', context)
 
     try:
         from openpyxl import load_workbook
         workbook = load_workbook(upload, read_only=True, data_only=True)
         sheet = workbook.active
-        headers = [str(value).strip() for value in next(sheet.iter_rows(min_row=1, max_row=1, values_only=True)) if value not in (None, '')]
+        first_row = next(sheet.iter_rows(min_row=1, max_row=1, values_only=True), None)
+        headers = _headers_from_first_row(first_row)
     except Exception as exc:
         messages.error(request, _('We could not read that spreadsheet: %s') % exc)
-        return render(request, 'app_manager/excel_form_builder.html')
+        return render(request, 'app_manager/excel_form_builder.html', context)
 
     if not headers:
         messages.error(request, _('The first row of the spreadsheet must contain question names.'))
-        return render(request, 'app_manager/excel_form_builder.html')
+        return render(request, 'app_manager/excel_form_builder.html', context)
 
     app = Application.new_app(domain, app_name, lang='en')
     module = Module.new_module(_('Survey'), 'en')
     app.add_module(module)
     form = app.new_form(0, app_name, 'en')
     form.source = _build_xform(app_name, headers)
-    if request.project.secure_submissions:
+    if getattr(request.project, 'secure_submissions', False):
         app.secure_submissions = True
     app.save()
     clear_app_cache(request, domain)
     messages.success(request, _('Your Excel form was created with %d questions.') % len(headers))
-    return redirect('view_form', domain, app.id, form.id)
+    return redirect('view_form', domain, app.id, form.get_unique_id())

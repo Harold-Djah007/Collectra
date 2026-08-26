@@ -4,8 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="start"
+    android:lineSpacingExtra="2dp"
+    android:paddingTop="@dimen/content_min_margin"
+    android:paddingBottom="@dimen/content_min_margin"
     android:scrollHorizontally="false"
     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+    android:textColor="@color/cc_core_text"
     android:text="QuestionWidget placeholder text: there should be a really big question text here, greater than the screen&apos;s size"
     android:textAlignment="viewStart"
     tools:viewBindingIgnore="true"/>

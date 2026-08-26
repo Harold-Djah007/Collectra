@@ -4,6 +4,9 @@
     <div class="col-sm-12">
       <div class="reg-form-container sign-in-container">
         <div class="form-bubble form-bubble-lg">
+          <div class="collectra-login-identity">
+            <p class="collectra-login-kicker">{% trans "Collectra" %}</p>
+          </div>
           {% include "login_and_password/two_factor/core/bootstrap5/login.html" %}
         </div>
         {% if not restrict_domain_creation %}
@@ -17,11 +20,9 @@
               {% if not allow_domain_requests %}
                 <p class="lead">
                   {% blocktrans %}
-                    Data collection is just the start. Equip your frontline
-                    team with powerful service delivery apps that work where
-                    you work, even offline. No coding required.
+                    Collect forms in the field, even offline, and turn the
+                    results into decisions your team can act on.
                   {% endblocktrans %}
-                  <a class="text-decoration-underline" target="_blank" href="https://www.dimagi.com/commcare/">{% trans "Learn more about CommCare." %}</a>
                 </p>
               {% endif %}
               <p class="text-center">

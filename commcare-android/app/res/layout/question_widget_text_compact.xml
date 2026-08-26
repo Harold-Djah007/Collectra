@@ -8,6 +8,7 @@
     android:gravity="start"
     android:maxLines="1"
     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+    android:textColor="@color/cc_core_text"
     android:scrollHorizontally="false"
     android:text="QuestionWidget placeholder text: there should be a really big question text here, greater than the screen&apos;s size"
     android:textAlignment="viewStart"

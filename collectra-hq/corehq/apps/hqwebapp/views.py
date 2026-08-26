@@ -115,7 +115,6 @@ from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username, is_dimagi_email
 from corehq.toggles import CLOUDCARE_LATEST_BUILD
-from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import (
     create_metrics_event,
@@ -421,9 +420,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'default_password_reset_link': reverse('domain_password_reset_email', kwargs={'domain': domain_name}),
         })
     else:
-        commcare_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % commcare_name},
+            'current_page': {'page_name': _('Welcome back to Collectra!')},
             'default_password_reset_link': reverse('password_reset_email'),
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:

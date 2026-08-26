@@ -9,7 +9,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-xs-12">
-          <a href="https://dimagi.com/commcare/" class="footer-link-img">
+          <a href="{% url "homepage" %}" class="footer-link-img">
             <img
               src="{% static 'hqwebapp/images/collectra-logo-footer.svg' %}"
               alt="Collectra"
@@ -18,22 +18,14 @@
           </a>
           &nbsp;
           {% blocktrans %}
-            <a href="https://dimagi.com/commcare/">CommCare</a>
-            is copyright &copy;
+            Collectra &copy;
           {% endblocktrans %}{% now "Y" %}
-          <a href="https://dimagi.com/">Dimagi, Inc.</a>
+          &nbsp;{% trans "Built on CommCare HQ." %}
 
           <div class="visible-sm-inline visible-md-inline visible-lg-inline">
             &nbsp;|&nbsp;
           </div>
           <br class="hidden-sm hidden-md hidden-lg" />
-
-          <a href="https://dimagi.com/commcare/"
-            >{% trans 'Learn more about CommCare' %}</a
-          >
-
-          <div class="visible-md-inline visible-lg-inline">&nbsp;|&nbsp;</div>
-          <br class="hidden-md hidden-lg" />
 
           <a href="https://dimagi.com/terms/latest/privacy/" target="_blank">
             {% trans "Privacy" %}
