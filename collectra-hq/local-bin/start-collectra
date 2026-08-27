@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_root="${COLLECTRA_PROJECT_ROOT:-$HOME/projects/Collectra-Cursor/collectra-hq}"
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}/collectra"
+mkdir -p "$state_root"
+cd "$project_root"
+
+celery_pid=""
+pillowtop_pid=""
+
+stop_managed_process() {
+    local pid_file="$1"
+    local expected_command="$2"
+
+    if [[ ! -f "$pid_file" ]]; then
+        return
+    fi
+
+    local pid
+    pid="$(<"$pid_file")"
+    if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" >/dev/null 2>&1; then
+        local command_line
+        command_line="$(ps -p "$pid" -o args= 2>/dev/null || true)"
+        if [[ "$command_line" == *"$expected_command"* ]]; then
+            kill "$pid" >/dev/null 2>&1 || true
+        fi
+    fi
+    rm -f "$pid_file"
+}
+
+cleanup() {
+    echo
+    echo "Stopping Collectra background workers..."
+    for pid in "$pillowtop_pid" "$celery_pid"
+    do
+        if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" >/dev/null 2>&1; then
+            kill "$pid" >/dev/null 2>&1 || true
+        fi
+    done
+    rm -f "$state_root/pillowtop.pid" "$state_root/celery.pid"
+}
+trap cleanup EXIT INT TERM
+
+echo "Waiting for Docker Desktop..."
+until docker info >/dev/null 2>&1
+do
+    sleep 3
+done
+
+wsl_ip="$(hostname -I | awk '{print $1}')"
+if [[ -z "$wsl_ip" ]]; then
+    echo "Unable to determine the WSL IP address."
+    exit 1
+fi
+
+export COLLECTRA_BASE_ADDRESS="${wsl_ip}:8000"
+export COMMCARE_HOST="http://${wsl_ip}:8000"
+
+echo "Collectra address: http://localhost:8000"
+echo "Formplayer callback: ${COMMCARE_HOST}"
+echo "Starting Collectra services..."
+
+./scripts/docker up -d \
+    postgres couch redis elasticsearch6 \
+    zookeeper kafka minio
+./scripts/docker up -d --force-recreate formplayer
+
+echo "Waiting for PostgreSQL..."
+until docker exec hqservice-postgres-1 \
+    pg_isready -U commcarehq -d commcarehq >/dev/null 2>&1
+do
+    sleep 2
+done
+
+echo "Waiting for Kafka..."
+until docker inspect hqservice-kafka-1 \
+    --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' 2>/dev/null \
+    | grep -q '^healthy$'
+do
+    sleep 2
+done
+
+echo "Waiting for Formplayer..."
+until curl --silent --fail \
+    http://localhost:8080/serverup >/dev/null 2>&1
+do
+    sleep 2
+done
+
+if fuser 8000/tcp >/dev/null 2>&1; then
+    echo "Stopping the previous process on port 8000..."
+    fuser -k 8000/tcp >/dev/null 2>&1 || true
+    sleep 2
+fi
+
+# Stop legacy Docker workers. The managed workers below use the current checkout.
+docker stop hqservice-pillowtop-1 hqservice-celery-1 >/dev/null 2>&1 || true
+stop_managed_process "$state_root/pillowtop.pid" "manage.py run_ptop"
+stop_managed_process "$state_root/celery.pid" "celery -A corehq worker"
+
+echo "Checking Collectra configuration..."
+uv run python manage.py check
+
+celery_queues="celery,analytics_queue,async_restore_queue,case_import_queue,email_queue,export_download_queue,saved_exports_queue,submission_reprocessing_queue"
+
+echo "Starting Celery worker..."
+uv run celery -A corehq worker \
+    --loglevel=INFO \
+    --pool=solo \
+    --queues="$celery_queues" \
+    >"$state_root/celery.log" 2>&1 &
+celery_pid=$!
+echo "$celery_pid" >"$state_root/celery.pid"
+
+echo "Starting Pillowtop indexer..."
+uv run python manage.py run_ptop \
+    --pillow-key=core \
+    --processor-chunk-size=1 \
+    >"$state_root/pillowtop.log" 2>&1 &
+pillowtop_pid=$!
+echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
+
+sleep 5
+if ! kill -0 "$celery_pid" >/dev/null 2>&1; then
+    echo "Celery failed to start. Recent log output:"
+    tail -50 "$state_root/celery.log"
+    exit 1
+fi
+if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
+    echo "Pillowtop failed to start. Recent log output:"
+    tail -50 "$state_root/pillowtop.log"
+    exit 1
+fi
+
+echo "Background logs: $state_root"
+echo "Starting Collectra at http://localhost:8000"
+echo "Press Ctrl+C once to stop Collectra and its background workers."
+uv run python manage.py runserver --noreload 0.0.0.0:8000

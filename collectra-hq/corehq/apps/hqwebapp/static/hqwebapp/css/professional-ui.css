@@ -461,7 +461,7 @@ body {
 
 .hq-container {
   position: relative;
-  isolation: isolate;
+  isolation: auto;
 }
 
 .hq-container::before {

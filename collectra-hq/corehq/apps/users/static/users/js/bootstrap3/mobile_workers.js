@@ -649,5 +649,8 @@ $(function () {
     $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
     $("#new-user-modal").koApplyBindings(newUserCreation);
     $("#new-users-list").koApplyBindings(newUserCreation);
-    $("#mobile-worker-confirmation-panel").koApplyBindings(usersConfirmationModel);
+    var $confirmationPanel = $("#mobile-worker-confirmation-panel");
+    if ($confirmationPanel.length) {
+        $confirmationPanel.koApplyBindings(usersConfirmationModel);
+    }
 });
