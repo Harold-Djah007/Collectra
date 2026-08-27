@@ -6,7 +6,8 @@ from django.shortcuts import render, redirect
 from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.views.utils import clear_app_cache, generate_xmlns
+from corehq.apps.app_manager.views.apps import clear_app_cache
+from corehq.apps.app_manager.views.utils import generate_xmlns
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 

@@ -80,7 +80,7 @@ docker/data
 !uv.lock
 !yarn.lock
 fab/config.py
-extensions/
+/extensions/
 
 # direnv
 .envrc

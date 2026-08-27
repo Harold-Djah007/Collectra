@@ -53,7 +53,8 @@ RUN npm -g install \
     yarn \
     bower \
     grunt-cli \
-    uglify-js
+    uglify-js \
+    sass
 
 # prefer https for git checkouts made by pip
 RUN git config --global url."https://".insteadOf git://
@@ -74,7 +75,8 @@ USER cchq:cchq
 
 COPY --chown=cchq:cchq package.json /vendor/
 RUN npm shrinkwrap && \
-    yarn global add phantomjs-prebuilt
+    yarn global add phantomjs-prebuilt && \
+    yarn install --frozen-lockfile
 
 COPY --chown=cchq:cchq . /vendor/
 COPY --chown=cchq:cchq docker/min_settings.py /vendor/localsettings.py
