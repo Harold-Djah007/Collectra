@@ -30,15 +30,19 @@
         <p class="collectra-welcome">
           {% blocktrans with name=welcome_name %}Welcome back, {{ name }}{% endblocktrans %}
         </p>
-        <h1 class="collectra-brand-title">Collectra</h1>
-        <p class="collectra-tagline">Turning collected data into smarter decisions.</p>
+        <h1 class="collectra-brand-title">{% trans "Welcome to Collectra" %}</h1>
+        <p class="collectra-tagline">{% trans "Build forms. Collect data. Make an impact." %}</p>
       </div>
     </header>
 
     {% if show_create_form %}
       <div class="collectra-quick-actions">
-        <a class="collectra-quick-action" href="{% url 'form_builder_choice' domain %}">
+        <a class="collectra-quick-action collectra-quick-action-primary" href="{% url 'form_builder_choice' domain %}">
           {% trans "Create form" %}
+        </a>
+        <a class="collectra-quick-action" href="{% url 'excel_form_builder' domain %}">
+          <i class="fa fa-upload" aria-hidden="true"></i>
+          {% trans "Import XLSForm" %}
         </a>
       </div>
     {% endif %}
@@ -88,6 +92,24 @@
             </div>
           </article>
         </div>
+      </div>
+    </section>
+
+    <section class="collectra-dashboard-next" aria-label="Getting started with Collectra">
+      <div class="collectra-next-card">
+        <h2>{% trans "Your workspace" %}</h2>
+        <p class="text-muted mb-0">
+          {% trans "Your applications, reports, data tools and team are available in the cards above. Recent applications remain visible inside Applications so you can continue working quickly." %}
+        </p>
+      </div>
+      <div class="collectra-next-card">
+        <h2>{% trans "Getting started" %}</h2>
+        <ol class="collectra-start-list">
+          <li><span class="collectra-start-number">1</span>{% trans "Create or import an application" %}</li>
+          <li><span class="collectra-start-number">2</span>{% trans "Add and test a form" %}</li>
+          <li><span class="collectra-start-number">3</span>{% trans "Add mobile workers" %}</li>
+          <li><span class="collectra-start-number">4</span>{% trans "Publish when you are ready" %}</li>
+        </ol>
       </div>
     </section>
   </div>
