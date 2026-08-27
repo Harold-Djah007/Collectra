@@ -1,5 +1,7 @@
 {% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
-{% load i18n %}
+{% load hq_shared_tags i18n %}
+
+{% js_entry "app_manager/js/xlsform_preview" %}
 
 {% block title %}{% trans "SurveyCTO / XLSForm Import" %} - Collectra{% endblock %}
 
@@ -66,6 +68,7 @@
         </p>
       </div>
     {% else %}
+      {% initial_page_data 'xlsform_preview' preview_definition %}
       <div class="row g-4">
         <div class="col-lg-8">
           <div class="card border-0 p-4 collectra-builder-card mb-4">
@@ -124,47 +127,33 @@
           </div>
 
           <div class="card border-0 p-4 collectra-builder-card">
-            <h2 class="h4 mb-1">{% trans "Form preview" %}</h2>
-            <p class="text-muted">
-              {{ definition.form_title }} · {{ definition.default_language }} ·
-              {% blocktrans count counter=definition.languages|length %}1 language{% plural %}{{ counter }} languages{% endblocktrans %}
-            </p>
-            <div class="vstack gap-3">
-              {% for item in preview_rows %}
-                {% with question=item.question %}
-                  <div class="border rounded p-3" style="margin-left: {{ question.depth }}rem;">
-                    <div class="d-flex justify-content-between gap-2">
-                      <label class="form-label fw-semibold mb-1">{{ question.display_label }}</label>
-                      <span class="badge text-bg-light">{{ question.raw_type }}</span>
-                    </div>
-                    {% if question.hints %}
-                      <p class="small text-muted mb-2">{{ question.hints.values|first }}</p>
-                    {% endif %}
-                    {% if question.kind == "begin_group" or question.kind == "begin_repeat" %}
-                      <p class="small text-muted mb-0">{% trans "Questions below are nested in this section." %}</p>
-                    {% elif question.kind == "calculate" %}
-                      <code>{{ question.calculation|default:question.raw_type }}</code>
-                    {% elif question.is_select %}
-                      <select class="form-select" disabled>
-                        <option>{% trans "Choose an answer" %}</option>
-                        {% for choice in item.choices %}
-                          <option>{{ choice.display_label }}</option>
-                        {% endfor %}
-                      </select>
-                    {% elif question.kind == "note" %}
-                      <p class="mb-0">{{ question.display_label }}</p>
-                    {% else %}
-                      <input class="form-control" type="text" disabled placeholder="{% trans 'Response' %}">
-                    {% endif %}
-                    {% if question.relevant %}
-                      <p class="small text-muted mt-2 mb-0">
-                        {% trans "Shown when:" %} <code>{{ question.relevant }}</code>
-                      </p>
-                    {% endif %}
-                  </div>
-                {% endwith %}
-              {% endfor %}
+            <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
+              <div>
+                <h2 class="h4 mb-1">{% trans "Interactive form preview" %}</h2>
+                <p class="text-muted mb-0">
+                  {{ definition.form_title }} ·
+                  {% blocktrans count counter=definition.languages|length %}1 language{% plural %}{{ counter }} languages{% endblocktrans %}
+                </p>
+              </div>
+              <span class="badge text-bg-info">{% trans "Test mode" %}</span>
             </div>
+            {% if definition.errors %}
+              <div class="alert alert-secondary mb-0">
+                {% trans "Interactive testing becomes available after the workbook validation errors are corrected." %}
+              </div>
+            {% else %}
+              <div id="xlsform-live-preview">
+                <div class="text-center text-muted py-5">
+                  <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                  {% trans "Preparing interactive preview…" %}
+                </div>
+              </div>
+              <noscript>
+                <div class="alert alert-warning mb-0">
+                  {% trans "JavaScript is required for the interactive form preview." %}
+                </div>
+              </noscript>
+            {% endif %}
           </div>
         </div>
 

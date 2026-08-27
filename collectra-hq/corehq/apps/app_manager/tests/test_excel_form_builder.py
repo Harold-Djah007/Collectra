@@ -15,7 +15,7 @@ from corehq.apps.app_manager.xlsform import (
     build_xform,
     parse_xlsform,
 )
-from corehq.apps.app_manager.views.form_builder import NEW_MODULE_VALUE, _save_draft
+from corehq.apps.app_manager.views.form_builder import NEW_MODULE_VALUE, _preview_definition, _save_draft
 
 
 def _workbook_file(survey_rows, choice_rows=None, setting_rows=None):
@@ -95,6 +95,14 @@ class XlsFormParserTest(SimpleTestCase):
 
         self.assertEqual(restored.to_dict(), definition.to_dict())
         self.assertEqual(restored.question_count, definition.question_count)
+
+    def test_interactive_preview_payload_includes_computed_languages(self):
+        definition = parse_xlsform(_representative_xlsform(), "household.xlsx")
+
+        preview = _preview_definition(definition)
+
+        self.assertEqual(preview["languages"], ["en", "fr"])
+        self.assertEqual(preview["rows"][2]["name"], "full_name")
 
     def test_reports_missing_choice_list_without_saving(self):
         stream = _workbook_file([

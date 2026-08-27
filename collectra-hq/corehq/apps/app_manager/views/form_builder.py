@@ -54,18 +54,12 @@ def _module_options(app):
     return options
 
 
-def _preview_rows(definition):
-    choices_by_list = {}
-    for choice in definition.choices:
-        choices_by_list.setdefault(choice.list_name, []).append(choice)
-    return [
-        {
-            "question": row,
-            "choices": choices_by_list.get(row.list_name, []),
-        }
-        for row in definition.rows
-        if not row.kind.startswith("end_")
-    ]
+def _preview_definition(definition):
+    if not definition:
+        return {}
+    preview = definition.to_dict()
+    preview["languages"] = definition.languages
+    return preview
 
 
 def _builder_context(domain, app=None, definition=None, preview_token=""):
@@ -74,7 +68,7 @@ def _builder_context(domain, app=None, definition=None, preview_token=""):
         "app": app,
         "definition": definition,
         "preview_token": preview_token,
-        "preview_rows": _preview_rows(definition) if definition else [],
+        "preview_definition": _preview_definition(definition),
         "module_options": _module_options(app),
         "new_module_value": NEW_MODULE_VALUE,
         "max_upload_mb": MAX_XLSFORM_SIZE // (1024 * 1024),
