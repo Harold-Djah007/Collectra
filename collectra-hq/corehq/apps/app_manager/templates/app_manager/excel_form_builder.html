@@ -1,30 +1,231 @@
 {% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
-{% load i18n static %}
-{% block title %}{% trans "Excel Form Builder" %} - Collectra{% endblock %}
+{% load i18n %}
+
+{% block title %}{% trans "SurveyCTO / XLSForm Import" %} - Collectra{% endblock %}
+
 {% block content %}
-<div class="container py-5 collectra-builder-page">
-  <div class="mb-4">
-    <a href="{% url 'form_builder_choice' domain %}" class="text-decoration-none">← {% trans "Back to form builders" %}</a>
+  <div class="container py-5 collectra-builder-page">
+    <div class="mb-4">
+      {% if app %}
+        <a href="{% url 'view_app' domain app.id %}" class="text-decoration-none">
+          ← {% blocktrans with app_name=app.name %}Back to {{ app_name }}{% endblocktrans %}
+        </a>
+      {% else %}
+        <a href="{% url 'form_builder_choice' domain %}" class="text-decoration-none">
+          ← {% trans "Back to form builders" %}
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="mb-4">
+      <p class="collectra-builder-kicker mb-1">{% trans "Spreadsheet workflow" %}</p>
+      <h1 class="h2 mb-2">{% trans "Import SurveyCTO / XLSForm" %}</h1>
+      <p class="text-muted mb-0">
+        {% trans "Validate the survey, choices, settings, translations, and logic before anything is saved." %}
+      </p>
+    </div>
+
+    {% if not definition %}
+      <div class="card border-0 p-4 p-md-5 collectra-builder-card">
+        <h2 class="h4">{% trans "1. Upload workbook" %}</h2>
+        <p class="text-muted">
+          {% blocktrans with max_upload_mb=max_upload_mb %}
+            Choose an .xlsx or .xlsm file up to {{ max_upload_mb }} MB. The workbook must contain a survey sheet;
+            choices and settings sheets are supported.
+          {% endblocktrans %}
+        </p>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="validate">
+          <div class="mb-4">
+            <label class="form-label" for="id_spreadsheet">{% trans "SurveyCTO / XLSForm workbook" %}</label>
+            <input
+              class="form-control"
+              id="id_spreadsheet"
+              type="file"
+              name="spreadsheet"
+              accept=".xlsx,.xlsm"
+              required
+            >
+          </div>
+          <div class="d-flex gap-2">
+            {% if app %}
+              <a href="{% url 'view_app' domain app.id %}" class="btn btn-light">{% trans "Cancel" %}</a>
+            {% else %}
+              <a href="{% url 'form_builder_choice' domain %}" class="btn btn-light">{% trans "Cancel" %}</a>
+            {% endif %}
+            <button class="btn btn-primary" type="submit">
+              <i class="fa fa-check-circle me-1"></i> {% trans "Validate workbook" %}
+            </button>
+          </div>
+        </form>
+        <hr class="my-4">
+        <p class="small text-muted mb-0">
+          <i class="fa fa-lock me-1"></i>
+          {% trans "Uploading and validating does not change your application. Saving creates a draft only." %}
+        </p>
+      </div>
+    {% else %}
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card border-0 p-4 collectra-builder-card mb-4">
+            <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+              <div>
+                <h2 class="h4 mb-1">{% trans "2. Validation results" %}</h2>
+                <p class="text-muted mb-0">{{ definition.filename }}</p>
+              </div>
+              <a href="{{ request.path }}" class="btn btn-outline-secondary btn-sm">
+                {% trans "Upload another file" %}
+              </a>
+            </div>
+
+            {% if definition.errors %}
+              <div class="alert alert-danger mt-4 mb-0">
+                <strong>{% blocktrans count counter=definition.errors|length %}1 error{% plural %}{{ counter }} errors{% endblocktrans %}</strong>
+                {% trans "must be fixed in the workbook before it can be saved." %}
+              </div>
+            {% else %}
+              <div class="alert alert-success mt-4 mb-0">
+                <strong>{% trans "Ready to import." %}</strong>
+                {% blocktrans count counter=definition.question_count %}1 question was recognized.{% plural %}{{ counter }} questions were recognized.{% endblocktrans %}
+              </div>
+            {% endif %}
+
+            {% if definition.issues %}
+              <div class="table-responsive mt-4">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>{% trans "Level" %}</th>
+                      <th>{% trans "Location" %}</th>
+                      <th>{% trans "Message" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for issue in definition.issues %}
+                      <tr>
+                        <td>
+                          {% if issue.level == "error" %}
+                            <span class="badge text-bg-danger">{% trans "Error" %}</span>
+                          {% else %}
+                            <span class="badge text-bg-warning">{% trans "Warning" %}</span>
+                          {% endif %}
+                        </td>
+                        <td class="text-nowrap">
+                          {{ issue.sheet }}{% if issue.row %}, {% trans "row" %} {{ issue.row }}{% endif %}{% if issue.column %}, {{ issue.column }}{% endif %}
+                        </td>
+                        <td>{{ issue.message }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="card border-0 p-4 collectra-builder-card">
+            <h2 class="h4 mb-1">{% trans "Form preview" %}</h2>
+            <p class="text-muted">
+              {{ definition.form_title }} · {{ definition.default_language }} ·
+              {% blocktrans count counter=definition.languages|length %}1 language{% plural %}{{ counter }} languages{% endblocktrans %}
+            </p>
+            <div class="vstack gap-3">
+              {% for item in preview_rows %}
+                {% with question=item.question %}
+                  <div class="border rounded p-3" style="margin-left: {{ question.depth }}rem;">
+                    <div class="d-flex justify-content-between gap-2">
+                      <label class="form-label fw-semibold mb-1">{{ question.display_label }}</label>
+                      <span class="badge text-bg-light">{{ question.raw_type }}</span>
+                    </div>
+                    {% if question.hints %}
+                      <p class="small text-muted mb-2">{{ question.hints.values|first }}</p>
+                    {% endif %}
+                    {% if question.kind == "begin_group" or question.kind == "begin_repeat" %}
+                      <p class="small text-muted mb-0">{% trans "Questions below are nested in this section." %}</p>
+                    {% elif question.kind == "calculate" %}
+                      <code>{{ question.calculation|default:question.raw_type }}</code>
+                    {% elif question.is_select %}
+                      <select class="form-select" disabled>
+                        <option>{% trans "Choose an answer" %}</option>
+                        {% for choice in item.choices %}
+                          <option>{{ choice.display_label }}</option>
+                        {% endfor %}
+                      </select>
+                    {% elif question.kind == "note" %}
+                      <p class="mb-0">{{ question.display_label }}</p>
+                    {% else %}
+                      <input class="form-control" type="text" disabled placeholder="{% trans 'Response' %}">
+                    {% endif %}
+                    {% if question.relevant %}
+                      <p class="small text-muted mt-2 mb-0">
+                        {% trans "Shown when:" %} <code>{{ question.relevant }}</code>
+                      </p>
+                    {% endif %}
+                  </div>
+                {% endwith %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card border-0 p-4 collectra-builder-card position-sticky" style="top: 1rem;">
+            <h2 class="h4">{% trans "3. Save draft" %}</h2>
+            {% if definition.errors %}
+              <p class="text-muted mb-0">
+                {% trans "Correct the errors in the workbook and upload it again. Nothing has been saved." %}
+              </p>
+            {% else %}
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save">
+                <input type="hidden" name="preview_token" value="{{ preview_token }}">
+
+                {% if not app %}
+                  <div class="mb-3">
+                    <label class="form-label" for="id_app_name">{% trans "Application name" %}</label>
+                    <input class="form-control" id="id_app_name" name="app_name" value="{{ definition.form_title }}" required>
+                  </div>
+                {% endif %}
+
+                <div class="mb-3">
+                  <label class="form-label" for="id_form_title">{% trans "Form name" %}</label>
+                  <input class="form-control" id="id_form_title" name="form_title" value="{{ definition.form_title }}" required>
+                </div>
+
+                {% if app and module_options %}
+                  <div class="mb-3">
+                    <label class="form-label" for="id_module">{% trans "Add to menu" %}</label>
+                    <select class="form-select" id="id_module" name="module_unique_id">
+                      <option value="{{ new_module_value }}">{% trans "Create a new menu" %}</option>
+                      {% for module in module_options %}
+                        <option value="{{ module.unique_id }}">{{ module.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                {% else %}
+                  <input type="hidden" name="module_unique_id" value="{{ new_module_value }}">
+                {% endif %}
+
+                <div class="mb-4">
+                  <label class="form-label" for="id_module_name">{% trans "New menu name" %}</label>
+                  <input class="form-control" id="id_module_name" name="module_name" value="{% trans 'Imported Surveys' %}">
+                  {% if app and module_options %}
+                    <div class="form-text">{% trans "Used only when “Create a new menu” is selected." %}</div>
+                  {% endif %}
+                </div>
+
+                <button class="btn btn-primary w-100" type="submit">
+                  <i class="fa fa-save me-1"></i> {% trans "Save as draft" %}
+                </button>
+                <p class="small text-muted mt-3 mb-0">
+                  {% trans "The form remains unpublished until you review and release the application." %}
+                </p>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
   </div>
-  <div class="card border-0 p-4 p-md-5 collectra-builder-card">
-    <p class="collectra-builder-kicker">{% trans "Excel Form Builder" %}</p>
-    <h1 class="h3 mb-1">{% trans "Turn a spreadsheet into a form" %}</h1>
-    <p class="text-muted mb-4">{% trans "Use the first row for question names. Each column becomes one text question." %}</p>
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label class="form-label" for="id_app_name">{% trans "Form name" %}</label>
-        <input class="form-control" id="id_app_name" name="app_name" placeholder="{% trans 'Customer Survey' %}" required>
-      </div>
-      <div class="mb-4">
-        <label class="form-label" for="id_spreadsheet">{% trans "Excel workbook" %}</label>
-        <input class="form-control" id="id_spreadsheet" type="file" name="spreadsheet" accept=".xlsx,.xlsm" required>
-      </div>
-      <div class="d-flex gap-2">
-        <a href="{% url 'form_builder_choice' domain %}" class="btn btn-light">{% trans "Cancel" %}</a>
-        <button class="btn btn-primary" type="submit">{% trans "Create Form" %}</button>
-      </div>
-    </form>
-  </div>
-</div>
 {% endblock %}

@@ -514,7 +514,7 @@ var _initNewModuleOptionClicks = function () {
     var self = {};
     self.deprecatedCaseTypes = ko.observableArray();
 
-    $('.new-module-option').on('click', function () {
+    $('.new-module-option[data-type]').on('click', function () {
         var moduleType = $(this).data('type');
         $('#new-module-type').val(moduleType);
         var $form = $('#new-module-form');
@@ -652,7 +652,7 @@ var _initNewModuleOptionClicks = function () {
         },
     };
 
-    $('.new-module-option').each(function () {
+    $('.new-module-option[data-type]').each(function () {
         var type = $(this).data('type');
         if (hoverHelpTexts[type]) {
             $(this).popover({

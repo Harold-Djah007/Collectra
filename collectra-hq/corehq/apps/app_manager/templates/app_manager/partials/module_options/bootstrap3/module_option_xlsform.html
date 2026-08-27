@@ -1,0 +1,11 @@
+{% load i18n %}
+
+<a class="new-module-option" href="{% url 'xlsform_import' domain app.id %}">
+  <div class="panel panel-primary">
+    <div class="panel-heading">{% trans "Import XLSForm" %}</div>
+    <div class="panel-body">
+      <i class="fa fa-file-excel"></i>
+      <p>{% trans "SurveyCTO / XLSForm workbook" %}</p>
+    </div>
+  </div>
+</a>

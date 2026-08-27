@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<div class="col-sm">
+  <a
+    class="text-decoration-none fw-normal h-100 w-100 d-block"
+    href="{% url 'xlsform_import' domain app.id %}"
+  >
+    <div class="card h-100 border-primary">
+      <div class="card-header fs-5">{% trans "Import XLSForm" %}</div>
+      <div class="card-body py-4 text-center text-body">
+        <i class="fa fa-file-excel d-block w-100 mb-2"></i>
+        {% trans "SurveyCTO / XLSForm workbook" %}
+      </div>
+    </div>
+  </a>
+</div>

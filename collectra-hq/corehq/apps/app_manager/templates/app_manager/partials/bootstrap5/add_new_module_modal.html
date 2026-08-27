@@ -23,6 +23,7 @@
       <div class="modal-body">
         <div class="row row-cols-sm-2 g-4">
           {% include 'app_manager/partials/module_options/bootstrap5/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
+          {% include 'app_manager/partials/module_options/bootstrap5/module_option_xlsform.html' %}
           {% include 'app_manager/partials/module_options/bootstrap5/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
           {% if show_biometric %}
             {% include 'app_manager/partials/module_options/bootstrap5/module_option_biometrics.html' with module_type="biometrics" icon_class="fcc fcc-app-biometrics" %}

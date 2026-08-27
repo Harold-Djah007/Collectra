@@ -6,7 +6,7 @@
   <div class="mb-5">
     <p class="collectra-builder-kicker">{% trans "New form" %}</p>
     <h1 class="fw-semibold mb-2">{% trans "Choose how to build it" %}</h1>
-    <p class="text-muted mb-0">{% trans "Use the visual designer for full control, or start from an Excel spreadsheet." %}</p>
+    <p class="text-muted mb-0">{% trans "Use the visual designer for full control, or import a SurveyCTO/XLSForm workbook." %}</p>
   </div>
   <div class="row g-4">
     <div class="col-md-6">
@@ -20,10 +20,10 @@
     <div class="col-md-6">
       <article class="card h-100 border-0 p-4 collectra-builder-card collectra-builder-card-featured">
         <div class="collectra-builder-icon" aria-hidden="true"><i class="fa fa-table"></i></div>
-        <p class="collectra-builder-kicker mt-3 mb-0">{% trans "Spreadsheet workflow" %}</p>
-        <h2 class="h4 mt-2">{% trans "Excel Form Builder" %}</h2>
-        <p class="text-muted">{% trans "Put question names in the first row of a spreadsheet. Collectra turns them into a form." %}</p>
-        <a href="{% url 'excel_form_builder' domain %}" class="btn btn-primary">{% trans "Upload Excel" %}</a>
+        <p class="collectra-builder-kicker mt-3 mb-0">{% trans "SurveyCTO workflow" %}</p>
+        <h2 class="h4 mt-2">{% trans "SurveyCTO / XLSForm Import" %}</h2>
+        <p class="text-muted">{% trans "Validate survey, choices, settings, translations, and logic before saving a draft." %}</p>
+        <a href="{% url 'excel_form_builder' domain %}" class="btn btn-primary">{% trans "Import XLSForm" %}</a>
       </article>
     </div>
   </div>

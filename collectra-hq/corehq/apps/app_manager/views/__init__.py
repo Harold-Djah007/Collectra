@@ -8,7 +8,11 @@ from corehq.apps.app_manager.views.app_summary import (
     DownloadFormSummaryView,
     FormSummaryDiffView,
 )
-from corehq.apps.app_manager.views.form_builder import excel_form_builder, form_builder_choice
+from corehq.apps.app_manager.views.form_builder import (
+    excel_form_builder,
+    form_builder_choice,
+    xlsform_import,
+)
 from corehq.apps.app_manager.views.apps import (
     app_exchange,
     app_from_template,
