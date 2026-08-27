@@ -311,12 +311,17 @@ def _parse_choices(sheet, default_language, issues):
 
 
 def _parse_row_type(raw_type):
+    raw_type = _string(raw_type)
     normalized = _normalize_type(raw_type)
     if normalized in {"begin group", "begin repeat"}:
         return ("begin_repeat" if normalized.endswith("repeat") else "begin_group", None, "")
     if normalized in {"end group", "end repeat"}:
         return ("end_repeat" if normalized.endswith("repeat") else "end_group", None, "")
-    select_match = re.match(r"^select (one|multiple)(?: from file)?\s+(.+)$", normalized)
+    select_match = re.match(
+        r"^select[_\s]+(one|multiple)(?:[_\s]+from[_\s]+file)?[_\s]+(.+)$",
+        raw_type,
+        re.IGNORECASE,
+    )
     if select_match:
         kind = "select_one" if select_match.group(1) == "one" else "select_multiple"
         return kind, "string", select_match.group(2).strip()

@@ -107,6 +107,23 @@ class XlsFormParserTest(SimpleTestCase):
         self.assertEqual(len(definition.errors), 1)
         self.assertIn("Choice list 'missing'", definition.errors[0].message)
 
+    def test_preserves_underscores_in_choice_list_names(self):
+        stream = _workbook_file(
+            [
+                ["type", "name", "label"],
+                ["select_one customer_type_list", "customer_type", "Customer type"],
+            ],
+            [
+                ["list_name", "name", "label"],
+                ["customer_type_list", "retail", "Retail customer"],
+            ],
+        )
+
+        definition = parse_xlsform(stream, "customer-types.xlsx")
+
+        self.assertFalse(definition.errors)
+        self.assertEqual(definition.rows[0].list_name, "customer_type_list")
+
     def test_reports_duplicate_names_and_unclosed_groups(self):
         stream = _workbook_file([
             ["type", "name", "label"],
