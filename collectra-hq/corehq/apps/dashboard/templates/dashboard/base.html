@@ -1,18 +1,15 @@
 {% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
 
-{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% js_entry 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
-{% compress css %}
-<link type="text/scss"
+<link type="text/css"
       rel="stylesheet"
       media="all"
-      href="{% static 'dashboard/scss/dashboard.scss' %}" />
-{% endcompress %}
+      href="{% static 'dashboard/css/dashboard.css' %}" />
 {% endblock stylesheets %}
 
 {% block content %}

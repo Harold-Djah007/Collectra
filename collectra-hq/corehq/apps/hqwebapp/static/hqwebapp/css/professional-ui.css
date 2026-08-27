@@ -471,10 +471,10 @@ body {
   content: "";
   pointer-events: none;
   background-image: url("../images/collectra-icon.png");
-  background-position: 36px 34px;
+  background-position: 48px 44px;
   background-repeat: repeat;
-  background-size: 180px 180px;
-  opacity: .018;
+  background-size: 300px 300px;
+  opacity: .005;
 }
 
 /* Global navigation: quiet active state and useful hover menus. */
@@ -679,31 +679,68 @@ body {
 }
 
 /* Application builder: retain its columns and behavior, remove loud chrome. */
-.appmanager-main-container .appnav,
-.appmanager-main-container .appmanager-sidebar {
+.appmanager-sidebar,
+.appmanager-sidebar .appmanager-content {
   border-right-color: var(--collectra-line);
-  background: #fff;
+  background: #fff !important;
 }
 
-.appmanager-main-container .appnav-name-wrapper {
+.appmanager-sidebar .appnav-name-wrapper {
   background: var(--collectra-ink) !important;
 }
 
-.appmanager-main-container .appnav-item.active,
-.appmanager-main-container .appnav-item.active.settings-view {
+.appmanager-sidebar .appnav-menu > li > .appnav-item.active,
+.appmanager-sidebar .appnav-item.active.settings-view {
   background: var(--collectra-teal-soft) !important;
   color: var(--collectra-ink) !important;
   box-shadow: inset 3px 0 0 var(--collectra-teal);
 }
 
-.appmanager-main-container .appnav-item.active a,
-.appmanager-main-container .appnav-item.active .appnav-title {
+.appmanager-sidebar .appnav-item.active a,
+.appmanager-sidebar .appnav-item.active .appnav-title,
+.appmanager-sidebar .appnav-item.active .appnav-item-name {
   color: var(--collectra-ink) !important;
 }
 
-.appmanager-main-container .appnav-name-publish {
+.appmanager-sidebar .appnav-name-publish {
   background: #fff7e8 !important;
   color: #815b18 !important;
+}
+
+.appmanager-main-container,
+.appmanager-main-container #formdesigner,
+.appmanager-main-container #formdesigner .fd-content,
+.appmanager-main-container #formdesigner .fd-content-right,
+.appmanager-main-container #formdesigner .fd-ui-container {
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.appmanager-main-container #formdesigner .fd-head,
+.appmanager-main-container #formdesigner .fd-form-actions {
+  border-color: var(--collectra-line) !important;
+  background: #fff !important;
+}
+
+.appmanager-main-container #formdesigner .fd-help {
+  max-width: 360px;
+  padding: 22px !important;
+  border: 1px solid var(--collectra-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: var(--collectra-ink) !important;
+  box-shadow: 0 10px 28px rgba(19, 47, 76, .08) !important;
+}
+
+.appmanager-main-container #formdesigner .fd-help h3,
+.appmanager-main-container #formdesigner .fd-help h4,
+.appmanager-main-container #formdesigner .fd-help p {
+  color: var(--collectra-ink) !important;
+}
+
+.appmanager-main-container #formdesigner .fd-help::before,
+.appmanager-main-container #formdesigner .fd-help::after {
+  border-bottom-color: #fff !important;
 }
 
 .appmanager-main-container .btn-purple,
