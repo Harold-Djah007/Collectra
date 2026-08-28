@@ -136,4 +136,4 @@ fi
 echo "Background logs: $state_root"
 echo "Starting Collectra at http://localhost:8000"
 echo "Press Ctrl+C once to stop Collectra and its background workers."
-uv run python manage.py runserver --noreload 0.0.0.0:8000
+uv run gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class gevent --timeout 900 --access-logfile - --error-logfile - deployment.gunicorn.collectra_wsgi:application
