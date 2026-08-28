@@ -20,6 +20,10 @@ VELLUM_NAMESPACE = "http://commcarehq.org/xforms/vellum"
 MAX_XLSFORM_SIZE = 10 * 1024 * 1024
 XML_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
 REFERENCE_RE = re.compile(r"\$\{([^}]+)\}")
+SELECTED_AT_REFERENCE_RE = re.compile(
+    r"selected-at\s*\(\s*(\$\{([^}]+)\})\s*,\s*(\d+)\s*\)",
+    re.IGNORECASE,
+)
 LOCALIZED_HEADER_RE = re.compile(
     r"^(label|hint|constraint_message|required_message)::(.+)$",
     re.IGNORECASE,
@@ -515,6 +519,27 @@ def _replace_references(expression, references):
     return REFERENCE_RE.sub(lambda match: references.get(match.group(1), match.group(0)), expression)
 
 
+def _guard_selected_at_calculation(expression):
+    """Keep direct list-item calculations empty until their source has enough values.
+
+    SurveyCTO permits calculations such as ``selected-at(${gps}, 0)`` while the
+    geopoint is empty. CommCare raises a runtime calculation error in that case,
+    so direct extraction calculations need an explicit length guard.
+    """
+    if not expression:
+        return ""
+    match = SELECTED_AT_REFERENCE_RE.fullmatch(_string(expression))
+    if not match:
+        return expression
+    reference = match.group(1)
+    index = int(match.group(3))
+    return "if(count-selected({}) > {}, {}, '')".format(
+        reference,
+        index,
+        match.group(0),
+    )
+
+
 def _add_localized_text(translations, text_id, values, default_language):
     if not values:
         return
@@ -653,6 +678,7 @@ def build_xform(definition):
                 "today": "today()",
             }.get(_normalize_type(row.raw_type), "")
         if calculation:
+            calculation = _guard_selected_at_calculation(calculation)
             bind_attrs["calculate"] = _replace_references(calculation, references)
         if row.kind == "note":
             bind_attrs["readonly"] = "true()"

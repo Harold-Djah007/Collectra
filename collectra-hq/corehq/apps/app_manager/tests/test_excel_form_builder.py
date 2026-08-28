@@ -231,6 +231,36 @@ class XlsFormCompilerTest(SimpleTestCase):
             "http://openrosa.org/formdesigner/household_survey",
         )
 
+    def test_guards_gps_component_calculations_until_geopoint_is_available(self):
+        definition = parse_xlsform(
+            _workbook_file([
+                ["type", "name", "label", "calculation"],
+                ["begin group", "usage_details", "Usage details", ""],
+                ["geopoint", "gps_location", "GPS location", ""],
+                ["calculate", "lat", "", "selected-at(${gps_location}, 0)"],
+                ["calculate", "long", "", "selected-at(${gps_location}, 1)"],
+                ["calculate", "z", "", "selected-at(${gps_location}, 2)"],
+                ["calculate", "acc", "", "selected-at(${gps_location}, 3)"],
+                ["end group", "", "", ""],
+            ]),
+            "customer-onboarding.xlsx",
+        )
+        document = etree.fromstring(build_xform(definition).encode())
+
+        for name, index in (("lat", 0), ("long", 1), ("z", 2), ("acc", 3)):
+            bind = document.xpath(
+                f"//xf:bind[@nodeset='/data/usage_details/{name}']",
+                namespaces=self.namespaces,
+            )[0]
+            reference = "/data/usage_details/gps_location"
+            self.assertEqual(
+                bind.get("calculate"),
+                (
+                    f"if(count-selected({reference}) > {index}, "
+                    f"selected-at({reference}, {index}), '')"
+                ),
+            )
+
 
 class XlsFormDraftSaveTest(SimpleTestCase):
     @patch("corehq.apps.app_manager.views.form_builder.messages.success")
