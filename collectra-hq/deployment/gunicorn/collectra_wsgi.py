@@ -28,3 +28,7 @@ class BufferChunkedRequestBody:
 
 
 application = BufferChunkedRequestBody(commcarehq_application)
+
+# Serve Django static assets during local demos and temporary tunnels.
+from django.contrib.staticfiles.handlers import StaticFilesHandler
+application = StaticFilesHandler(application)
