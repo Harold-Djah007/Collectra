@@ -228,7 +228,7 @@ object InstrumentationUtility {
             .perform(swipeUp())
         onView(withId(R.id.nsv_home_screen))
             .perform(swipeUp())
-        onView(withText("Log out of CommCare"))
+        onView(withText("Log out of Collectra"))
             .perform(click())
     }
 

@@ -63,7 +63,7 @@ home.forms.incomplete.indicator=${1} (${0})
 home.forms.saved=Saved
 home.sync=Sync with Server
 home.unsent.forms.indicator=Unsent Forms: ${0}
-home.logout=Log out of CommCare
+home.logout=Log out of Collectra
 home.report=Report an Issue
 home.connect=View Job Status
 # IMPORTANT: do NOT change the name of this key for any reason; HQ uses it for the training root menu

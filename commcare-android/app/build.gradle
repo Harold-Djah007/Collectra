@@ -202,6 +202,7 @@ ext {
     COMMCARE_APP_ID = ''
     HQ_API_USERNAME = loadProp('HQ_API_USERNAME', '')
     HQ_API_PASSWORD = loadProp('HQ_API_PASSWORD', '')
+    COLLECTRA_HQ_BASE_URL = loadProp('COLLECTRA_HQ_BASE_URL', '')
     TEST_BUILD_TYPE = loadProp('TEST_BUILD_TYPE', 'debug')
     FIREBASE_DATABASE_URL = loadProp('FIREBASE_DATABASE_URL', '')
 }
@@ -317,6 +318,7 @@ android {
         buildConfigField 'String', 'MAPBOX_SDK_API_KEY', "\"${project.ext.MAPBOX_SDK_API_KEY}\""
         buildConfigField 'String', 'FIREBASE_DATABASE_URL', "\"${project.ext.FIREBASE_DATABASE_URL}\""
         buildConfigField 'String', 'CCC_HOST', "\"connect.dimagi.com\""
+        buildConfigField 'String', 'COLLECTRA_HQ_BASE_URL', "\"${project.ext.COLLECTRA_HQ_BASE_URL}\""
         buildConfigField 'long', 'GOOGLE_CLOUD_PROJECT_NUMBER', "${project.ext.GOOGLE_CLOUD_PROJECT_NUMBER}"
         buildConfigField 'boolean', 'IS_QA_AUTOMATION', 'false'
         testInstrumentationRunner 'org.commcare.CommCareJUnitRunner'

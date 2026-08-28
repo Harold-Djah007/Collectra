@@ -30,7 +30,7 @@ class LoginTest : BaseTest() {
     companion object {
         const val CCZ_NAME = "test_list_search.ccz"
         const val APP_NAME = "Test: List Searching"
-        val homeButtons = arrayOf("Start", "Sync with Server", "Log out of CommCare")
+        val homeButtons = arrayOf("Start", "Sync with Server", "Log out of Collectra")
         val demoHomeButtons =
             arrayOf(
                 "Explore CommCare Practice Mode",

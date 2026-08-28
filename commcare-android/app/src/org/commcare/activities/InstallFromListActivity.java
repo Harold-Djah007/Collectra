@@ -24,6 +24,7 @@ import org.commcare.core.network.AuthInfo;
 import org.commcare.core.network.AuthenticationInterceptor;
 import org.commcare.dalvik.R;
 import org.commcare.models.database.SqlStorage;
+import org.commcare.network.AppListEndpointProvider;
 import org.commcare.network.CommcareRequestGenerator;
 import org.commcare.preferences.GlobalPrivilegesManager;
 import org.commcare.tasks.ModernHttpTask;
@@ -57,21 +58,17 @@ public class InstallFromListActivity<T> extends CommCareActivity<T> implements H
     private static final String KEY_LAST_SUCCESSFUL_USERNAME = "last-successful-username";
     private static final String KEY_LAST_SUCCESSFUL_PW = "last-successful-password";
 
-    private static final String REQUESTED_FROM_PROD_KEY = "have-requested-from-prod";
-    private static final String REQUESTED_FROM_INDIA_KEY = "have-requested-from-india";
+    private static final String NEXT_REQUEST_INDEX_KEY = "next-request-index";
     private static final String ERROR_MESSAGE_KEY = "error-message-key";
     private static final String AUTH_MODE_KEY = "auth-mode-key";
-
-    private static final String PROD_URL = "https://www.commcarehq.org/phone/list_apps";
-    private static final String INDIA_URL = "https://india.commcarehq.org/phone/list_apps";
 
     private static final int RETRIEVE_APPS_FOR_DIFF_USER = Menu.FIRST;
 
     private boolean inMobileUserAuthMode;
 
-    private boolean requestedFromProd;
-    private boolean requestedFromIndia;
+    private int nextRequestIndex;
     private String urlCurrentlyRequestingFrom;
+    private final List<String> appListUrls = AppListEndpointProvider.getUrls();
 
     private String errorMessage;
     private View authenticateView;
@@ -122,8 +119,7 @@ public class InstallFromListActivity<T> extends CommCareActivity<T> implements H
     private void startRequests(String username, String password) {
         authenticateView.setVisibility(View.GONE);
         appsListContainer.setVisibility(View.GONE);
-        requestedFromIndia = false;
-        requestedFromProd = false;
+        nextRequestIndex = 0;
         requestAppList(username, password);
     }
 
@@ -202,8 +198,7 @@ public class InstallFromListActivity<T> extends CommCareActivity<T> implements H
 
     private void setInitialValues(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
-            requestedFromIndia = savedInstanceState.getBoolean(REQUESTED_FROM_INDIA_KEY);
-            requestedFromProd = savedInstanceState.getBoolean(REQUESTED_FROM_PROD_KEY);
+            nextRequestIndex = savedInstanceState.getInt(NEXT_REQUEST_INDEX_KEY);
             errorMessage = savedInstanceState.getString(ERROR_MESSAGE_KEY);
             inMobileUserAuthMode = savedInstanceState.getBoolean(AUTH_MODE_KEY);
         } else {
@@ -214,8 +209,7 @@ public class InstallFromListActivity<T> extends CommCareActivity<T> implements H
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putBoolean(REQUESTED_FROM_INDIA_KEY, requestedFromIndia);
-        savedInstanceState.putBoolean(REQUESTED_FROM_PROD_KEY, requestedFromProd);
+        savedInstanceState.putInt(NEXT_REQUEST_INDEX_KEY, nextRequestIndex);
         savedInstanceState.putString(ERROR_MESSAGE_KEY, errorMessage);
         savedInstanceState.putBoolean(AUTH_MODE_KEY, inMobileUserAuthMode);
     }
@@ -251,7 +245,6 @@ public class InstallFromListActivity<T> extends CommCareActivity<T> implements H
             };
 
             task.connect((CommCareTaskConnector)this);
-            setAttemptedRequestFlag();
             task.executeParallel();
             return true;
         }
@@ -277,19 +270,10 @@ public class InstallFromListActivity<T> extends CommCareActivity<T> implements H
         return ((EditText)findViewById(R.id.edit_password)).getText().toString();
     }
 
-    private void setAttemptedRequestFlag() {
-        if (PROD_URL.equals(urlCurrentlyRequestingFrom)) {
-            requestedFromProd = true;
-        } else {
-            requestedFromIndia = true;
-        }
-    }
-
     private String getUrlToTry() {
-        if (!requestedFromProd) {
-            urlCurrentlyRequestingFrom = PROD_URL;
-        } else if (!requestedFromIndia) {
-            urlCurrentlyRequestingFrom = INDIA_URL;
+        if (nextRequestIndex < appListUrls.size()) {
+            urlCurrentlyRequestingFrom = appListUrls.get(nextRequestIndex);
+            nextRequestIndex++;
         } else {
             urlCurrentlyRequestingFrom = null;
         }

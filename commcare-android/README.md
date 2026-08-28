@@ -81,6 +81,9 @@ cd commcare-android
 # the apk can now be found in the build/outputs/apk/ directory
 ```
 
+For a Collectra deployment, configure the public HQ endpoint before building. See
+[Collectra server connectivity](docs/commcare/collectra-connectivity.md).
+
 ## Unit Tests
 
 The commcare-android repository uses [Robolectric](http://robolectric.org/), which provides mocks, allowing you to run Android specific code on your local machine.
