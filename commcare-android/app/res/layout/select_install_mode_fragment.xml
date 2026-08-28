@@ -25,8 +25,38 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/collectra_mobile_panel"
+                android:elevation="2dp"
                 android:gravity="center_horizontal"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingTop="22dp"
+                android:paddingBottom="22dp">
+
+                <TextView
+                    android:id="@+id/collectra_install_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/collectra_install_title"
+                    android:textColor="@color/collectra_text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/collectra_install_subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginBottom="14dp"
+                    android:gravity="center"
+                    android:text="@string/collectra_install_subtitle"
+                    android:textColor="@color/collectra_text_secondary"
+                    android:textSize="15sp" />
 
                 <TextView
                     android:id="@+id/str_setup_message"
@@ -35,6 +65,7 @@
                     android:layout_marginLeft="@dimen/content_min_margin"
                     android:layout_marginRight="@dimen/content_min_margin"
                     android:gravity="center"
+                    android:textColor="@color/collectra_text_primary"
                     android:textSize="@dimen/text_small"
                     android:textStyle="bold"
                     android:layout_marginEnd="@dimen/content_min_margin"
@@ -69,6 +100,7 @@
                     android:layout_marginLeft="@dimen/content_min_margin"
                     android:layout_marginRight="@dimen/content_min_margin"
                     android:gravity="center"
+                    android:textColor="@color/collectra_text_secondary"
                     android:textSize="@dimen/text_small"
                     android:layout_marginEnd="@dimen/content_min_margin"
                     android:layout_marginStart="@dimen/content_min_margin" />
@@ -92,7 +124,7 @@
                             android:id="@+id/btn_fetch_uri"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            SquareButtonWithText:backgroundColor="@color/palatinate_blue"
+                            SquareButtonWithText:backgroundColor="@color/cc_brand_color"
                             SquareButtonWithText:img="@drawable/startup_barcode"
                             SquareButtonWithText:subtitle="Scan Application Barcode"
                             SquareButtonWithText:textColor="@color/white"/>
@@ -112,7 +144,7 @@
                             android:layout_height="match_parent"
                             android:background="@drawable/tile_drop_shadow_small_margins"
                             android:gravity="end"
-                            SquareButtonWithText:backgroundColor="@color/palatinate_blue"
+                            SquareButtonWithText:backgroundColor="@color/collectra_brand_dark"
                             SquareButtonWithText:img="@drawable/startup_url"
                             SquareButtonWithText:subtitle="Enter Code"
                             SquareButtonWithText:textColor="@color/white"/>

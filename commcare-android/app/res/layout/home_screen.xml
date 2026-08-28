@@ -29,7 +29,10 @@
                 android:layout_height="match_parent"
                 android:background="@color/cc_core_bg"
                 android:orientation="vertical"
-                android:padding="8dp"
+                android:paddingStart="8dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="16dp"
                 tools:viewBindingIgnore="true">
                 <androidx.core.widget.NestedScrollView
                     android:id="@+id/nsv_home_screen"

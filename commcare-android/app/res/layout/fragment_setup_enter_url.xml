@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/screen_first_start_main"
     android:layout_width="fill_parent"
@@ -25,21 +26,25 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@drawable/collectra_mobile_panel"
                 android:orientation="vertical"
-                android:layout_marginLeft="@dimen/content_min_margin"
-                android:layout_marginRight="@dimen/content_min_margin"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="24dp"
+                android:elevation="2dp"
                 android:gravity="center_horizontal"
-                android:layout_marginStart="@dimen/content_min_margin"
-                android:layout_marginEnd="@dimen/content_min_margin">
+                android:padding="24dp">
 
                 <TextView
                     android:id="@+id/app_profile_txt_view"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="@dimen/content_min_margin"
+                    android:layout_marginBottom="16dp"
                     android:gravity="center"
-                    android:text="Enter your app install address"
-                    android:textSize="@dimen/text_medium"/>
+                    android:text="@string/install_appprofile"
+                    android:textColor="@color/collectra_text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold"/>
 
 
                 <LinearLayout
@@ -54,12 +59,14 @@
 
                     <EditText
                         android:id="@+id/edit_profile_location"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:hint="Enter code here"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:background="@drawable/login_edit_text"
+                        android:hint="@string/collectra_install_subtitle"
                         android:ellipsize="start"
-                        android:layout_weight="1"
-                        android:gravity="center_horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
                         android:singleLine="true"
                         >
                     </EditText>
@@ -74,7 +81,9 @@
                     android:paddingBottom="@dimen/content_start"
                     android:layout_marginTop="@dimen/content_min_margin"
                     android:layout_gravity="bottom"
-                    android:text="Start Install"
+                    android:backgroundTint="@color/cc_brand_color"
+                    android:text="@string/install_button_start"
+                    app:cornerRadius="14dp"
                     android:nextFocusUp="@+id/edit_password" />
 
             </LinearLayout>
