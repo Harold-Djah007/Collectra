@@ -174,10 +174,10 @@ def _process_force_close_subreport(domain, xform):
             user_id=force_closure.get('user_id'),
             type=force_closure['type'],
             msg=force_closure['msg'],
-            android_version=force_closure['android_version'],
-            device_model=force_closure['device_model'],
-            session_readable=force_closure['session_readable'],
-            session_serialized=force_closure['session_serialized'],
+            android_version=force_closure.get('android_version') or '',
+            device_model=force_closure.get('device_model') or '',
+            session_readable=force_closure.get('session_readable') or '',
+            session_serialized=force_closure.get('session_serialized') or '',
         )
         to_save.append(entry)
     ForceCloseEntry.objects.bulk_create(to_save)

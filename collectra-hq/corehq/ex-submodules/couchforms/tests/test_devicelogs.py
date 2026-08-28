@@ -1,4 +1,6 @@
 import os
+from datetime import datetime, timezone
+
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -7,7 +9,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import sharded
 from corehq.form_processor.utils import convert_xform_to_json
 from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceCloseEntry
-from phonelog.utils import _get_logs
+from phonelog.utils import _get_logs, _process_force_close_subreport
 
 
 @sharded
@@ -110,6 +112,31 @@ class DeviceLogTest(TestCase, TestFileMixin):
     def test_subreports_that_shouldnt_fail(self):
         xml = self.get_xml('subreports_that_shouldnt_fail')
         submit_form_locally(xml, 'test-domain')
+
+    def test_force_close_without_optional_device_details(self):
+        class DeviceLogForm:
+            form_id = 'force-close-without-device-details'
+            received_on = datetime(2026, 8, 28, 10, 15, 53, tzinfo=timezone.utc)
+            form_data = {
+                'force_close_subreport': {
+                    'force_close': {
+                        'app_build': '1',
+                        '@date': '2026-08-28T10:15:53Z',
+                        'type': 'forceclose',
+                        'msg': 'Force close report without optional device details',
+                    },
+                },
+            }
+
+        _process_force_close_subreport('test-domain', DeviceLogForm())
+
+        force_closure = ForceCloseEntry.objects.get(
+            xform_id=DeviceLogForm.form_id,
+        )
+        self.assertEqual(force_closure.android_version, '')
+        self.assertEqual(force_closure.device_model, '')
+        self.assertEqual(force_closure.session_readable, '')
+        self.assertEqual(force_closure.session_serialized, '')
 
 
 class TestDeviceLogUtils(SimpleTestCase, TestFileMixin):
