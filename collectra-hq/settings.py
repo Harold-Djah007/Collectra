@@ -1214,6 +1214,27 @@ except ImportError as error:
     from dev_settings import *
 
 
+# Allow launchers and hosted environments to publish Collectra at a stable
+# address without rewriting the developer's untracked localsettings.py file.
+_collectra_base_address = os.environ.get('COLLECTRA_BASE_ADDRESS')
+if _collectra_base_address:
+    BASE_ADDRESS = _collectra_base_address
+
+_collectra_default_protocol = os.environ.get('COLLECTRA_DEFAULT_PROTOCOL')
+if _collectra_default_protocol:
+    DEFAULT_PROTOCOL = _collectra_default_protocol
+
+if os.environ.get('COLLECTRA_TRUST_PROXY_HTTPS') == '1':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    if DEFAULT_PROTOCOL == 'https':
+        _collectra_trusted_origin = f'https://{BASE_ADDRESS}'
+        CSRF_TRUSTED_ORIGINS = list(dict.fromkeys([
+            *globals().get('CSRF_TRUSTED_ORIGINS', []),
+            _collectra_trusted_origin,
+        ]))
+
+
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_CONTENT)
 AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_REMINDER_RECIPIENTS)
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS)

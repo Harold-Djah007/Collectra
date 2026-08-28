@@ -54,10 +54,16 @@ if [[ -z "$wsl_ip" ]]; then
     exit 1
 fi
 
-export COLLECTRA_BASE_ADDRESS="${wsl_ip}:8000"
+if [[ -n "${COLLECTRA_BASE_ADDRESS:-}" ]]; then
+    export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-https}"
+else
+    export COLLECTRA_BASE_ADDRESS="${wsl_ip}:8000"
+    export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-http}"
+fi
 export COMMCARE_HOST="http://${wsl_ip}:8000"
 
 echo "Collectra address: http://localhost:8000"
+echo "Published mobile address: ${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS}"
 echo "Formplayer callback: ${COMMCARE_HOST}"
 echo "Starting Collectra services..."
 

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_root="${COLLECTRA_PROJECT_ROOT:-$HOME/projects/Collectra-Cursor/collectra-hq}"
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}/collectra"
+tunnel_log="$state_root/cloudflared.log"
+tunnel_pid=""
+
+mkdir -p "$state_root"
+cd "$project_root"
+
+cleanup_tunnel() {
+    if [[ "$tunnel_pid" =~ ^[0-9]+$ ]] && kill -0 "$tunnel_pid" >/dev/null 2>&1; then
+        kill "$tunnel_pid" >/dev/null 2>&1 || true
+    fi
+}
+trap cleanup_tunnel EXIT INT TERM
+
+if ! command -v cloudflared >/dev/null 2>&1; then
+    echo "cloudflared is required for public cellular testing."
+    echo "Install it from https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/downloads/"
+    exit 1
+fi
+
+: >"$tunnel_log"
+echo "Creating a temporary public HTTPS address..."
+cloudflared tunnel \
+    --no-autoupdate \
+    --url http://127.0.0.1:8000 \
+    >"$tunnel_log" 2>&1 &
+tunnel_pid=$!
+
+public_url=""
+for _ in $(seq 1 60)
+do
+    public_url="$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' "$tunnel_log" | head -1 || true)"
+    if [[ -n "$public_url" ]]; then
+        break
+    fi
+    if ! kill -0 "$tunnel_pid" >/dev/null 2>&1; then
+        echo "Cloudflare Tunnel stopped before publishing an address."
+        tail -50 "$tunnel_log"
+        exit 1
+    fi
+    sleep 1
+done
+
+if [[ -z "$public_url" ]]; then
+    echo "Timed out while waiting for a public HTTPS address."
+    tail -50 "$tunnel_log"
+    exit 1
+fi
+
+export COLLECTRA_BASE_ADDRESS="${public_url#https://}"
+export COLLECTRA_DEFAULT_PROTOCOL="https"
+export COLLECTRA_TRUST_PROXY_HTTPS="1"
+
+echo "Public Collectra address: $public_url"
+echo "This temporary address remains available only while this command is running."
+echo "Tunnel logs: $tunnel_log"
+
+"$project_root/local-bin/start-collectra"
