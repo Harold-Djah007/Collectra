@@ -18,6 +18,10 @@ var tileModel = function (options) {
 
     // Might get updated if this tile supports an item list but it's empty
     self.hasItemList = ko.observable(options.has_item_list);
+    // The template evaluates `foreach: items` for every tile, including links
+    // such as Users that do not have a paginator. Keep the binding defined for
+    // those tiles so one link-only card cannot abort the entire dashboard.
+    self.items = ko.observableArray();
 
     if (self.hasItemList()) {
         self.itemsPerPage = 5;
@@ -25,7 +29,6 @@ var tileModel = function (options) {
         // Set via ajax
         self.totalItems = ko.observable();
         self.totalPages = ko.observable();
-        self.items = ko.observableArray();
     }
 
     // Control visibility of various parts of tile content
