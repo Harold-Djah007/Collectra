@@ -1,5 +1,6 @@
 package org.commcare.activities
 
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import androidx.cardview.widget.CardView
@@ -17,7 +18,13 @@ import org.robolectric.annotation.Config
 @Config(application = CommCareTestApplication::class)
 @RunWith(AndroidJUnit4::class)
 class CollectraMobilePresentationTest {
-    private val inflater: LayoutInflater = LayoutInflater.from(ApplicationProvider.getApplicationContext())
+    private val inflater: LayoutInflater =
+        LayoutInflater.from(
+            ContextThemeWrapper(
+                ApplicationProvider.getApplicationContext(),
+                R.style.CommonTheme,
+            ),
+        )
 
     @Test
     fun `login presents Collectra identity and offline guidance`() {

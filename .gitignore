@@ -35,7 +35,7 @@ local_settings.py
 
 # Django generated files
 staticfiles/
-media/
+/collectra-hq/mediafiles/
 
 # -------------------------
 # Node / JavaScript
