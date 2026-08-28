@@ -1,132 +1,45 @@
 {
   "project_info": {
-    "project_number": "768065119425",
-    "firebase_url": "@firebaseDatabaseUrl@",
-    "project_id": "commcare-a57e4",
-    "storage_bucket": "commcare-a57e4.firebasestorage.app"
+    "project_number": "203049404148",
+    "project_id": "collectra-mobile-production",
+    "storage_bucket": "collectra-mobile-production.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:768065119425:android:bf4b2396fb9805b2",
+        "mobilesdk_app_id": "1:203049404148:android:e74772a27d4599afed40a1",
         "android_client_info": {
-          "package_name": "org.commcare.dalvik"
+          "package_name": "com.collectra.mobile"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "768065119425-tkclgago3bpupbv1b88tj24cd0q0qmud.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "org.commcare.dalvik",
-            "certificate_hash": "737358001ce578f34147faabb8d60a10eaf477c1"
-          }
-        },
-        {
-          "client_id": "768065119425-hg10t0osvjqrt6pne3toaobabn5gobqs.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "@apiKey@"
+          "current_key": "AIzaSyA6G8QjjCGef9a7k15FfnMN2NwFDLe6xfQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "768065119425-05thotts3f4ujdcscoaeheebpia8ag9m.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:768065119425:android:e07510ddb3459ee3",
+        "mobilesdk_app_id": "1:203049404148:android:de16011751dcdb31ed40a1",
         "android_client_info": {
-          "package_name": "org.commcare.lts"
+          "package_name": "com.collectra.mobile.debug"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "768065119425-hg10t0osvjqrt6pne3toaobabn5gobqs.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "@apiKey@"
+          "current_key": "AIzaSyA6G8QjjCGef9a7k15FfnMN2NwFDLe6xfQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "768065119425-05thotts3f4ujdcscoaeheebpia8ag9m.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:768065119425:android:4e058a2bb3994794",
-        "android_client_info": {
-          "package_name": "org.commcare.dalvik.debug"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "768065119425-hg10t0osvjqrt6pne3toaobabn5gobqs.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "@apiKey@"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "768065119425-05thotts3f4ujdcscoaeheebpia8ag9m.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:768065119425:android:13a443baea08b29e",
-        "android_client_info": {
-          "package_name": "org.commcare.lts.debug"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "768065119425-hg10t0osvjqrt6pne3toaobabn5gobqs.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "@apiKey@"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "768065119425-05thotts3f4ujdcscoaeheebpia8ag9m.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

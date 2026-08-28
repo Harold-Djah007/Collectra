@@ -285,14 +285,14 @@ android {
         minSdkVersion 23
         targetSdkVersion 35
 
-        applicationId 'org.commcare.dalvik'
+        applicationId 'com.collectra.mobile'
         testNamespace 'org.commcare.dalvik.test'
 
         project.ext.COMMCARE_APP_ID = applicationId
         // set the app name
         def applicationName = 'Collectra'
         resValue 'string', 'application_name', applicationName
-        def odkProviderStr = 'org.commcare.android.provider.odk'
+        def odkProviderStr = 'com.collectra.mobile.provider.odk'
         manifestPlaceholders = [
                 odkProvider         : odkProviderStr,
                 googlePlayMapsApiKey: "${project.ext.GOOGLE_PLAY_MAPS_API_KEY}"
@@ -470,11 +470,11 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix '.debug'
-            def applicationId = 'org.commcare.dalvik.debug'
+            def applicationId = 'com.collectra.mobile.debug'
             project.ext.COMMCARE_APP_ID = applicationId
             def applicationName = 'Collectra Debug'
             resValue 'string', 'application_name', applicationName
-            def odkProviderStr = 'org.commcare.dalvik.debug.provider.odk'
+            def odkProviderStr = 'com.collectra.mobile.debug.provider.odk'
             manifestPlaceholders = [odkProvider: odkProviderStr]
 
             minifyEnabled false
