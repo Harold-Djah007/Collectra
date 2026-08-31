@@ -35,6 +35,37 @@ public final class CollectraMotion {
                 .start();
     }
 
+    /** Full-screen launch splash sequence. */
+    public static void playLaunchSplash(@Nullable View mark,
+                                        @Nullable View title,
+                                        @Nullable View tagline) {
+        if (mark != null) {
+            mark.setScaleX(0.6f);
+            mark.setScaleY(0.6f);
+            mark.setAlpha(0f);
+            mark.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(520)
+                    .setInterpolator(new OvershootInterpolator(1.3f))
+                    .withEndAction(() -> startLogoPulse(mark))
+                    .start();
+        }
+        playWordmarkEnter(title);
+        if (title != null) {
+            title.postDelayed(() -> startSoftFloat(title), 520);
+        }
+        if (tagline != null) {
+            tagline.setAlpha(0f);
+            tagline.animate()
+                    .alpha(1f)
+                    .setStartDelay(280)
+                    .setDuration(420)
+                    .start();
+        }
+    }
+
     /** Breathing pulse for the Collectra mark. */
     public static void startLogoPulse(@Nullable View logo) {
         if (logo == null) {

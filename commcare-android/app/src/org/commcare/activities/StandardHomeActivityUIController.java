@@ -81,7 +81,13 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
             ActionBar actionBar = activity.getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setDisplayHomeAsUpEnabled(true);
-                actionBar.setTitle(CommCareActivity.getTopLevelTitleName(activity));
+                actionBar.setDisplayShowTitleEnabled(false);
+                actionBar.setDisplayShowCustomEnabled(true);
+                View titleView = activity.getLayoutInflater()
+                        .inflate(R.layout.collectra_toolbar_title, toolbar, false);
+                actionBar.setCustomView(titleView);
+                CollectraMotion.startTitleLiveliness(
+                        titleView.findViewById(R.id.collectra_toolbar_title_text));
             }
         }
     }

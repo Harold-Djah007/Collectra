@@ -78,6 +78,13 @@ class CollectraMobilePresentationTest {
     }
 
     @Test
+    fun `launch splash presents Collectra brand`() {
+        val view = inflater.inflate(R.layout.collectra_splash, null)
+        assertNotNull(view.findViewById(R.id.collectra_splash_mark))
+        assertNotNull(view.findViewById(R.id.collectra_splash_title))
+    }
+
+    @Test
     fun `home logout action uses Collectra identity`() {
         assertEquals("Log out of Collectra", Localization.get("home.logout"))
     }

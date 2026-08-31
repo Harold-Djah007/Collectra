@@ -25,7 +25,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:fontFamily="@font/font_outfit"
-                android:text="@string/application_name"
+                android:text="@string/collectra_brand_name"
                 android:textColor="@color/collectra_signal"
                 android:textSize="22sp"
                 android:textStyle="bold" />

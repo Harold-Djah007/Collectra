@@ -5,7 +5,8 @@
     <!-- string name="default_app_server">http://build.dimagi.com/commcare/pact/profile.xml</string -->
     <item name="login_screen_hide_banner_cutoff" type="integer">250</item>
     <item name="detail_size_cutoff" format="integer" type="integer">500</item>
-    <string name="title_bar_name">@string/application_name</string>
+    <string name="title_bar_name">@string/collectra_brand_name</string>
+    <string name="collectra_brand_name">Collectra</string>
     <!-- string name="PostURL">https://pact.dimagi.com/receiver/submit/pact</string -->
     <!-- string name="ota_restore_url">https://pact.dimagi.com/provider/caselist</string -->
     <string name="PostURL" translatable="false">https://staging.commcarehq.org/receiver/submit/pf</string>
