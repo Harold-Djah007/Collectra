@@ -14,7 +14,13 @@ fi
 
 destination="$(realpath -m "$2")"
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-hq_root="$(realpath "$here/../../collectra-hq")"
+hq_root="$(realpath "${COLLECTRA_HQ_ROOT:-$here/../../collectra-hq}")"
+
+if [[ ! -f "$hq_root/manage.py" ]]; then
+    echo "Collectra HQ was not found at: $hq_root"
+    echo "Set COLLECTRA_HQ_ROOT to the configured collectra-hq directory."
+    exit 1
+fi
 
 install -d -m 0700 "$destination"
 
