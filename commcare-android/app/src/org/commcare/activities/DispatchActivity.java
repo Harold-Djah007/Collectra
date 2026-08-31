@@ -98,8 +98,8 @@ public class DispatchActivity extends AppCompatActivity {
     private boolean redirectToConnectOpportunityInfo = false;
     private boolean forceSingleAppMode = true;
     private boolean awaitingSplash;
-    /** Short hold after the system splash so title/tagline motion can settle once. */
-    private static final long SPLASH_DURATION_MS = 1100L;
+    private final Handler launchHandler = new Handler(Looper.getMainLooper());
+    private static final long SPLASH_DURATION_MS = 850L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,7 +141,7 @@ public class DispatchActivity extends AppCompatActivity {
                 findViewById(R.id.collectra_splash_title),
                 findViewById(R.id.collectra_splash_tagline)
         );
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        launchHandler.postDelayed(() -> {
             awaitingSplash = false;
             if (!isFinishing() && !shouldFinish) {
                 dispatch();
@@ -181,6 +181,12 @@ public class DispatchActivity extends AppCompatActivity {
         } else if (!awaitingSplash) {
             dispatch();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        launchHandler.removeCallbacksAndMessages(null);
+        super.onDestroy();
     }
 
     @Override
