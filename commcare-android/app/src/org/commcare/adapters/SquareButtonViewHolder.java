@@ -2,19 +2,22 @@ package org.commcare.adapters;
 
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import org.commcare.dalvik.R;
-import org.commcare.views.SquareImageView;
 
 /**
- * Holds views for a home screen button
+ * Holds views for a Collectra home action row
  *
  * @author Phillip Mates (pmates@dimagi.com).
  */
 public class SquareButtonViewHolder extends RecyclerView.ViewHolder {
-    public final SquareImageView imageView;
+    public final ImageView imageView;
+    public final FrameLayout iconChip;
+    public final View accentRail;
     public final RelativeLayout cardView;
     public final TextView textView;
     public final TextView subTextView;
@@ -23,6 +26,8 @@ public class SquareButtonViewHolder extends RecyclerView.ViewHolder {
         super(view);
 
         cardView = view.findViewById(R.id.card);
+        accentRail = view.findViewById(R.id.card_accent_rail);
+        iconChip = view.findViewById(R.id.card_icon_chip);
         imageView = view.findViewById(R.id.card_image);
         textView = view.findViewById(R.id.card_text);
         subTextView = view.findViewById(R.id.card_subtext);
