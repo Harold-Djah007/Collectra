@@ -9,8 +9,8 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/collectra_brand_deep"
-        app:titleTextColor="@android:color/white"
-        app:subtitleTextColor="@android:color/white"/>
+        android:background="@color/collectra_ink"
+        app:titleTextColor="@color/collectra_signal"
+        app:subtitleTextColor="@color/white"/>
 
 </com.google.android.material.appbar.AppBarLayout>

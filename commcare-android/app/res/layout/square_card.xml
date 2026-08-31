@@ -6,12 +6,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="14dp"
-    android:layout_marginEnd="14dp"
-    android:layout_marginBottom="10dp"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/collectra_surface"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="2dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
     app:cardPreventCornerOverlap="true"
     app:cardUseCompatPadding="true"
     tools:viewBindingIgnore="true">
@@ -21,18 +21,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
-        android:minHeight="76dp"
-        android:paddingStart="14dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="12dp">
+        android:clipToPadding="false"
+        android:minHeight="80dp">
+
+        <View
+            android:id="@+id/card_accent_rail"
+            android:layout_width="5dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/collectra_home_accent_rail"
+            android:minHeight="80dp" />
 
         <FrameLayout
             android:id="@+id/card_icon_chip"
-            android:layout_width="52dp"
-            android:layout_height="52dp"
-            android:layout_alignParentStart="true"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_centerVertical="true"
+            android:layout_marginStart="18dp"
+            android:layout_toEndOf="@id/card_accent_rail"
             android:background="@drawable/collectra_home_icon_chip"
             android:padding="10dp">
 
@@ -50,32 +58,37 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginStart="14dp"
+            android:layout_marginEnd="16dp"
             android:layout_toEndOf="@id/card_icon_chip"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp">
 
             <org.commcare.views.ResizingTextView
                 android:id="@+id/card_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/font_outfit"
                 android:gravity="start"
-                android:letterSpacing="0.01"
+                android:letterSpacing="-0.01"
                 android:textColor="@color/collectra_text_primary"
-                android:textSize="@dimen/font_size_medium"
+                android:textSize="18sp"
                 android:textStyle="bold"
-                app:text_size_small="@dimen/font_size_medium" />
+                app:text_size_small="16sp" />
 
             <TextView
                 android:id="@+id/card_subtext"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:background="@drawable/collectra_home_subtext_chip"
+                android:fontFamily="@font/font_manrope"
                 android:paddingStart="8dp"
                 android:paddingTop="3dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="3dp"
                 android:textColor="@color/collectra_text_secondary"
-                android:textSize="@dimen/font_size_small"
+                android:textSize="12sp"
                 android:visibility="gone" />
         </LinearLayout>
     </RelativeLayout>

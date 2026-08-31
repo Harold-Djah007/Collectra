@@ -107,11 +107,15 @@ abstract class SquareButtonAdapter
             squareButtonViewHolder.subTextView.setOnClickListener(cardDisplayData.subTextListener);
         }
 
-        // Soft Collectra row surface; accent color lives on the icon chip only.
+        // Soft Collectra row; ink chip + signal/accent rail for identity.
         squareButtonViewHolder.cardView.setBackground(
                 ContextCompat.getDrawable(context, R.drawable.collectra_home_card_surface));
         squareButtonViewHolder.iconChip.setBackground(
-                accentChipDrawable(context, cardDisplayData.bgColor));
+                accentChipDrawable(context, R.color.collectra_ink));
+        if (squareButtonViewHolder.accentRail != null) {
+            squareButtonViewHolder.accentRail.setBackgroundColor(
+                    ContextCompat.getColor(context, cardDisplayData.bgColor));
+        }
     }
 
     private static GradientDrawable accentChipDrawable(Context context, int bgColorResource) {

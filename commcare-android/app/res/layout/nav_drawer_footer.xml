@@ -6,12 +6,12 @@
     android:layout_height="wrap_content"
     android:padding="16dp"
     android:layout_gravity="bottom"
-    android:background="@color/collectra_brand_deep">
+    android:background="@color/collectra_ink">
     <View
         android:layout_marginTop="16dp"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/collectra_brand_bright"/>
+        android:background="@color/collectra_signal"/>
 
     <LinearLayout
         android:id="@+id/notification_view"

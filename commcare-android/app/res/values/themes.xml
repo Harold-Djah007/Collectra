@@ -3,11 +3,13 @@
 
     <style name="CommonTheme" parent="Theme.MaterialComponents.Light.DarkActionBar.Bridge">
         <item name="colorPrimary">@color/cc_brand_color</item>
-        <item name="colorPrimaryDark">@color/collectra_brand_deep</item>
-        <item name="colorAccent">@color/collectra_brand_bright</item>
+        <item name="colorPrimaryDark">@color/collectra_ink</item>
+        <item name="colorAccent">@color/collectra_signal</item>
         <item name="colorControlActivated">@color/cc_brand_color</item>
         <item name="android:textColorSecondary">@color/collectra_text_secondary</item>
         <item name="android:textColorPrimary">@color/collectra_text_primary</item>
+        <item name="android:fontFamily">@font/font_manrope</item>
+        <item name="fontFamily">@font/font_manrope</item>
         <item name="buttonStyle">@style/Commcare.Button.Primary</item>
         <item name="materialButtonStyle">@style/Commcare.Button.Primary.Rounded</item>
         <item name="buttonBarButtonStyle">@style/AlertDialogButtonStyle</item>
@@ -16,8 +18,8 @@
         <item name="android:windowBackground">@drawable/collectra_screen_background</item>
         <item name="detail_odd_row_color">@color/collectra_surface_muted</item>
         <item name="detail_even_row_color">@color/transparent</item>
-        <item name="entity_view_header_background_color">@color/collectra_brand_deep</item>
-        <item name="entity_view_header_text_color">@color/cc_core_bg</item>
+        <item name="entity_view_header_background_color">@color/collectra_ink</item>
+        <item name="entity_view_header_text_color">@color/collectra_signal</item>
         <item name="drawer_pulldown_text_color">@color/white</item>
         <item name="drawer_pulldown_even_row_color">@color/cc_brand_bg</item>
         <item name="drawer_pulldown_odd_row_color">@color/drawer_pulldown_odd_row_color</item>
@@ -86,7 +88,7 @@
     </style>
 
     <style name="ActionBar" parent="Widget.AppCompat.Light.ActionBar">
-        <item name="background">@color/collectra_brand_deep</item>
+        <item name="background">@color/collectra_ink</item>
         <item name="titleTextStyle">@style/ActionBar.TitleTextStyle</item>
         <item name="subtitleTextStyle">@style/ActionBarSubtitleTextStyle</item>
         <item name="logo">@drawable/commcare_actionbar_logo_spacing</item>
@@ -97,9 +99,10 @@
     </style>
 
     <style name="ActionBar.TitleTextStyle">
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">@color/collectra_signal</item>
+        <item name="android:fontFamily">@font/font_outfit</item>
         <item name="android:paddingLeft">16dp</item>
-        <item name="android:textSize">22sp</item>
+        <item name="android:textSize">20sp</item>
     </style>
 
     <style name="ActionBarSubtitleTextStyle">

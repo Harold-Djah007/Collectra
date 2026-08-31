@@ -1,37 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Compact Collectra brand lockup. Replaces the oversized CommCare-style banner. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="14dp"
-    android:layout_marginTop="14dp"
-    android:layout_marginEnd="14dp"
-    android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="@color/transparent"
-    app:cardCornerRadius="22dp"
-    app:cardElevation="3dp"
-    app:strokeWidth="0dp"
+    android:background="@drawable/collectra_hero_banner_bg"
+    android:paddingStart="24dp"
+    android:paddingTop="28dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="28dp"
     tools:viewBindingIgnore="true">
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/collectra_hero_banner_bg">
+        android:gravity="center_vertical"
+        android:orientation="vertical">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:contentDescription="@null"
+                android:src="@drawable/collectra_mark" />
+
+            <TextView
+                android:id="@+id/collectra_brand_wordmark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:fontFamily="@font/font_outfit"
+                android:letterSpacing="-0.02"
+                android:text="@string/application_name"
+                android:textColor="@color/collectra_signal"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Kept for CustomBanner / LoginActivityUIController compatibility; hidden by default. -->
         <ImageView
             android:id="@+id/main_top_banner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:adjustViewBounds="true"
             android:contentDescription="@string/application_name"
-            android:minHeight="88dp"
-            android:paddingStart="20dp"
-            android:paddingTop="18dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="18dp"
-            android:scaleType="fitCenter"
-            app:srcCompat="@drawable/commcare_by_dimagi"
-            android:visibility="visible" />
-    </FrameLayout>
-</com.google.android.material.card.MaterialCardView>
+            android:maxHeight="72dp"
+            android:scaleType="fitStart"
+            android:visibility="gone"
+            tools:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

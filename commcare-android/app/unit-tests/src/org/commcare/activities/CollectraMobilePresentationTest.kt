@@ -62,6 +62,20 @@ class CollectraMobilePresentationTest {
     }
 
     @Test
+    fun `home masthead uses Collectra brand without legacy banner card`() {
+        val view = inflater.inflate(R.layout.collectra_home_masthead, null)
+        assertNotNull(view.findViewById(R.id.collectra_home_greeting))
+        assertNotNull(view.findViewById(R.id.main_top_banner))
+    }
+
+    @Test
+    fun `login banner uses Collectra typographic masthead`() {
+        val view = inflater.inflate(R.layout.grid_header_top_banner, null)
+        assertNotNull(view.findViewById(R.id.collectra_brand_wordmark))
+        assertEquals(View.GONE, view.findViewById<View>(R.id.main_top_banner).visibility)
+    }
+
+    @Test
     fun `home logout action uses Collectra identity`() {
         assertEquals("Log out of Collectra", Localization.get("home.logout"))
     }

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Shows home screen actions and Collectra header banner
+ * Shows Collectra home actions with a compact brand masthead.
  *
  * @author Phillip Mates (pmates@dimagi.com)
  */
@@ -40,7 +40,6 @@ public class HomeScreenAdapter
         buttonData = HomeButtons.buildButtonData(activity, buttonsToHide, isDemoUser);
         syncButtonPosition = calcSyncButtonPos();
 
-        // get screen dimensions for drawing custom header image
         DisplayMetrics displaymetrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
         screenHeight = displaymetrics.heightPixels;
@@ -50,7 +49,6 @@ public class HomeScreenAdapter
     private int calcSyncButtonPos() {
         for (int i = 0; i < buttonData.length; i++) {
             if (buttonData[i].imageResource == R.drawable.home_sync) {
-                // pos in button array plus initial custom header
                 return i + 1;
             }
         }
@@ -61,7 +59,7 @@ public class HomeScreenAdapter
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_HEADER) {
             final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-            View header = inflater.inflate(R.layout.grid_header_top_banner, parent, false);
+            View header = inflater.inflate(R.layout.collectra_home_masthead, parent, false);
             return new HeaderViewHolder(header);
         } else {
             return super.onCreateViewHolder(parent, viewType);
@@ -104,16 +102,16 @@ public class HomeScreenAdapter
         layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
         headerHolder.itemView.setLayoutParams(layoutParams);
 
-        boolean noCustomBanner =
-                !CustomBanner.useCustomBanner(context, screenHeight, screenWidth, headerHolder.headerImage, CustomBanner.Banner.HOME);
-        if (noCustomBanner) {
-            headerHolder.headerImage.setImageResource(R.drawable.commcare_by_dimagi);
+        // Prefer a tiny Collectra mark; only swap in a custom banner image when provided.
+        boolean usedCustom = CustomBanner.useCustomBanner(
+                context, screenHeight, screenWidth, headerHolder.headerImage, CustomBanner.Banner.HOME);
+        if (!usedCustom) {
+            headerHolder.headerImage.setImageResource(R.drawable.collectra_mark);
         }
     }
 
     @Override
     public int getItemCount() {
-        // buttons and header
         return buttonData.length + 1;
     }
 
@@ -143,7 +141,6 @@ public class HomeScreenAdapter
 
         public HeaderViewHolder(View itemView) {
             super(itemView);
-
             headerImage = itemView.findViewById(R.id.main_top_banner);
         }
     }

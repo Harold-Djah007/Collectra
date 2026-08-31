@@ -109,6 +109,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_below="@id/cvConnectMessage"
+                            android:layoutAnimation="@anim/collectra_list_cascade"
                             android:nestedScrollingEnabled="false"
                             android:scrollbars="vertical" />
                     </RelativeLayout>

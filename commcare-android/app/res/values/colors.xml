@@ -47,34 +47,37 @@
          buttons with WHITE text but avoid for longform / paragraph text. -->
 
     <!-- Core -->
-    <color name="cc_core_bg">#EEF8F6</color>
-    <color name="cc_core_text">#0F172A</color>
+    <color name="cc_core_bg">#EEF4F1</color>
+    <color name="cc_core_text">#0B1F1D</color>
 
-    <!-- Brand: Collectra lagoon -->
-    <color name="cc_brand_color">#0D9488</color>
-    <color name="cc_brand_bg">#CCFBF1</color>
-    <color name="cc_brand_text">#115E59</color>
-    <color name="collectra_surface">#FFFFFF</color>
-    <color name="collectra_surface_muted">#F0FDFA</color>
-    <color name="collectra_outline">#99F6E4</color>
-    <color name="collectra_text_primary">#0F172A</color>
-    <color name="collectra_text_secondary">#475569</color>
-    <color name="collectra_brand_dark">#0F766E</color>
-    <color name="collectra_brand_deep">#134E4A</color>
-    <color name="collectra_brand_bright">#2DD4BF</color>
-    <color name="collectra_bg_start">#F0FDFA</color>
-    <color name="collectra_bg_mid">#E0F2FE</color>
-    <color name="collectra_bg_end">#ECFEFF</color>
-    <color name="collectra_panel_shadow">#1A0F766E</color>
-    <color name="collectra_action_start">#0D9488</color>
-    <color name="collectra_action_saved">#14B8A6</color>
-    <color name="collectra_action_incomplete">#E11D48</color>
-    <color name="collectra_action_sync">#0F766E</color>
-    <color name="collectra_action_sync_dark">#134E4A</color>
-    <color name="collectra_action_logout">#1E293B</color>
-    <color name="collectra_action_training">#115E59</color>
-    <color name="collectra_action_report">#C2410C</color>
-    <color name="collectra_action_connect">#0369A1</color>
+    <!-- Brand: Collectra Signal -->
+    <color name="cc_brand_color">#0C6B63</color>
+    <color name="cc_brand_bg">#DCEEEA</color>
+    <color name="cc_brand_text">#0C6B63</color>
+    <color name="collectra_ink">#062A28</color>
+    <color name="collectra_signal">#C9F56A</color>
+    <color name="collectra_signal_ink">#24350A</color>
+    <color name="collectra_surface">#FAFCFB</color>
+    <color name="collectra_surface_muted">#E8F2EF</color>
+    <color name="collectra_outline">#C5DDD7</color>
+    <color name="collectra_text_primary">#0B1F1D</color>
+    <color name="collectra_text_secondary">#4A635F</color>
+    <color name="collectra_brand_dark">#0C6B63</color>
+    <color name="collectra_brand_deep">#094F49</color>
+    <color name="collectra_brand_bright">#C9F56A</color>
+    <color name="collectra_bg_start">#EEF4F1</color>
+    <color name="collectra_bg_mid">#E3EEEA</color>
+    <color name="collectra_bg_end">#F7FAF8</color>
+    <color name="collectra_panel_shadow">#1A062A28</color>
+    <color name="collectra_action_start">#0C6B63</color>
+    <color name="collectra_action_saved">#127A70</color>
+    <color name="collectra_action_incomplete">#E4572E</color>
+    <color name="collectra_action_sync">#094F49</color>
+    <color name="collectra_action_sync_dark">#062A28</color>
+    <color name="collectra_action_logout">#1A2E2B</color>
+    <color name="collectra_action_training">#0C6B63</color>
+    <color name="collectra_action_report">#C45C1A</color>
+    <color name="collectra_action_connect">#1B6B8A</color>
 
     <!-- Neutral -->
     <color name="cc_neutral_color">#685C53</color>
@@ -93,7 +96,7 @@
     <color name="cc_attention_negative_text">#812627</color>
 
     <!-- Dark Cool Accent -->
-    <color name="cc_dark_cool_accent_color">#0F766E</color>
+    <color name="cc_dark_cool_accent_color">#0C6B63</color>
 
     <!-- Light Cool Accent -->
     <color name="cc_light_cool_accent_bg">#CCF3F4</color>
@@ -112,7 +115,7 @@
     <color name="edit_text_color">#D0D0D0</color>
 
     <!-- Drawer pulldown odd row color -->
-    <color name="drawer_pulldown_odd_row_color">#B2F5EA</color>
+    <color name="drawer_pulldown_odd_row_color">#D7EBE6</color>
 
     <!-- Error Colors -->
     <color name="cc_error_bg_color">#EE5555</color>

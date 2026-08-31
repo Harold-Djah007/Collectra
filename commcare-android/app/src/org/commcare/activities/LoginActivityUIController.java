@@ -528,8 +528,14 @@ public class LoginActivityUIController implements CommCareActivityUIController {
     private void updateBanner() {
         ImageView topBannerImageView =
                 banner.findViewById(R.id.main_top_banner);
-        if (!CustomBanner.useCustomBannerFitToActivity(activity, topBannerImageView, CustomBanner.Banner.LOGIN)) {
-            topBannerImageView.setImageResource(R.drawable.commcare_by_dimagi);
+        if (topBannerImageView == null) {
+            return;
+        }
+        if (CustomBanner.useCustomBannerFitToActivity(activity, topBannerImageView, CustomBanner.Banner.LOGIN)) {
+            topBannerImageView.setVisibility(View.VISIBLE);
+        } else {
+            // Collectra uses the typographic masthead; hide the legacy logo slot.
+            topBannerImageView.setVisibility(View.GONE);
         }
     }
 

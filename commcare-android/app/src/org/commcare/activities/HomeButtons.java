@@ -65,7 +65,7 @@ public class HomeButtons {
                 HomeCardDisplayData.homeCardDataWithStaticText(Localization.get(homeMessageKey),
                         R.color.collectra_text_primary,
                         R.drawable.home_start,
-                        R.color.collectra_action_start,
+                        R.color.collectra_signal,
                         getStartButtonListener(activity)),
                 HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("training.root.title"),
                         R.color.collectra_text_primary,
