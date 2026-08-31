@@ -60,11 +60,13 @@ jobs:
 
       - name: Verify CommCare behavior and build Collectra
         working-directory: commcare-android
-        run: >-
-          ./gradlew
-          :app:testCommcareDebugUnitTest
-          :app:assembleCommcareDebug
-          --tests org.commcare.network.AppListEndpointProviderTest
-          --tests org.commcare.utils.ConnectivityStatusTest
-          --tests org.commcare.activities.CollectraMobilePresentationTest
-          --no-daemon
+        run: |
+          ./gradlew \
+            :app:testCommcareDebugUnitTest \
+            --tests org.commcare.network.AppListEndpointProviderTest \
+            --tests org.commcare.utils.ConnectivityStatusTest \
+            --tests org.commcare.activities.CollectraMobilePresentationTest \
+            --no-daemon
+          ./gradlew \
+            :app:assembleCommcareDebug \
+            --no-daemon
