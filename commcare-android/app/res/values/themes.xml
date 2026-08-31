@@ -50,6 +50,17 @@
     </style>
 
     <!--
+        Launcher/cold-start theme for DispatchActivity. Matches collectra_splash so the
+        system window splash and the animated Collectra splash read as one screen.
+    -->
+    <style name="CollectraLaunchTheme" parent="CommonTheme.NoActionBar">
+        <item name="android:windowBackground">@drawable/collectra_launch_window</item>
+        <item name="android:statusBarColor">@color/collectra_ink</item>
+        <item name="android:navigationBarColor">@color/collectra_ink</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!--
         The only place a Connect colour acquires meaning. Layouts reference these roles via
         ?attr/…; they should not name a colour directly.
     -->
