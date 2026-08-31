@@ -1,0 +1,13 @@
+{
+  "name": "Collectra HQ",
+  "user": "ubuntu",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "collectra-web",
+      "command": "export PATH=\"$HOME/.npm-global/bin:$HOME/.local/bin:$PATH\" && cd collectra-hq && uv run gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class gevent --timeout 900 --access-logfile - --error-logfile - deployment.gunicorn.collectra_wsgi:application"
+    }
+  ],
+  "ports": [8000]
+}
