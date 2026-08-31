@@ -7,6 +7,7 @@ import android.content.Context;
 import org.commcare.android.logging.ForceCloseLogger;
 import org.commcare.core.network.CommCareNetworkService;
 import org.commcare.core.network.CommCareNetworkServiceGenerator;
+import org.commcare.network.CollectraHostConfig;
 import org.commcare.tasks.templates.CommCareTask;
 import org.commcare.utils.ConnectivityStatus;
 import org.javarosa.core.services.Logger;
@@ -41,7 +42,7 @@ public abstract class ConnectionDiagnosticTask<R> extends CommCareTask<Void, Str
 
     //strings used to in various diagnostics tests. Change these values if the URLs/HTML code is changed.
     private static final String googleURL = "www.google.com";
-    private static final String commcareURL = "http://www.commcarehq.org/serverup.txt";
+    private static final String legacyCommcareURL = "http://www.commcarehq.org/serverup.txt";
     private static final String commcareHTML = "success";
     private static final String pingPrefix = "ping -c 1 ";
 
@@ -71,7 +72,7 @@ public abstract class ConnectionDiagnosticTask<R> extends CommCareTask<Void, Str
             Logger.log(CONNECTION_DIAGNOSTIC_REPORT, logNotConnectedMessage);
         } else if (!pingSuccess(googleURL)) {
             out = Test.googlePing;
-        } else if (!pingCC(commcareURL)) {
+        } else if (!pingCC(CollectraHostConfig.getServerUpUrl(legacyCommcareURL))) {
             out = Test.commCarePing;
         } else {
             Logger.log(CONNECTION_DIAGNOSTIC_REPORT, logConnectionSuccessMessage);

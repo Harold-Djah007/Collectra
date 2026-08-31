@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import org.commcare.CommCareApp;
 import org.commcare.CommCareApplication;
 import org.commcare.dalvik.R;
+import org.commcare.network.CollectraHostConfig;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,8 +31,16 @@ public class ServerUrls {
     }
 
     public static String getDataServerKey() {
-        return getServerProperty(PREFS_DATA_SERVER_KEY, CommCareApplication.instance()
-                .getString(R.string.ota_restore_url)) ;
+        String legacyDefault = CommCareApplication.instance().getString(R.string.ota_restore_url);
+        return getServerProperty(
+                PREFS_DATA_SERVER_KEY,
+                CollectraHostConfig.getFallbackRestoreUrl(legacyDefault)
+        );
+    }
+
+    public static String getFallbackSubmissionUrl() {
+        String legacyDefault = CommCareApplication.instance().getString(R.string.PostURL);
+        return CollectraHostConfig.getFallbackPostUrl(legacyDefault);
     }
 
     /**

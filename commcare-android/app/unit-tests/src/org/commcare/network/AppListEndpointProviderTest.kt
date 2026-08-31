@@ -29,12 +29,9 @@ class AppListEndpointProviderTest {
     }
 
     @Test
-    fun `blank configuration preserves upstream endpoints`() {
+    fun `blank configuration returns no Dimagi fallbacks`() {
         assertEquals(
-            listOf(
-                "https://www.commcarehq.org/phone/list_apps",
-                "https://india.commcarehq.org/phone/list_apps",
-            ),
+            emptyList<String>(),
             AppListEndpointProvider.getUrls(""),
         )
     }
