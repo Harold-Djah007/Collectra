@@ -5,6 +5,9 @@ Docker host. It preserves the tested CommCare engine and exposes only Caddy on
 ports 80 and 443. PostgreSQL, CouchDB, Redis, Elasticsearch, Kafka, MinIO,
 Formplayer, Celery, and Pillowtop remain private.
 
+For the end-to-end path to cellular/field readiness (DNS → bootstrap → APK →
+acceptance), follow **[FIELD_CUTOVER.md](./FIELD_CUTOVER.md)**.
+
 This is the recommended baseline for approximately 50 mobile workers. It is a
 single-host deployment, not a high-availability cluster. Use provider snapshots,
 off-host backups, monitoring, and a documented recovery procedure.
@@ -26,10 +29,12 @@ limits cannot safely retain Collectra production data.
 1. Point the production hostname to the server's static IP.
 2. Clone this repository on the server.
 3. Change to `deploy/production`.
-4. Copy `.env.example` to `.env` and replace every placeholder with an
-   independent random secret. Keep `.env` mode `0600` and never commit it.
-5. Run `./bootstrap.sh`.
-6. Run `./healthcheck.sh`.
+4. Copy `.env.example` to `.env`, run `./generate-secrets.sh`, then set
+   `COLLECTRA_HOST`, `COLLECTRA_ADMIN_EMAIL`, and `CADDY_ACME_EMAIL`.
+5. Run `./validate-env.sh`, then `./bootstrap.sh`.
+6. Run `./healthcheck.sh` (and repeat from a phone on cellular).
+7. Build the field APK with
+   `commcare-android/scripts/build-field-apk.sh https://<COLLECTRA_HOST>`.
 
 Caddy obtains and renews the TLS certificate automatically. Do not publish app
 builds or QR codes until the public health check passes over cellular data.
