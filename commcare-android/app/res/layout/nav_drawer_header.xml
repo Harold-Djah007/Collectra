@@ -6,7 +6,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:background="@color/connect_blue_color">
+        android:background="@color/collectra_brand_deep">
         <ImageView
             android:contentDescription="@null"
             android:layout_gravity="center"
@@ -19,8 +19,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            app:cardCornerRadius="8dp"
-            android:backgroundTint="@color/persian_indigo">
+            app:cardCornerRadius="12dp"
+            android:backgroundTint="@color/collectra_brand_dark">
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -90,6 +90,6 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:paddingBottom="16dp"
-            android:background="@color/darker_grey"/>
+            android:background="@color/collectra_brand_bright"/>
     </LinearLayout>
 </layout>

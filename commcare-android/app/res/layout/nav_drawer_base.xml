@@ -2,7 +2,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:background="@color/collectra_brand_dark"
+    android:background="@color/collectra_brand_deep"
     android:layout_gravity="start"
     android:paddingHorizontal="@dimen/side_nav_horizontal_padding"
     xmlns:android="http://schemas.android.com/apk/res/android">
@@ -11,7 +11,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:background="@color/collectra_brand_dark">
+            android:background="@color/collectra_brand_deep">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -120,7 +120,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="12dp"
-                                    android:backgroundTint="@color/connect_blue_color"
+                                    android:backgroundTint="@color/cc_brand_color"
                                     android:paddingStart="24dp"
                                     android:paddingTop="16dp"
                                     android:paddingEnd="24dp"

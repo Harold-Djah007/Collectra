@@ -4,11 +4,9 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.StateListDrawable;
 
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import android.util.StateSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +17,7 @@ import org.commcare.dalvik.R;
 import java.util.List;
 
 /**
- * Inflation and binding of square cards used on home screen and other places.
+ * Inflation and binding of Collectra home action rows.
  *
  * @author Phillip Mates (pmates@dimagi.com).
  */
@@ -106,54 +104,51 @@ abstract class SquareButtonAdapter
         squareButtonViewHolder.imageView.setImageDrawable(buttonDrawable);
         squareButtonViewHolder.cardView.setOnClickListener(cardDisplayData.listener);
 
-        if(cardDisplayData.subTextListener != null) {
+        if (cardDisplayData.subTextListener != null) {
             squareButtonViewHolder.subTextView.setOnClickListener(cardDisplayData.subTextListener);
         }
 
-        StateListDrawable bgDrawable = bgDrawStates(context, cardDisplayData.bgColor);
-        squareButtonViewHolder.cardView.setBackground(bgDrawable);
+        // Soft Collectra row surface; accent color lives on the icon chip only.
+        squareButtonViewHolder.cardView.setBackground(
+                ContextCompat.getDrawable(context, R.drawable.collectra_home_card_surface));
+        squareButtonViewHolder.iconChip.setBackground(
+                accentChipDrawable(context, cardDisplayData.bgColor));
+    }
+
+    private static GradientDrawable accentChipDrawable(Context context, int bgColorResource) {
+        float radius = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                14f,
+                context.getResources().getDisplayMetrics()
+        );
+        GradientDrawable chip = new GradientDrawable();
+        chip.setShape(GradientDrawable.RECTANGLE);
+        chip.setCornerRadius(radius);
+        chip.setColor(ContextCompat.getColor(context, bgColorResource));
+        return chip;
     }
 
     /**
-     * Build drawable with default state being the provided color resource,
-     * pressed color state being that color with less saturation, and disabled
-     * state being gray. Corners match the Collectra home card radius.
+     * Soft subtext chip background tinted from an accent color.
      */
-    private static StateListDrawable bgDrawStates(Context context,
-                                                  int bgColorResource) {
+    public static Drawable softSubtextChip(Context context, int colorResource) {
         float radius = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
-                20f,
+                10f,
                 context.getResources().getDisplayMetrics()
         );
-
-        GradientDrawable disabledColor = roundedColor(
-                context.getResources().getColor(R.color.grey), radius);
-        GradientDrawable colorDrawable = roundedColor(
-                context.getResources().getColor(bgColorResource), radius);
-        GradientDrawable pressedBackground = desaturateColor(
-                context.getResources().getColor(bgColorResource), radius);
-
-        StateListDrawable sld = new StateListDrawable();
-        sld.addState(new int[]{-android.R.attr.state_enabled}, disabledColor);
-        sld.addState(new int[]{android.R.attr.state_pressed}, pressedBackground);
-        sld.addState(StateSet.WILD_CARD, colorDrawable);
-        return sld;
-    }
-
-    private static GradientDrawable roundedColor(int color, float radius) {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setShape(GradientDrawable.RECTANGLE);
-        drawable.setCornerRadius(radius);
-        drawable.setColor(color);
-        return drawable;
-    }
-
-    private static GradientDrawable desaturateColor(int color, float radius) {
-        float[] hsvOutput = new float[3];
-        Color.colorToHSV(color, hsvOutput);
-        hsvOutput[2] = (float)(hsvOutput[2] / 1.35);
-        return roundedColor(Color.HSVToColor(hsvOutput), radius);
+        int accent = ContextCompat.getColor(context, colorResource);
+        int soft = Color.argb(
+                36,
+                Color.red(accent),
+                Color.green(accent),
+                Color.blue(accent)
+        );
+        GradientDrawable chip = new GradientDrawable();
+        chip.setShape(GradientDrawable.RECTANGLE);
+        chip.setCornerRadius(radius);
+        chip.setColor(soft);
+        return chip;
     }
 
     @Override

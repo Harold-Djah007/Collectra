@@ -1,7 +1,6 @@
 package org.commcare.adapters;
 
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +18,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Shows home screen buttons and header banner
+ * Shows home screen actions and Collectra header banner
  *
  * @author Phillip Mates (pmates@dimagi.com)
  */
@@ -101,9 +100,9 @@ public class HomeScreenAdapter
     }
 
     private void bindHeader(HeaderViewHolder headerHolder) {
-        StaggeredGridLayoutManager.LayoutParams layoutParams =
-                (StaggeredGridLayoutManager.LayoutParams)headerHolder.itemView.getLayoutParams();
-        layoutParams.setFullSpan(true);
+        ViewGroup.LayoutParams layoutParams = headerHolder.itemView.getLayoutParams();
+        layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        headerHolder.itemView.setLayoutParams(layoutParams);
 
         boolean noCustomBanner =
                 !CustomBanner.useCustomBanner(context, screenHeight, screenWidth, headerHolder.headerImage, CustomBanner.Banner.HOME);

@@ -46,12 +46,19 @@ class CollectraMobilePresentationTest {
     }
 
     @Test
-    fun `home card uses a defined surface`() {
+    fun `home card uses Collectra list row surface`() {
         val view = inflater.inflate(R.layout.square_card, null)
         val card = view.findViewById<CardView>(R.id.home_card)
 
         assertNotNull(card.background)
         assertTrue(card.radius > 0)
+        assertNotNull(view.findViewById(R.id.card_icon_chip))
+        assertNotNull(view.findViewById(R.id.card_text))
+        assertEquals(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            card.layoutParams?.width
+                ?: android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+        )
     }
 
     @Test

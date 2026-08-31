@@ -14,7 +14,6 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import org.commcare.CommCareApp;
 import org.commcare.CommCareApplication;
@@ -271,9 +270,9 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
         final RecyclerView grid = activity.findViewById(R.id.home_gridview_buttons);
         grid.setHasFixedSize(false);
 
-        StaggeredGridLayoutManager gridView =
-                new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        grid.setLayoutManager(gridView);
+        LinearLayoutManager listLayout =
+                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        grid.setLayoutManager(listLayout);
         grid.setItemAnimator(null);
         grid.setAdapter(adapter);
 

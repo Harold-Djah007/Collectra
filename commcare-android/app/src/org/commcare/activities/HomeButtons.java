@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import org.commcare.adapters.HomeCardDisplayData;
+import org.commcare.adapters.SquareButtonAdapter;
 import org.commcare.adapters.SquareButtonViewHolder;
 import org.commcare.dalvik.R;
 import org.commcare.google.services.analytics.AnalyticsParamValue;
@@ -58,41 +59,48 @@ public class HomeButtons {
 
         HomeCardDisplayData[] allButtons = new HomeCardDisplayData[]{
                 HomeCardDisplayData.homeCardDataWithStaticText(Localization.get(homeMessageKey),
-                        R.color.white,
+                        R.color.collectra_text_primary,
                         R.drawable.home_start,
                         R.color.collectra_action_start,
                         getStartButtonListener(activity)),
-                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("training.root.title"), R.color.white,
+                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("training.root.title"),
+                        R.color.collectra_text_primary,
                         R.drawable.home_training, R.color.collectra_action_training,
                         getTrainingButtonListener(activity)),
                 HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.forms.saved"),
-                        R.color.white,
+                        R.color.collectra_text_primary,
                         R.drawable.home_saved,
                         R.color.collectra_action_saved,
                         getViewOldFormsListener(activity)),
-                HomeCardDisplayData.homeCardDataWithDynamicText(Localization.get("home.forms.incomplete"), R.color.white,
+                HomeCardDisplayData.homeCardDataWithDynamicText(Localization.get("home.forms.incomplete"),
+                        R.color.collectra_text_primary,
                         R.drawable.home_incomplete,
                         R.color.collectra_action_incomplete,
                         getIncompleteButtonListener(activity),
                         null,
                         getIncompleteButtonTextSetter(activity)),
-                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.connect"), R.color.white,
+                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.connect"),
+                        R.color.collectra_text_primary,
                         R.drawable.quick_reference, R.color.collectra_action_connect,
                         getConnectButtonListener(activity)),
-                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(syncKey), R.color.white,
-                        R.color.white,
+                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(syncKey),
+                        R.color.collectra_text_primary,
+                        R.color.collectra_text_secondary,
                         R.drawable.home_sync,
                         R.color.collectra_action_sync,
-                        R.color.collectra_action_sync_dark,
+                        R.color.collectra_action_sync,
                         getSyncButtonListener(activity),
                         getSyncButtonSubTextListener(activity),
                         getSyncButtonTextSetter(activity)),
-                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.report"), R.color.white,
+                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.report"),
+                        R.color.collectra_text_primary,
                         R.drawable.home_report, R.color.collectra_action_report,
                         getReportButtonListener(activity)),
-                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(logoutMessageKey), R.color.white,
-                        R.color.white,
-                        R.drawable.home_logout, R.color.collectra_action_logout, R.color.collectra_brand_deep,
+                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(logoutMessageKey),
+                        R.color.collectra_text_primary,
+                        R.color.collectra_text_secondary,
+                        R.drawable.home_logout, R.color.collectra_action_logout,
+                        R.color.collectra_action_logout,
                         getLogoutButtonListener(activity),
                         null,
                         getLogoutButtonTextSetter(activity)),
@@ -157,7 +165,10 @@ public class HomeButtons {
                 return;
             }
 
-            squareButtonViewHolder.subTextView.setBackgroundColor(activity.getResources().getColor(cardDisplayData.subTextBgColor));
+            squareButtonViewHolder.subTextView.setVisibility(View.VISIBLE);
+            squareButtonViewHolder.subTextView.setBackground(
+                    SquareButtonAdapter.softSubtextChip(
+                            context, cardDisplayData.subTextBgColor));
             squareButtonViewHolder.textView.setTextColor(context.getResources().getColor(cardDisplayData.textColor));
             squareButtonViewHolder.textView.setText(cardDisplayData.text);
         };
@@ -243,9 +254,12 @@ public class HomeButtons {
         return (cardDisplayData, squareButtonViewHolder, context, notificationText) -> {
             squareButtonViewHolder.textView.setText(cardDisplayData.text);
             squareButtonViewHolder.textView.setTextColor(context.getResources().getColor(cardDisplayData.textColor));
+            squareButtonViewHolder.subTextView.setVisibility(View.VISIBLE);
             squareButtonViewHolder.subTextView.setText(activity.getActivityTitle());
             squareButtonViewHolder.subTextView.setTextColor(context.getResources().getColor(cardDisplayData.subTextColor));
-            squareButtonViewHolder.subTextView.setBackgroundColor(activity.getResources().getColor(cardDisplayData.subTextBgColor));
+            squareButtonViewHolder.subTextView.setBackground(
+                    SquareButtonAdapter.softSubtextChip(
+                            context, cardDisplayData.subTextBgColor));
         };
     }
 
