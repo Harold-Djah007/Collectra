@@ -37,6 +37,7 @@ import org.commcare.preferences.HiddenPreferences;
 import org.commcare.preferences.LocalePreferences;
 import org.commcare.utils.MultipleAppsUtil;
 import org.commcare.views.CustomBanner;
+import org.commcare.views.CollectraMotion;
 import org.commcare.views.ManagedUi;
 import org.commcare.views.ManagedUiFramework;
 import org.commcare.views.PasswordShow;
@@ -180,6 +181,20 @@ public class LoginActivityUIController implements CommCareActivityUIController {
         notificationButton.setOnClickListener(
                 view -> CommCareNoficationManager.performIntentCalloutToNotificationsView(activity));
         setUpConnectUiListeners();
+        playCollectraEntrance();
+    }
+
+    private void playCollectraEntrance() {
+        View root = activity.findViewById(R.id.screen_login_main);
+        CollectraMotion.playScreenEnter(root);
+
+        View brandMark = banner != null ? banner.findViewById(R.id.collectra_brand_mark) : null;
+        View wordmark = banner != null ? banner.findViewById(R.id.collectra_brand_wordmark) : null;
+        CollectraMotion.startLogoPulse(brandMark);
+        CollectraMotion.playWordmarkEnter(wordmark);
+
+        View title = activity.findViewById(R.id.collectra_login_title);
+        CollectraMotion.startTitleLiveliness(title);
     }
 
     private void setUpConnectUiListeners() {

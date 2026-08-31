@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Compact Collectra brand lockup. Replaces the oversized CommCare-style banner. -->
+<!-- Compact Collectra brand lockup with motion-friendly IDs. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/collectra_brand_masthead_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/collectra_hero_banner_bg"
     android:paddingStart="24dp"
-    android:paddingTop="28dp"
+    android:paddingTop="32dp"
     android:paddingEnd="24dp"
-    android:paddingBottom="28dp"
+    android:paddingBottom="32dp"
     tools:viewBindingIgnore="true">
 
     <LinearLayout
@@ -25,8 +25,9 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:id="@+id/collectra_brand_mark"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:contentDescription="@null"
                 android:src="@drawable/collectra_mark" />
 
@@ -39,7 +40,7 @@
                 android:letterSpacing="-0.02"
                 android:text="@string/application_name"
                 android:textColor="@color/collectra_signal"
-                android:textSize="28sp"
+                android:textSize="30sp"
                 android:textStyle="bold" />
         </LinearLayout>
 

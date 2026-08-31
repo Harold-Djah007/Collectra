@@ -66,6 +66,8 @@ class CollectraMobilePresentationTest {
         val view = inflater.inflate(R.layout.collectra_home_masthead, null)
         assertNotNull(view.findViewById(R.id.collectra_home_greeting))
         assertNotNull(view.findViewById(R.id.main_top_banner))
+        assertNotNull(view.findViewById(R.id.collectra_home_wordmark))
+        assertNotNull(view.findViewById(R.id.collectra_home_accent))
     }
 
     @Test

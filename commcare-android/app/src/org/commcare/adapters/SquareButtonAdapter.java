@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import org.commcare.dalvik.R;
+import org.commcare.views.CollectraMotion;
 
 import java.util.List;
 
@@ -73,7 +74,7 @@ abstract class SquareButtonAdapter
 
         cardDisplayData.textSetter.update(cardDisplayData,
                 squareButtonViewHolder, context, notificationText);
-        setupViewHolder(context, cardDisplayData, squareButtonViewHolder);
+        setupViewHolder(context, cardDisplayData, squareButtonViewHolder, i);
     }
 
     /**
@@ -116,6 +117,16 @@ abstract class SquareButtonAdapter
             squareButtonViewHolder.accentRail.setBackgroundColor(
                     ContextCompat.getColor(context, cardDisplayData.bgColor));
         }
+
+        // Staggered chip pulse so tiles feel alive like the brand mark.
+        long delay = Math.max(0, squareButtonViewHolder.getBindingAdapterPosition()) * 90L;
+        CollectraMotion.startChipPulse(squareButtonViewHolder.iconChip, delay);
+
+        squareButtonViewHolder.textView.setAlpha(0.85f);
+        squareButtonViewHolder.textView.animate()
+                .alpha(1f)
+                .setDuration(280)
+                .start();
     }
 
     private static GradientDrawable accentChipDrawable(Context context, int bgColorResource) {

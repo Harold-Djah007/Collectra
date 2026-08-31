@@ -6,10 +6,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import org.commcare.activities.StandardHomeActivity;
 import org.commcare.activities.HomeButtons;
 import org.commcare.dalvik.R;
+import org.commcare.views.CollectraMotion;
 import org.commcare.views.CustomBanner;
 
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Shows Collectra home actions with a compact brand masthead.
+ * Shows Collectra home actions with a lively brand masthead.
  *
  * @author Phillip Mates (pmates@dimagi.com)
  */
@@ -31,6 +33,7 @@ public class HomeScreenAdapter
     private final int screenHeight, screenWidth;
     private final int syncButtonPosition;
     private final HashMap<Integer, String> messagePayload = new HashMap<>();
+    private boolean mastheadAnimated;
 
     public HomeScreenAdapter(StandardHomeActivity activity,
                              Vector<String> buttonsToHide,
@@ -102,11 +105,26 @@ public class HomeScreenAdapter
         layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
         headerHolder.itemView.setLayoutParams(layoutParams);
 
-        // Prefer a tiny Collectra mark; only swap in a custom banner image when provided.
         boolean usedCustom = CustomBanner.useCustomBanner(
                 context, screenHeight, screenWidth, headerHolder.headerImage, CustomBanner.Banner.HOME);
         if (!usedCustom) {
             headerHolder.headerImage.setImageResource(R.drawable.collectra_mark);
+        }
+
+        if (!mastheadAnimated) {
+            mastheadAnimated = true;
+            CollectraMotion.startLogoPulse(headerHolder.headerImage);
+            CollectraMotion.playWordmarkEnter(headerHolder.wordmark);
+            CollectraMotion.startTitleLiveliness(headerHolder.greeting);
+            CollectraMotion.playAccentReveal(headerHolder.accent);
+            if (headerHolder.tagline != null) {
+                headerHolder.tagline.setAlpha(0f);
+                headerHolder.tagline.animate()
+                        .alpha(1f)
+                        .setStartDelay(220)
+                        .setDuration(360)
+                        .start();
+            }
         }
     }
 
@@ -138,10 +156,18 @@ public class HomeScreenAdapter
 
     private static class HeaderViewHolder extends RecyclerView.ViewHolder {
         public final ImageView headerImage;
+        public final TextView wordmark;
+        public final TextView greeting;
+        public final TextView tagline;
+        public final View accent;
 
         public HeaderViewHolder(View itemView) {
             super(itemView);
             headerImage = itemView.findViewById(R.id.main_top_banner);
+            wordmark = itemView.findViewById(R.id.collectra_home_wordmark);
+            greeting = itemView.findViewById(R.id.collectra_home_greeting);
+            tagline = itemView.findViewById(R.id.collectra_home_tagline);
+            accent = itemView.findViewById(R.id.collectra_home_accent);
         }
     }
 }
