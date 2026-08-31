@@ -2,37 +2,53 @@
 
 Collectra Mobile accepts any connected Android network. Form entry remains available offline, and
 installation, login, updates, and synchronization resume when either Wi-Fi or cellular data is
-connected.
+connected **and Collectra HQ is reachable from that network**.
 
 ## Configure the hosted Collectra HQ address
 
-Set the public HTTPS base address in `local.properties` before building the APK:
+Set the public (or LAN) base address in `commcare-android/local.properties` before building the APK:
 
 ```properties
+sdk.dir=/home/you/Android/Sdk
 COLLECTRA_HQ_BASE_URL=https://collectra.example.com
 ```
 
-The value is compiled into the APK and is used by **See Available Apps** and by **Enter
-your app code**. Collectra HQ issues local install codes at `/s/<code>` when Bitly is
-not configured. The same `COLLECTRA_HQ_BASE_URL` must be compiled into the APK so those
-codes resolve to Collectra HQ instead of `bit.ly`. Collectra app profiles
-must use the same public address for their restore, submission, update, and heartbeat URLs. A local
-address such as `192.168.x.x`, `172.x.x.x`, `localhost`, or a WSL address is reachable only on the
-corresponding local network and cannot work over cellular data.
+Local LAN testing example:
 
-Build the configured APK with:
+```properties
+COLLECTRA_HQ_BASE_URL=http://192.168.1.195:8000
+```
+
+The value is compiled into the APK and is used by:
+
+- **See Available Apps**
+- **Enter your app code** / QR bare codes (`/s/<code>`)
+- SMS install host allowlisting (plus private LAN hosts)
+- Captive-portal / connection diagnostics (`/serverup.txt`)
+- Fallback submit/restore URLs when a profile is missing those prefs
+
+Collectra HQ issues local install codes at `/s/<code>` when Bitly is not configured. App profiles
+must use the same public address for restore, submission, update, and heartbeat URLs.
+
+Build:
 
 ```bash
 ./gradlew assembleCommcareDebug
 ```
 
-If `COLLECTRA_HQ_BASE_URL` is blank, the upstream CommCare production and India app-list endpoints
-remain as fallbacks for compatibility.
+If `COLLECTRA_HQ_BASE_URL` is blank, Collectra will **not** fall back to Dimagi app-list endpoints.
+Configure the property for every field APK.
+
+## Field vs local
+
+| Address type | Cellular / other Wi-Fi | Same LAN only |
+|--------------|------------------------|---------------|
+| `https://collectra.example.com` | Yes | Yes |
+| `http://192.168.x.x:8000` | No | Yes |
 
 ## Production requirements
 
-- Use a stable public hostname with HTTPS. Authenticated app discovery intentionally rejects plain
-  HTTP.
+- Use a stable public hostname with HTTPS for field workers.
 - Configure HQ's base address before generating application profiles or QR codes.
 - Keep the Android `INTERNET` and `ACCESS_NETWORK_STATE` permissions enabled.
 - Do not add a `NetworkType.UNMETERED` constraint to sync workers; `NetworkType.CONNECTED` allows
@@ -40,9 +56,8 @@ remain as fallbacks for compatibility.
 
 ## Acceptance check
 
-1. Install an app while connected to Wi-Fi.
+1. Install an app while connected to Wi-Fi that can reach Collectra HQ.
 2. Complete and save a form in airplane mode to confirm offline operation.
-3. Disable Wi-Fi, enable cellular data, and tap **Sync with Server**.
+3. Disable Wi-Fi, enable cellular data (public HQ only), and tap **Sync with Server**.
 4. Confirm the unsent-form count becomes zero and the submission appears in Collectra HQ.
-5. From a clean installation, use **See Available Apps** over cellular data and confirm the
-   configured Collectra applications are listed.
+5. From a clean installation, use **See Available Apps** and confirm configured Collectra apps list.

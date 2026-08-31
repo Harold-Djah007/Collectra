@@ -43,6 +43,10 @@ public class SigningUtilTest {
         // try to decode a 'malicious', of non-commcarehq origin, URL
         assertWhitelistURLFailure("https://www.corncarehq.org/a/gc/sms/app_info/7c7d49fbef59b703fb468e20d52a21e4/");
         assertWhitelistURLFailure("https://zcommcarehq.org/a/gc/sms/app_info/7c7d49fbef59b703fb468e20d52a21e4/");
+
+        // Collectra local / private LAN hosts are allowed for self-hosted installs
+        String localUrl = "http://192.168.1.195:8000/a/gc/sms/app_info/7c7d49fbef59b703fb468e20d52a21e4/";
+        assertEquals(localUrl, SigningUtil.decodeUrl(Base64.encode(localUrl.getBytes("UTF-8"))));
     }
 
     private void assertWhitelistURLFailure(String url) throws UnsupportedEncodingException, Base64DecoderException {

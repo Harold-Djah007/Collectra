@@ -55,12 +55,15 @@ if [[ -z "$wsl_ip" ]]; then
 fi
 
 if [[ -n "${COLLECTRA_BASE_ADDRESS:-}" ]]; then
-    export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-https}"
+    # Local LAN IPs and :8000 are almost always plain HTTP; require operators to set
+    # COLLECTRA_DEFAULT_PROTOCOL=https explicitly for TLS endpoints.
+    export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-http}"
 else
     export COLLECTRA_BASE_ADDRESS="${wsl_ip}:8000"
     export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-http}"
 fi
 export COMMCARE_HOST="http://${wsl_ip}:8000"
+export COMMCARE_ALTERNATE_ORIGINS="http://localhost:8000,http://127.0.0.1:8000,${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS},http://${wsl_ip}:8000"
 
 echo "Collectra address: http://localhost:8000"
 echo "Published mobile address: ${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS}"
@@ -70,7 +73,8 @@ echo "Starting Collectra services..."
 ./scripts/docker up -d \
     postgres couch redis elasticsearch6 \
     zookeeper kafka minio
-./scripts/docker up -d --force-recreate formplayer
+COMMCARE_HOST="$COMMCARE_HOST" COMMCARE_ALTERNATE_ORIGINS="$COMMCARE_ALTERNATE_ORIGINS" \
+    ./scripts/docker up -d --force-recreate formplayer
 
 echo "Waiting for PostgreSQL..."
 until docker exec hqservice-postgres-1 \
@@ -108,7 +112,10 @@ stop_managed_process "$state_root/celery.pid" "celery -A corehq worker"
 echo "Checking Collectra configuration..."
 uv run python manage.py check
 
-celery_queues="celery,analytics_queue,async_restore_queue,case_import_queue,email_queue,export_download_queue,saved_exports_queue,submission_reprocessing_queue"
+echo "Applying database migrations..."
+uv run python manage.py migrate --noinput
+
+celery_queues="celery,analytics_queue,async_restore_queue,background_queue,case_import_queue,case_rule_queue,email_queue,export_download_queue,reminder_case_update_queue,reminder_queue,reminder_rule_queue,repeat_record_queue,saved_exports_queue,sms_queue,submission_reprocessing_queue,ucr_queue"
 
 echo "Starting Celery worker..."
 uv run celery -A corehq worker \

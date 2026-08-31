@@ -14,8 +14,18 @@ import retrofit2.Response;
  * @author $|-|!˅@M
  */
 public class NetworkStatus {
+    private static volatile String captivePortalURL = "http://www.commcarehq.org/serverup.txt";
+
+    /**
+     * Allow Android Collectra builds to probe their configured HQ instead of Dimagi.
+     */
+    public static void setCaptivePortalUrl(String url) {
+        if (url != null && !url.trim().isEmpty()) {
+            captivePortalURL = url.trim();
+        }
+    }
+
     public static boolean isCaptivePortal() {
-        String captivePortalURL = "http://www.commcarehq.org/serverup.txt";
         CommCareNetworkService commCareNetworkService =
                 CommCareNetworkServiceGenerator.createNoAuthCommCareNetworkService();
         try {

@@ -444,6 +444,10 @@ public class CommCareSetupActivity extends BaseDrawerActivity<CommCareSetupActiv
             return;
         }
 
+        if (lastInstallMode == INSTALL_MODE_BARCODE) {
+            result = org.commcare.network.CollectraHostConfig.resolveInstallReference(result);
+        }
+
         setReadyToInstall(result);
     }
 

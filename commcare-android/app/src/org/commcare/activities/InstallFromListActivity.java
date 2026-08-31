@@ -25,6 +25,7 @@ import org.commcare.core.network.AuthenticationInterceptor;
 import org.commcare.dalvik.R;
 import org.commcare.models.database.SqlStorage;
 import org.commcare.network.AppListEndpointProvider;
+import org.commcare.network.CollectraHostConfig;
 import org.commcare.network.CommcareRequestGenerator;
 import org.commcare.preferences.GlobalPrivilegesManager;
 import org.commcare.tasks.ModernHttpTask;
@@ -260,7 +261,7 @@ public class InstallFromListActivity<T> extends CommCareActivity<T> implements H
         if (inMobileUserAuthMode) {
             String username = ((EditText)findViewById(R.id.edit_username)).getText().toString();
             String domain = ((EditText)findViewById(R.id.edit_domain)).getText().toString();
-            return username + "@" + domain + ".commcarehq.org";
+            return username + "@" + domain + "." + CollectraHostConfig.getAccountRoot();
         } else {
             return ((EditText)findViewById(R.id.edit_email)).getText().toString();
         }
