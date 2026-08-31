@@ -5,14 +5,14 @@
     android:id="@+id/screen_first_start_main"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@color/cc_core_bg"
+    android:background="@drawable/collectra_screen_background"
     android:orientation="vertical"
     tools:viewBindingIgnore="true">
 
     <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/cc_core_bg"
+        android:background="@android:color/transparent"
         android:scrollbars="none">
 
         <LinearLayout
@@ -29,11 +29,11 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="24dp"
                 android:background="@drawable/collectra_mobile_panel"
-                android:elevation="2dp"
+                android:elevation="4dp"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="22dp"
-                android:paddingBottom="22dp">
+                android:paddingTop="26dp"
+                android:paddingBottom="26dp">
 
                 <TextView
                     android:id="@+id/collectra_install_title"
@@ -42,8 +42,9 @@
                     android:gravity="center"
                     android:text="@string/collectra_install_title"
                     android:textColor="@color/collectra_text_primary"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="-0.01" />
 
                 <TextView
                     android:id="@+id/collectra_install_subtitle"
@@ -124,7 +125,7 @@
                             android:id="@+id/btn_fetch_uri"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            SquareButtonWithText:backgroundColor="@color/cc_brand_color"
+                            SquareButtonWithText:backgroundColor="@color/collectra_action_start"
                             SquareButtonWithText:img="@drawable/startup_barcode"
                             SquareButtonWithText:subtitle="Scan Application Barcode"
                             SquareButtonWithText:textColor="@color/white"/>
@@ -144,7 +145,7 @@
                             android:layout_height="match_parent"
                             android:background="@drawable/tile_drop_shadow_small_margins"
                             android:gravity="end"
-                            SquareButtonWithText:backgroundColor="@color/collectra_brand_dark"
+                            SquareButtonWithText:backgroundColor="@color/collectra_action_sync"
                             SquareButtonWithText:img="@drawable/startup_url"
                             SquareButtonWithText:subtitle="Enter Code"
                             SquareButtonWithText:textColor="@color/white"/>
@@ -173,7 +174,7 @@
                             android:id="@+id/btn_fetch_hub"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            SquareButtonWithText:backgroundColor="@color/cc_neutral_color"
+                            SquareButtonWithText:backgroundColor="@color/collectra_action_logout"
                             SquareButtonWithText:img="@drawable/startup_micronode"
                             SquareButtonWithText:subtitle="Install From Local"
                             SquareButtonWithText:textColor="@color/white"/>

@@ -4,29 +4,34 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="12dp"
-    android:layout_marginTop="12dp"
-    android:layout_marginEnd="12dp"
-    android:layout_marginBottom="16dp"
-    app:cardBackgroundColor="@color/cc_brand_color"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="2dp"
-    app:strokeColor="@color/collectra_outline"
-    app:strokeWidth="1dp"
+    android:layout_marginStart="14dp"
+    android:layout_marginTop="14dp"
+    android:layout_marginEnd="14dp"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@color/transparent"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="3dp"
+    app:strokeWidth="0dp"
     tools:viewBindingIgnore="true">
 
-    <ImageView
-        android:id="@+id/main_top_banner"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/application_name"
-        android:minHeight="72dp"
-        android:paddingStart="16dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="12dp"
-        android:scaleType="fitCenter"
-        app:srcCompat="@drawable/commcare_by_dimagi"
-        android:visibility="visible" />
+        android:background="@drawable/collectra_hero_banner_bg">
+
+        <ImageView
+            android:id="@+id/main_top_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/application_name"
+            android:minHeight="88dp"
+            android:paddingStart="20dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="18dp"
+            android:scaleType="fitCenter"
+            app:srcCompat="@drawable/commcare_by_dimagi"
+            android:visibility="visible" />
+    </FrameLayout>
 </com.google.android.material.card.MaterialCardView>

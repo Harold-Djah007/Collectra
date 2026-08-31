@@ -2,19 +2,19 @@ package org.commcare.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.os.Build;
+
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.util.StateSet;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import org.commcare.dalvik.R;
-import org.commcare.views.ViewUtil;
 
 import java.util.List;
 
@@ -117,15 +117,22 @@ abstract class SquareButtonAdapter
     /**
      * Build drawable with default state being the provided color resource,
      * pressed color state being that color with less saturation, and disabled
-     * state being gray.
+     * state being gray. Corners match the Collectra home card radius.
      */
     private static StateListDrawable bgDrawStates(Context context,
                                                   int bgColorResource) {
-        ColorDrawable disabledColor =
-                new ColorDrawable(context.getResources().getColor(R.color.grey));
-        ColorDrawable colorDrawable =
-                new ColorDrawable(context.getResources().getColor(bgColorResource));
-        ColorDrawable pressedBackground = desaturateColor(colorDrawable);
+        float radius = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                20f,
+                context.getResources().getDisplayMetrics()
+        );
+
+        GradientDrawable disabledColor = roundedColor(
+                context.getResources().getColor(R.color.grey), radius);
+        GradientDrawable colorDrawable = roundedColor(
+                context.getResources().getColor(bgColorResource), radius);
+        GradientDrawable pressedBackground = desaturateColor(
+                context.getResources().getColor(bgColorResource), radius);
 
         StateListDrawable sld = new StateListDrawable();
         sld.addState(new int[]{-android.R.attr.state_enabled}, disabledColor);
@@ -134,12 +141,19 @@ abstract class SquareButtonAdapter
         return sld;
     }
 
-    private static ColorDrawable desaturateColor(ColorDrawable colorDrawable) {
+    private static GradientDrawable roundedColor(int color, float radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setCornerRadius(radius);
+        drawable.setColor(color);
+        return drawable;
+    }
+
+    private static GradientDrawable desaturateColor(int color, float radius) {
         float[] hsvOutput = new float[3];
-        int color = ViewUtil.getColorDrawableColor(colorDrawable);
         Color.colorToHSV(color, hsvOutput);
-        hsvOutput[2] = (float)(hsvOutput[2] / 1.5);
-        return new ColorDrawable(Color.HSVToColor(hsvOutput));
+        hsvOutput[2] = (float)(hsvOutput[2] / 1.35);
+        return roundedColor(Color.HSVToColor(hsvOutput), radius);
     }
 
     @Override

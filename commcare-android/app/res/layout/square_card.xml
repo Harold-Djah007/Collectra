@@ -6,23 +6,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="8dp"
-    android:layout_marginRight="8dp"
-    android:layout_marginBottom="8dp"
-    card_view:cardBackgroundColor="@color/collectra_surface"
-    card_view:cardCornerRadius="18dp"
-    card_view:cardElevation="2dp"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginBottom="12dp"
+    card_view:cardBackgroundColor="@color/transparent"
+    card_view:cardCornerRadius="20dp"
+    card_view:cardElevation="4dp"
     card_view:cardPreventCornerOverlap="true"
-    card_view:cardUseCompatPadding="false"
-    android:layout_marginEnd="8dp"
-    android:layout_marginStart="8dp"
+    card_view:cardUseCompatPadding="true"
+    android:layout_marginEnd="10dp"
+    android:layout_marginStart="10dp"
     tools:viewBindingIgnore="true">
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToOutline="true">
+        android:layout_height="match_parent"
+        android:clipToOutline="true">
 
         <RelativeLayout
             android:id="@+id/card"
@@ -34,7 +34,8 @@
             <org.commcare.views.SquareImageView
                 android:id="@+id/card_image"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp" />
 
             <org.commcare.views.ResizingTextView
                 android:id="@+id/card_text"
@@ -43,14 +44,15 @@
                 android:layout_below="@+id/card_image"
                 android:layout_centerHorizontal="true"
                 android:gravity="center"
-                android:paddingBottom="@dimen/standard_spacer"
-                android:paddingLeft="@dimen/standard_spacer"
-                android:paddingRight="@dimen/standard_spacer"
+                android:paddingBottom="14dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:textSize="@dimen/font_size_medium"
                 android:textStyle="bold"
+                android:letterSpacing="0.02"
                 app:text_size_small="@dimen/font_size_medium"
-                android:paddingStart="@dimen/standard_spacer"
-                android:paddingEnd="@dimen/standard_spacer" />
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp" />
         </RelativeLayout>
 
         <TextView
