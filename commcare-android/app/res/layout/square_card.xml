@@ -2,64 +2,96 @@
 <androidx.cardview.widget.CardView
     android:id="@+id/home_card"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="8dp"
-    android:layout_marginRight="8dp"
-    android:layout_marginBottom="8dp"
-    card_view:cardBackgroundColor="@color/collectra_surface"
-    card_view:cardCornerRadius="18dp"
-    card_view:cardElevation="2dp"
-    card_view:cardPreventCornerOverlap="true"
-    card_view:cardUseCompatPadding="false"
-    android:layout_marginEnd="8dp"
-    android:layout_marginStart="8dp"
+    android:layout_marginStart="14dp"
+    android:layout_marginEnd="14dp"
+    android:layout_marginBottom="14dp"
+    app:cardBackgroundColor="@color/collectra_surface"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="2dp"
+    app:cardPreventCornerOverlap="true"
+    app:cardUseCompatPadding="true"
     tools:viewBindingIgnore="true">
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <RelativeLayout
+        android:id="@+id/card"
         android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToOutline="true">
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clipToPadding="false"
+        android:minHeight="96dp">
 
-        <RelativeLayout
-            android:id="@+id/card"
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent">
+        <View
+            android:id="@+id/card_accent_rail"
+            android:layout_width="6dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/collectra_home_accent_rail"
+            android:minHeight="96dp" />
 
-            <org.commcare.views.SquareImageView
+        <FrameLayout
+            android:id="@+id/card_icon_chip"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="18dp"
+            android:layout_toEndOf="@id/card_accent_rail"
+            android:background="@drawable/collectra_home_icon_chip"
+            android:padding="11dp">
+
+            <ImageView
                 android:id="@+id/card_image"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/card_text_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="18dp"
+            android:layout_toEndOf="@id/card_icon_chip"
+            android:orientation="vertical"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp">
 
             <org.commcare.views.ResizingTextView
                 android:id="@+id/card_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/card_image"
-                android:layout_centerHorizontal="true"
-                android:gravity="center"
-                android:paddingBottom="@dimen/standard_spacer"
-                android:paddingLeft="@dimen/standard_spacer"
-                android:paddingRight="@dimen/standard_spacer"
-                android:textSize="@dimen/font_size_medium"
+                android:fontFamily="@font/font_outfit"
+                android:gravity="start"
+                android:letterSpacing="-0.02"
+                android:lineSpacingMultiplier="0.98"
+                android:textColor="@color/collectra_text_primary"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                app:text_size_small="@dimen/font_size_medium"
-                android:paddingStart="@dimen/standard_spacer"
-                android:paddingEnd="@dimen/standard_spacer" />
-        </RelativeLayout>
+                app:text_size_small="18sp" />
 
-        <TextView
-            android:id="@+id/card_subtext"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/card"
-            android:layout_gravity="end"
-            android:padding="@dimen/help_text_padding"
-            android:textSize="@dimen/font_size_small"/>
+            <TextView
+                android:id="@+id/card_subtext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/collectra_home_subtext_chip"
+                android:fontFamily="@font/font_manrope"
+                android:letterSpacing="0.01"
+                android:paddingStart="10dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/collectra_text_secondary"
+                android:textSize="13sp"
+                android:visibility="gone" />
+        </LinearLayout>
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

@@ -12,7 +12,7 @@
             android:id="@+id/nav_drawer_frame"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/cc_core_bg">
+            android:background="@drawable/collectra_screen_background">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="fill_parent"
@@ -56,10 +56,7 @@
                         android:id="@+id/screen_login_banner_pane"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:paddingEnd="@dimen/standard_spacer_half"
-                        android:paddingLeft="@dimen/standard_spacer_half"
-                        android:paddingRight="@dimen/standard_spacer_half"
-                        android:paddingStart="@dimen/standard_spacer_half">
+                        android:padding="0dp">
 
                         <include layout="@layout/grid_header_top_banner" />
                     </FrameLayout>
@@ -80,10 +77,10 @@
                             android:layout_marginEnd="16dp"
                             android:layout_marginBottom="24dp"
                             android:background="@drawable/collectra_mobile_panel"
-                            android:elevation="2dp"
+                            android:elevation="4dp"
                             android:orientation="vertical"
-                            android:paddingTop="24dp"
-                            android:paddingBottom="24dp"
+                            android:paddingTop="28dp"
+                            android:paddingBottom="28dp"
                             android:paddingEnd="@dimen/login_box_margins"
                             android:paddingLeft="@dimen/login_box_margins"
                             android:paddingRight="@dimen/login_box_margins"
@@ -93,10 +90,12 @@
                                 android:id="@+id/collectra_login_title"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:gravity="center"
+                                android:fontFamily="@font/font_outfit"
+                                android:gravity="start"
+                                android:letterSpacing="-0.02"
                                 android:text="@string/collectra_login_title"
-                                android:textColor="@color/collectra_text_primary"
-                                android:textSize="24sp"
+                                android:textColor="@color/collectra_ink"
+                                android:textSize="32sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -104,8 +103,9 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
-                                android:layout_marginBottom="14dp"
-                                android:gravity="center"
+                                android:layout_marginBottom="18dp"
+                                android:fontFamily="@font/font_manrope"
+                                android:gravity="start"
                                 android:text="@string/collectra_login_subtitle"
                                 android:textColor="@color/collectra_text_secondary"
                                 android:textSize="15sp" />
@@ -170,7 +170,7 @@
                                 android:layout_width="fill_parent"
                                 android:paddingLeft="15dp"
                                 android:layout_height="50dp"
-                                android:background="@drawable/login_edit_text"
+                                android:background="@drawable/collectra_input_field"
                                 android:drawableStart="@drawable/icon_user_neutral50"
                                 android:hint="@string/collectra_username_hint"
                                 android:imeOptions="actionNext"
@@ -189,7 +189,7 @@
                                 android:padding="0dp"
                                 android:layout_marginTop="15dp"
                                 android:addStatesFromChildren="true"
-                                android:background="@drawable/login_edit_text">
+                                android:background="@drawable/collectra_input_field">
 
                                 <EditText
                                     android:id="@+id/edit_password"
@@ -245,10 +245,11 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="bottom"
                                 android:layout_marginTop="@dimen/content_start"
-                                android:minHeight="48dp"
+                                android:minHeight="52dp"
                                 android:backgroundTint="@color/cc_brand_color"
-                                app:cornerRadius="14dp"
-                                android:textAllCaps="true"
+                                app:cornerRadius="16dp"
+                                android:textAllCaps="false"
+                                android:textStyle="bold"
                                 android:nextFocusUp="@+id/edit_password"
                                />
 

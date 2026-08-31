@@ -6,21 +6,38 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:background="@color/connect_blue_color">
-        <ImageView
-            android:contentDescription="@null"
-            android:layout_gravity="center"
-            android:layout_height="32dp"
+        android:background="@color/collectra_ink">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:src="@drawable/commcare_by_dimagi"
-            app:tint="@color/white" />
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:contentDescription="@null"
+                android:src="@drawable/collectra_mark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:fontFamily="@font/font_outfit"
+                android:text="@string/collectra_brand_name"
+                android:textColor="@color/collectra_signal"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <androidx.cardview.widget.CardView
             android:id="@+id/profile_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            app:cardCornerRadius="8dp"
-            android:backgroundTint="@color/persian_indigo">
+            app:cardCornerRadius="14dp"
+            android:backgroundTint="@color/collectra_brand_deep">
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -90,6 +107,6 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:paddingBottom="16dp"
-            android:background="@color/darker_grey"/>
+            android:background="@color/collectra_brand_bright"/>
     </LinearLayout>
 </layout>

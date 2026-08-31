@@ -299,6 +299,7 @@ android {
         ]
 
         versionCode 1
+        versionName "2.65"
 
         // when set, app won't show install screen and try to install
         // resources from assets folder
@@ -309,6 +310,8 @@ android {
 
         buildConfigField 'String', 'CC_AUTHORITY', "\"${applicationId}\""
         buildConfigField 'String', 'ODK_AUTHORITY', "\"${odkProviderStr}\""
+        // Compatibility alias used by local Collectra tooling / headers.
+        buildConfigField 'String', 'COMMCARE_ENGINE_VERSION', "\"${versionName}\""
 
         buildConfigField 'String', 'BUILD_DATE', "\"" + getDate() + "\""
         buildConfigField 'String', 'BUILD_NUMBER', "\"" + computeVersionCode() + "\""
@@ -472,7 +475,7 @@ android {
             applicationIdSuffix '.debug'
             def applicationId = 'org.commcare.dalvik.debug'
             project.ext.COMMCARE_APP_ID = applicationId
-            def applicationName = 'Collectra Debug'
+            def applicationName = 'Collectra'
             resValue 'string', 'application_name', applicationName
             def odkProviderStr = 'org.commcare.dalvik.debug.provider.odk'
             manifestPlaceholders = [odkProvider: odkProviderStr]

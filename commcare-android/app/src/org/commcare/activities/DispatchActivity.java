@@ -2,7 +2,10 @@ package org.commcare.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +30,7 @@ import org.commcare.utils.CommCareLifecycleUtils;
 import org.commcare.utils.FirebaseMessagingUtil;
 import org.commcare.utils.MultipleAppsUtil;
 import org.commcare.utils.SessionUnavailableException;
+import org.commcare.views.CollectraMotion;
 import org.javarosa.core.services.locale.Localization;
 
 import java.util.ArrayList;
@@ -93,6 +97,9 @@ public class DispatchActivity extends AppCompatActivity {
     static final String REBUILD_SESSION = "rebuild_session";
     private boolean redirectToConnectOpportunityInfo = false;
     private boolean forceSingleAppMode = true;
+    private boolean awaitingSplash;
+    /** Short hold after the system splash so title/tagline motion can settle once. */
+    private static final long SPLASH_DURATION_MS = 1100L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +122,31 @@ public class DispatchActivity extends AppCompatActivity {
                     LoginActivity.USER_TRIGGERED_LOGOUT,
                     false
             );
+            maybeShowLaunchSplash();
         }
+    }
+
+    private void maybeShowLaunchSplash() {
+        Intent intent = getIntent();
+        boolean launcherStart = intent != null
+                && Intent.ACTION_MAIN.equals(intent.getAction())
+                && intent.hasCategory(Intent.CATEGORY_LAUNCHER);
+        if (!launcherStart) {
+            return;
+        }
+        awaitingSplash = true;
+        setContentView(R.layout.collectra_splash);
+        CollectraMotion.playLaunchSplash(
+                findViewById(R.id.collectra_splash_mark),
+                findViewById(R.id.collectra_splash_title),
+                findViewById(R.id.collectra_splash_tagline)
+        );
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            awaitingSplash = false;
+            if (!isFinishing() && !shouldFinish) {
+                dispatch();
+            }
+        }, SPLASH_DURATION_MS);
     }
 
     private Intent checkIfAnyPNIntentPresent() {
@@ -147,7 +178,7 @@ public class DispatchActivity extends AppCompatActivity {
         super.onResume();
         if (shouldFinish) {
             finish();
-        } else {
+        } else if (!awaitingSplash) {
             dispatch();
         }
     }
