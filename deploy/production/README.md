@@ -73,8 +73,11 @@ objects before loading their metadata. It then rebuilds the derived
 Elasticsearch indexes from the restored source data; this can take several
 minutes and must be allowed to finish. Do not use `--force` when loading the
 initial checkpoint. After the restore, run `./healthcheck.sh` and
-`./verify-domain.sh safisana`, sign in, verify the Safisana totals, and publish
-a new application release so its profile contains the permanent HTTPS hostname.
+`./verify-safisana-migration.sh`, followed by `./verify-domain.sh safisana`.
+The first command checks the final reconciled form, case, application, worker,
+and group totals; the second checks every form XML object. Only then sign in
+and publish a new application release so its profile contains the permanent
+HTTPS hostname.
 
 Each project remains isolated by the HQ domain in its install profile:
 applications installed from `/a/test-1/` submit to `test-1`, while applications

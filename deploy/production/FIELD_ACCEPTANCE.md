@@ -11,6 +11,8 @@ each project:
 ```bash
 cd deploy/production
 ./healthcheck.sh
+./verify-safisana-migration.sh
+./verify-domain.sh safisana
 ./field-preflight.sh \
   test-1 "https://YOUR-HOST/a/test-1/apps/odk/TEST1-BUILD/install/" \
   safisana "https://YOUR-HOST/a/safisana/apps/odk/SAFISANA-BUILD/install/"
