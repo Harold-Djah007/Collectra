@@ -64,6 +64,7 @@ jobs:
           ./gradlew \
             :app:testCommcareDebugUnitTest \
             --tests org.commcare.network.AppListEndpointProviderTest \
+            --tests org.commcare.network.AppInstallCodeResolverTest \
             --tests org.commcare.utils.ConnectivityStatusTest \
             --tests org.commcare.activities.CollectraMobilePresentationTest \
             --no-daemon
