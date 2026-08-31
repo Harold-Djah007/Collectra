@@ -2,6 +2,7 @@ package org.commcare.utils;
 
 import android.util.Pair;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.commcare.network.CollectraHostConfig;
 import org.commcare.util.Base64;
 import org.commcare.util.Base64DecoderException;
 import java.io.BufferedReader;
@@ -18,7 +19,6 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.regex.Pattern;
 
 /**
  * A set of helper methods for verifying whether a message was genuinely sent from HQ. Currently we
@@ -39,9 +39,6 @@ import java.util.regex.Pattern;
  * @author Will Pride (wpride@dimagi.com)
  */
 public class SigningUtil {
-
-    private final static Pattern WHITELISTED_URL_HOSTS_REGEX =
-            Pattern.compile("\\.commcarehq\\.org$");
 
     /**
      * Given a trimmed byte[] payload, return the parsed out download link and signature
@@ -92,7 +89,7 @@ public class SigningUtil {
         }
 
         String host = url.getHost();
-        if (!WHITELISTED_URL_HOSTS_REGEX.matcher(host).find()) {
+        if (!CollectraHostConfig.isAllowedSmsInstallHost(host)) {
             throw new DisallowedSMSInstallURLException(url + " is not an approved URL.");
         }
     }

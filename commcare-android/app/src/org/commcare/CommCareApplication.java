@@ -230,6 +230,9 @@ public class CommCareApplication extends Application implements LifecycleEventOb
         CommCareApplication.app = this;
         CrashUtil.init();
         DataChangeLogger.init(this);
+        org.commcare.util.NetworkStatus.setCaptivePortalUrl(
+                org.commcare.network.CollectraHostConfig.getServerUpUrl(
+                        "http://www.commcarehq.org/serverup.txt"));
         if (!BuildConfig.DEBUG) {
             FirebasePerformance.getInstance().setPerformanceCollectionEnabled(true);
         }

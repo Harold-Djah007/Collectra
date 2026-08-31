@@ -8,7 +8,6 @@ import android.util.Pair;
 import org.commcare.CommCareApplication;
 import org.commcare.activities.CommCareWiFiDirectActivity;
 import org.commcare.android.database.user.models.FormRecord;
-import org.commcare.dalvik.R;
 import org.commcare.models.database.SqlStorage;
 import org.commcare.preferences.ServerUrls;
 import org.commcare.tasks.templates.CommCareTask;
@@ -136,7 +135,7 @@ public abstract class FormRecordToFileTask extends CommCareTask<String, String, 
             SharedPreferences settings = CommCareApplication.instance().getCurrentApp().getAppPreferences();
             // HQ likes us to submit forms to the "correct" app and user specific URL
             String postUrl = settings.getString(ServerUrls.PREFS_SUBMISSION_URL_KEY,
-                    c.getString(R.string.PostURL));
+                    ServerUrls.getFallbackSubmissionUrl());
             properties.setProperty("PostURL", postUrl);
             properties.store(outputStream, null);
         } catch(IOException e){
