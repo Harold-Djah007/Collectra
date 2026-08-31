@@ -34,6 +34,8 @@ remain as fallbacks for compatibility.
 - Use a stable public hostname with HTTPS. Authenticated app discovery intentionally rejects plain
   HTTP.
 - Configure HQ's base address before generating application profiles or QR codes.
+- HQ keys cached QR images by the complete public profile URL, so changing the hostname, build
+  profile, or media option generates a matching QR instead of reusing an obsolete address.
 - Keep the Android `INTERNET` and `ACCESS_NETWORK_STATE` permissions enabled.
 - Do not add a `NetworkType.UNMETERED` constraint to sync workers; `NetworkType.CONNECTED` allows
   both Wi-Fi and cellular data.

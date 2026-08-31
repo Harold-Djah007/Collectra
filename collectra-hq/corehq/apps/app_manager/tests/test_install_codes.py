@@ -1,10 +1,74 @@
 from unittest.mock import patch
 
-from django.test import TestCase
+from couchdbkit import ResourceNotFound
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from corehq.apps.app_manager.models.applications import ApplicationBase
 from corehq.apps.app_manager.models.install_codes import AppInstallCode
+
+
+class AppQrCodeTests(SimpleTestCase):
+    def test_qr_cache_changes_when_public_profile_url_changes(self):
+        app = ApplicationBase()
+        app.domain = 'plant'
+        app._id = 'app-id'
+
+        with (
+            patch(
+                'corehq.apps.app_manager.models.applications.reverse',
+                return_value='/a/plant/apps/download/app-id/odk/profile.ccpr',
+            ),
+            patch.object(
+                ApplicationBase,
+                'lazy_fetch_attachment',
+                autospec=True,
+                side_effect=ResourceNotFound,
+            ) as fetch,
+            patch.object(ApplicationBase, 'lazy_put_attachment', autospec=True),
+            patch('corehq.apps.settings.views.get_qrcode', side_effect=lambda url: url.encode()) as get_qrcode,
+        ):
+            app.custom_base_url = 'https://first.collectra.test'
+            first_qr = app.get_odk_qr_code()
+            app.custom_base_url = 'https://second.collectra.test'
+            second_qr = app.get_odk_qr_code()
+
+        self.assertNotEqual(first_qr, second_qr)
+        self.assertNotEqual(fetch.call_args_list[0].args[1], fetch.call_args_list[1].args[1])
+        self.assertEqual(
+            [call.args[0] for call in get_qrcode.call_args_list],
+            [
+                'https://first.collectra.test/a/plant/apps/download/app-id/odk/profile.ccpr',
+                'https://second.collectra.test/a/plant/apps/download/app-id/odk/profile.ccpr',
+            ],
+        )
+
+    def test_qr_cache_changes_for_build_profile_and_media(self):
+        app = ApplicationBase()
+        app.domain = 'plant'
+        app._id = 'app-id'
+        app.custom_base_url = 'https://hq.collectra.test'
+
+        def reverse_url(view_name, args):
+            return f'/a/{args[0]}/apps/download/{args[1]}/{view_name}'
+
+        with (
+            patch('corehq.apps.app_manager.models.applications.reverse', side_effect=reverse_url),
+            patch.object(
+                ApplicationBase,
+                'lazy_fetch_attachment',
+                autospec=True,
+                side_effect=ResourceNotFound,
+            ) as fetch,
+            patch.object(ApplicationBase, 'lazy_put_attachment', autospec=True),
+            patch('corehq.apps.settings.views.get_qrcode', side_effect=lambda url: url.encode()),
+        ):
+            app.get_odk_qr_code(build_profile_id='field')
+            app.get_odk_qr_code(with_media=True, build_profile_id='field')
+            app.get_odk_qr_code(build_profile_id='supervisor')
+
+        cache_names = [call.args[1] for call in fetch.call_args_list]
+        self.assertEqual(len(cache_names), len(set(cache_names)))
 
 
 class AppInstallCodeTests(TestCase):

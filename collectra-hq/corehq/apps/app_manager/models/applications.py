@@ -630,19 +630,21 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def get_odk_qr_code(self, with_media=False, build_profile_id=None, download_target_version=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
-        filename = 'qrcode.png' if not download_target_version else 'qrcode-targeted.png'
+        url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+        kwargs = []
+        if build_profile_id is not None:
+            kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
+        if download_target_version:
+            kwargs.append('download_target_version=true')
+        if kwargs:
+            url += '?' + '&'.join(kwargs)
+
+        url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()[:16]
+        filename = f'qrcode-{url_hash}.png'
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
             from corehq.apps.settings.views import get_qrcode
-            url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            kwargs = []
-            if build_profile_id is not None:
-                kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
-            if download_target_version:
-                kwargs.append('download_target_version=true')
-            url += '?' + '&'.join(kwargs)
-
             qr_content = get_qrcode(url)
             self.lazy_put_attachment(qr_content, filename,
                                      content_type="image/png")
