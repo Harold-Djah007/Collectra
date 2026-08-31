@@ -2,14 +2,18 @@ package org.commcare.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.text.Spannable;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import org.commcare.adapters.HomeCardDisplayData;
-import org.commcare.adapters.SquareButtonAdapter;
 import org.commcare.adapters.SquareButtonViewHolder;
 import org.commcare.dalvik.R;
 import org.commcare.google.services.analytics.AnalyticsParamValue;
@@ -167,8 +171,7 @@ public class HomeButtons {
 
             squareButtonViewHolder.subTextView.setVisibility(View.VISIBLE);
             squareButtonViewHolder.subTextView.setBackground(
-                    SquareButtonAdapter.softSubtextChip(
-                            context, cardDisplayData.subTextBgColor));
+                    softSubtextChip(context, cardDisplayData.subTextBgColor));
             squareButtonViewHolder.textView.setTextColor(context.getResources().getColor(cardDisplayData.textColor));
             squareButtonViewHolder.textView.setText(cardDisplayData.text);
         };
@@ -258,9 +261,28 @@ public class HomeButtons {
             squareButtonViewHolder.subTextView.setText(activity.getActivityTitle());
             squareButtonViewHolder.subTextView.setTextColor(context.getResources().getColor(cardDisplayData.subTextColor));
             squareButtonViewHolder.subTextView.setBackground(
-                    SquareButtonAdapter.softSubtextChip(
-                            context, cardDisplayData.subTextBgColor));
+                    softSubtextChip(context, cardDisplayData.subTextBgColor));
         };
+    }
+
+    private static Drawable softSubtextChip(Context context, int colorResource) {
+        float radius = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                10f,
+                context.getResources().getDisplayMetrics()
+        );
+        int accent = ContextCompat.getColor(context, colorResource);
+        int soft = Color.argb(
+                36,
+                Color.red(accent),
+                Color.green(accent),
+                Color.blue(accent)
+        );
+        GradientDrawable chip = new GradientDrawable();
+        chip.setShape(GradientDrawable.RECTANGLE);
+        chip.setCornerRadius(radius);
+        chip.setColor(soft);
+        return chip;
     }
 
     private static View.OnClickListener getReportButtonListener(final StandardHomeActivity activity) {

@@ -1,7 +1,6 @@
 package org.commcare.adapters;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 
@@ -125,29 +124,6 @@ abstract class SquareButtonAdapter
         chip.setShape(GradientDrawable.RECTANGLE);
         chip.setCornerRadius(radius);
         chip.setColor(ContextCompat.getColor(context, bgColorResource));
-        return chip;
-    }
-
-    /**
-     * Soft subtext chip background tinted from an accent color.
-     */
-    public static Drawable softSubtextChip(Context context, int colorResource) {
-        float radius = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                10f,
-                context.getResources().getDisplayMetrics()
-        );
-        int accent = ContextCompat.getColor(context, colorResource);
-        int soft = Color.argb(
-                36,
-                Color.red(accent),
-                Color.green(accent),
-                Color.blue(accent)
-        );
-        GradientDrawable chip = new GradientDrawable();
-        chip.setShape(GradientDrawable.RECTANGLE);
-        chip.setCornerRadius(radius);
-        chip.setColor(soft);
         return chip;
     }
 
