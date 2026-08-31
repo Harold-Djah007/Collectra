@@ -31,6 +31,10 @@ limits cannot safely retain Collectra production data.
 5. Run `./bootstrap.sh`.
 6. Run `./healthcheck.sh`.
 
+Before onboarding workers, follow [`FIELD_ACCEPTANCE.md`](FIELD_ACCEPTANCE.md).
+It verifies both Test-1 and Safisana installation URLs and proves each test
+submission was processed in the correct project.
+
 Caddy obtains and renews the TLS certificate automatically. Do not publish app
 builds or QR codes until the public health check passes over cellular data.
 The bootstrap creates Formplayer's separate PostgreSQL database and preserves
