@@ -5,14 +5,14 @@
     android:id="@+id/screen_first_start_main"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@color/cc_core_bg"
+    android:background="@drawable/collectra_canvas_gradient"
     android:orientation="vertical"
     tools:viewBindingIgnore="true">
 
     <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/cc_core_bg"
+        android:background="@drawable/collectra_canvas_gradient"
         android:scrollbars="none">
 
         <LinearLayout
@@ -124,9 +124,9 @@
                             android:id="@+id/btn_fetch_uri"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            SquareButtonWithText:backgroundColor="@color/cc_brand_color"
+                            SquareButtonWithText:backgroundColor="@color/collectra_accent"
                             SquareButtonWithText:img="@drawable/startup_barcode"
-                            SquareButtonWithText:subtitle="Scan Application Barcode"
+                            SquareButtonWithText:subtitle="@string/collectra_scan_workspace"
                             SquareButtonWithText:textColor="@color/white"/>
                     </FrameLayout>
 
@@ -144,9 +144,9 @@
                             android:layout_height="match_parent"
                             android:background="@drawable/tile_drop_shadow_small_margins"
                             android:gravity="end"
-                            SquareButtonWithText:backgroundColor="@color/collectra_brand_dark"
+                            SquareButtonWithText:backgroundColor="@color/collectra_shell"
                             SquareButtonWithText:img="@drawable/startup_url"
-                            SquareButtonWithText:subtitle="Enter Code"
+                            SquareButtonWithText:subtitle="@string/collectra_enter_workspace_code"
                             SquareButtonWithText:textColor="@color/white"/>
                     </FrameLayout>
                 </LinearLayout>
@@ -173,9 +173,9 @@
                             android:id="@+id/btn_fetch_hub"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            SquareButtonWithText:backgroundColor="@color/cc_neutral_color"
+                            SquareButtonWithText:backgroundColor="@color/collectra_shell_soft"
                             SquareButtonWithText:img="@drawable/startup_micronode"
-                            SquareButtonWithText:subtitle="Install From Local"
+                            SquareButtonWithText:subtitle="@string/collectra_install_from_device"
                             SquareButtonWithText:textColor="@color/white"/>
                     </FrameLayout>
 
@@ -212,7 +212,7 @@
                         android:layout_height="@dimen/rectangle_button_height"
                         SquareButtonWithText:backgroundColor="@color/cc_attention_negative_bg"
                         SquareButtonWithText:img="@drawable/ic_list_error"
-                        SquareButtonWithText:subtitle="See Error Details"
+                        SquareButtonWithText:subtitle="@string/collectra_error_details"
                         SquareButtonWithText:textColor="@color/cc_attention_negative_text"/>
 
                 </FrameLayout>

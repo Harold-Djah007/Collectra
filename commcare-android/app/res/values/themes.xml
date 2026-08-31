@@ -2,9 +2,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="CommonTheme" parent="Theme.MaterialComponents.Light.DarkActionBar.Bridge">
-        <item name="colorPrimary">@color/cc_brand_color</item>
-        <item name="colorPrimaryDark">@color/cc_brand_text</item>
-        <item name="colorAccent">@color/cc_dark_cool_accent_color</item>
+        <item name="colorPrimary">@color/collectra_shell</item>
+        <item name="colorPrimaryDark">@color/collectra_shell</item>
+        <item name="colorAccent">@color/collectra_accent</item>
         <item name="colorControlActivated">@color/cc_brand_color</item>
         <item name="android:textColorSecondary">@color/cc_neutral_text</item>
         <item name="android:textColorPrimary">@color/cc_core_text</item>
@@ -12,7 +12,7 @@
         <item name="materialButtonStyle">@style/Commcare.Button.Primary.Rounded</item>
         <item name="buttonBarButtonStyle">@style/AlertDialogButtonStyle</item>
         <item name="android:textAppearanceButton">@style/TextAppearance.AppCompat.Medium</item>
-        <item name="android:colorBackground">@color/cc_core_bg</item>
+        <item name="android:colorBackground">@color/collectra_canvas</item>
         <item name="detail_odd_row_color">@color/cc_neutral_bg</item>
         <item name="detail_even_row_color">@color/transparent</item>
         <item name="entity_view_header_background_color">@color/cc_brand_text</item>
@@ -85,7 +85,7 @@
     </style>
 
     <style name="ActionBar" parent="Widget.AppCompat.Light.ActionBar">
-        <item name="background">@color/cc_brand_color</item>
+        <item name="background">@color/collectra_shell</item>
         <item name="titleTextStyle">@style/ActionBar.TitleTextStyle</item>
         <item name="subtitleTextStyle">@style/ActionBarSubtitleTextStyle</item>
         <item name="logo">@drawable/commcare_actionbar_logo_spacing</item>
@@ -98,7 +98,8 @@
     <style name="ActionBar.TitleTextStyle">
         <item name="android:textColor">@color/white</item>
         <item name="android:paddingLeft">16dp</item>
-        <item name="android:textSize">22sp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="ActionBarSubtitleTextStyle">

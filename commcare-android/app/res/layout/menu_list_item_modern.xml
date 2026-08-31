@@ -4,7 +4,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="4dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginBottom="5dp"
+    android:background="@drawable/collectra_list_item_background"
+    android:minHeight="72dp"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
     android:textAppearance="@style/EntityItemText"
     app:shrinkable_view="@+id/row_txt"
     android:gravity="center_vertical"
@@ -56,6 +64,8 @@
         android:textAlignment="viewStart"
         android:layout_weight="1"
         android:ellipsize="end"
+        android:textColor="@color/collectra_text_primary"
+        android:textStyle="bold"
         android:maxLines="2"/>
 
     <org.commcare.views.media.AudioPlaybackButton

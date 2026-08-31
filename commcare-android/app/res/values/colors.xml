@@ -60,6 +60,13 @@
     <color name="collectra_text_primary">#143654</color>
     <color name="collectra_text_secondary">#60758A</color>
     <color name="collectra_brand_dark">#064E49</color>
+    <color name="collectra_shell">#102A43</color>
+    <color name="collectra_shell_soft">#173F5F</color>
+    <color name="collectra_accent">#00A896</color>
+    <color name="collectra_accent_soft">#DDF7F2</color>
+    <color name="collectra_highlight">#FFB703</color>
+    <color name="collectra_canvas">#F5F8FC</color>
+    <color name="collectra_divider">#E2EAF2</color>
 
     <!-- Neutral -->
     <color name="cc_neutral_color">#685C53</color>

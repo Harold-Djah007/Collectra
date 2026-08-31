@@ -4,8 +4,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.os.Build;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.util.StateSet;
@@ -111,7 +111,9 @@ abstract class SquareButtonAdapter
         }
 
         StateListDrawable bgDrawable = bgDrawStates(context, cardDisplayData.bgColor);
-        squareButtonViewHolder.cardView.setBackground(bgDrawable);
+        squareButtonViewHolder.accentView.setBackground(bgDrawable);
+        squareButtonViewHolder.textView.setTextColor(
+                ContextCompat.getColor(context, R.color.collectra_text_primary));
     }
 
     /**
@@ -121,17 +123,28 @@ abstract class SquareButtonAdapter
      */
     private static StateListDrawable bgDrawStates(Context context,
                                                   int bgColorResource) {
-        ColorDrawable disabledColor =
-                new ColorDrawable(context.getResources().getColor(R.color.grey));
-        ColorDrawable colorDrawable =
-                new ColorDrawable(context.getResources().getColor(bgColorResource));
+        ColorDrawable disabledColor = new ColorDrawable(
+                ContextCompat.getColor(context, R.color.grey));
+        ColorDrawable colorDrawable = new ColorDrawable(
+                ContextCompat.getColor(context, bgColorResource));
         ColorDrawable pressedBackground = desaturateColor(colorDrawable);
+        float cornerRadius = 18 * context.getResources().getDisplayMetrics().density;
 
         StateListDrawable sld = new StateListDrawable();
-        sld.addState(new int[]{-android.R.attr.state_enabled}, disabledColor);
-        sld.addState(new int[]{android.R.attr.state_pressed}, pressedBackground);
-        sld.addState(StateSet.WILD_CARD, colorDrawable);
+        sld.addState(new int[]{-android.R.attr.state_enabled},
+                roundedBackground(disabledColor.getColor(), cornerRadius));
+        sld.addState(new int[]{android.R.attr.state_pressed},
+                roundedBackground(pressedBackground.getColor(), cornerRadius));
+        sld.addState(StateSet.WILD_CARD,
+                roundedBackground(colorDrawable.getColor(), cornerRadius));
         return sld;
+    }
+
+    private static GradientDrawable roundedBackground(int color, float cornerRadius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(cornerRadius);
+        return drawable;
     }
 
     private static ColorDrawable desaturateColor(ColorDrawable colorDrawable) {
