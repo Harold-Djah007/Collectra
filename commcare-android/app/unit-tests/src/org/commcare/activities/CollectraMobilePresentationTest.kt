@@ -82,6 +82,17 @@ class CollectraMobilePresentationTest {
         val view = inflater.inflate(R.layout.collectra_splash, null)
         assertNotNull(view.findViewById(R.id.collectra_splash_mark))
         assertNotNull(view.findViewById(R.id.collectra_splash_title))
+        assertNotNull(view.findViewById(R.id.collectra_splash_tagline))
+    }
+
+    @Test
+    fun `launch theme window matches Collectra splash surface`() {
+        val attrs = intArrayOf(android.R.attr.windowBackground)
+        val typed = ApplicationProvider.getApplicationContext<android.content.Context>()
+            .obtainStyledAttributes(R.style.CollectraLaunchTheme, attrs)
+        val windowBackground = typed.getDrawable(0)
+        typed.recycle()
+        assertNotNull(windowBackground)
     }
 
     @Test

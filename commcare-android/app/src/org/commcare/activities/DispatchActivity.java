@@ -98,7 +98,8 @@ public class DispatchActivity extends AppCompatActivity {
     private boolean redirectToConnectOpportunityInfo = false;
     private boolean forceSingleAppMode = true;
     private boolean awaitingSplash;
-    private static final long SPLASH_DURATION_MS = 1500L;
+    /** Short hold after the system splash so title/tagline motion can settle once. */
+    private static final long SPLASH_DURATION_MS = 1100L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
