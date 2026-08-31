@@ -2,7 +2,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <gradient
-        android:angle="120"
+        android:angle="135"
         android:startColor="@color/collectra_ink"
         android:centerColor="@color/collectra_brand_deep"
         android:endColor="@color/collectra_brand_dark"
