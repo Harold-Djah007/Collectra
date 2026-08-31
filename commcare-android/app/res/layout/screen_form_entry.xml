@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/collectra_canvas"
     tools:viewBindingIgnore="true">
 
     <FrameLayout
@@ -56,7 +57,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/nav_badge"
-        android:background="@color/cc_brand_color"
+        android:background="@color/collectra_shell"
         android:minHeight="@dimen/new_progressbar_minheight"
         android:paddingLeft="@dimen/content_start"
         android:paddingRight="@dimen/content_start"
@@ -145,7 +146,7 @@
                     android:layout_toLeftOf="@+id/nav_image_finish"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentLeft="true"
-                    android:text="CONTINUE"
+                    android:text="@string/personalid_continue_label"
                     android:textColor="@color/white"
                     android:gravity="center"
                     android:clickable="false"
@@ -201,7 +202,7 @@
             android:id="@+id/form_entry_pane"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/white"/>
+            android:background="@color/collectra_surface"/>
 
         <include layout="@layout/component_drop_shadow"/>
 
@@ -237,7 +238,7 @@
         android:layout_above="@+id/screen_form_entry_bottom_anchor">
         <com.google.android.material.button.MaterialButton
             android:id="@+id/multiple_intent_dispatch_button"
-            android:text="Batch Dispatch"
+            android:text="@string/collectra_batch_dispatch"
             android:drawableRight="@drawable/icon_chevron_right_brand"
             android:visibility="gone"
             android:layout_width="fill_parent"

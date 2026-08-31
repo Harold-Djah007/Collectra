@@ -12,7 +12,7 @@
             android:id="@+id/nav_drawer_frame"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/cc_core_bg">
+            android:background="@drawable/collectra_canvas_gradient">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="fill_parent"
@@ -217,7 +217,7 @@
                                     android:background="@android:color/transparent"
                                     android:padding="@dimen/spacer_small"
                                     android:src="@drawable/close_cross_icon"
-                                    android:textColor="@color/cc_brand_color"
+                                android:textColor="@color/collectra_accent"
                                     android:textSize="@dimen/font_size_dp_medium"
                                     android:visibility="invisible" />
                             </RelativeLayout>
@@ -246,7 +246,7 @@
                                 android:layout_gravity="bottom"
                                 android:layout_marginTop="@dimen/content_start"
                                 android:minHeight="48dp"
-                                android:backgroundTint="@color/cc_brand_color"
+                                android:backgroundTint="@color/collectra_accent"
                                 app:cornerRadius="14dp"
                                 android:textAllCaps="true"
                                 android:nextFocusUp="@+id/edit_password"

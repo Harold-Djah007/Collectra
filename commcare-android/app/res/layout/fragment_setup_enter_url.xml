@@ -6,13 +6,13 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
-    android:background="@color/cc_core_bg"
+    android:background="@drawable/collectra_canvas_gradient"
     tools:viewBindingIgnore="true">
 
     <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="@color/cc_core_bg"
+        android:background="@drawable/collectra_canvas_gradient"
         android:scrollbars="none">
 
         <LinearLayout
@@ -81,7 +81,7 @@
                     android:paddingBottom="@dimen/content_start"
                     android:layout_marginTop="@dimen/content_min_margin"
                     android:layout_gravity="bottom"
-                    android:backgroundTint="@color/cc_brand_color"
+                    android:backgroundTint="@color/collectra_accent"
                     android:text="@string/install_button_start"
                     app:cornerRadius="14dp"
                     android:nextFocusUp="@+id/edit_password" />

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@color/cc_core_bg"
+              android:background="@drawable/collectra_canvas_gradient"
               android:orientation="vertical"
     tools:viewBindingIgnore="true">
 
@@ -75,9 +75,9 @@
                                 android:id="@+id/btn_start_install"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                SquareButtonWithText:backgroundColor="@color/start_home_button"
+                                SquareButtonWithText:backgroundColor="@color/collectra_accent"
                                 SquareButtonWithText:img="@drawable/install_start"
-                                SquareButtonWithText:subtitle="Start install"
+                                SquareButtonWithText:subtitle="@string/collectra_start_install"
                                 SquareButtonWithText:textColor="@color/white"
                                 />
                         </FrameLayout>
@@ -95,9 +95,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:gravity="end"
-                                SquareButtonWithText:backgroundColor="@color/start_logout_button"
+                                SquareButtonWithText:backgroundColor="@color/collectra_shell"
                                 SquareButtonWithText:img="@drawable/install_stop"
-                                SquareButtonWithText:subtitle="Start over"
+                                SquareButtonWithText:subtitle="@string/collectra_start_over"
                                 SquareButtonWithText:textColor="@color/white"/>
                         </FrameLayout>
                     </LinearLayout>

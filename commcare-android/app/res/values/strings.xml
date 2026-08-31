@@ -25,6 +25,14 @@
     <string name="collectra_password_hint">Password</string>
     <string name="collectra_install_title">Connect to your workspace</string>
     <string name="collectra_install_subtitle">Scan the QR code from Collectra HQ or enter the app code.</string>
+    <string name="collectra_field_workspace">FIELD WORKSPACE · OFFLINE READY</string>
+    <string name="collectra_scan_workspace">Scan workspace QR</string>
+    <string name="collectra_enter_workspace_code">Enter workspace code</string>
+    <string name="collectra_install_from_device">Install from this device</string>
+    <string name="collectra_error_details">View error details</string>
+    <string name="collectra_start_install">Install workspace</string>
+    <string name="collectra_start_over">Choose another workspace</string>
+    <string name="collectra_batch_dispatch">Send selected items</string>
     <string name="uninstall_app">Uninstall</string>
     <string name="archive_app">Archive</string>
     <string name="unarchive_app">Unarchive</string>

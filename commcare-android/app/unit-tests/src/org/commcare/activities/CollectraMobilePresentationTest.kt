@@ -3,6 +3,7 @@ package org.commcare.activities
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -52,6 +53,31 @@ class CollectraMobilePresentationTest {
 
         assertNotNull(card.background)
         assertTrue(card.radius > 0)
+        assertNotNull(view.findViewById<View>(R.id.card_accent))
+    }
+
+    @Test
+    fun `workspace header and navigation use Collectra structure`() {
+        val header = inflater.inflate(R.layout.grid_header_top_banner, null)
+        val navigation = inflater.inflate(R.layout.nav_drawer_base, null)
+
+        assertEquals(
+            "FIELD WORKSPACE · OFFLINE READY",
+            header.findViewById<TextView>(R.id.collectra_workspace_badge).text,
+        )
+        assertNotNull(navigation.findViewById<View>(R.id.collectra_nav_shell).background)
+    }
+
+    @Test
+    fun `form and install screens retain required interaction controls`() {
+        val form = inflater.inflate(R.layout.screen_form_entry, null)
+        val install = inflater.inflate(R.layout.install_confirm_fragment, null)
+
+        assertNotNull(form.findViewById<View>(R.id.nav_btn_prev))
+        assertNotNull(form.findViewById<View>(R.id.nav_btn_next))
+        assertNotNull(form.findViewById<View>(R.id.nav_btn_finish))
+        assertNotNull(install.findViewById<View>(R.id.btn_start_install))
+        assertNotNull(install.findViewById<View>(R.id.btn_stop_install))
     }
 
     @Test
