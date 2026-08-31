@@ -3,7 +3,7 @@
     android:id="@+id/collectra_toolbar_title_text"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:fontFamily="@font/font_outfit"
+    android:fontFamily="@font/outfit_semibold"
     android:letterSpacing="-0.02"
     android:text="@string/collectra_brand_name"
     android:textColor="@color/collectra_signal"

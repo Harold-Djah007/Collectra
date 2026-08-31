@@ -131,7 +131,7 @@
     <style name="LoginEditTextV2">
         <item name="android:paddingLeft">8dp</item>
         <item name="android:drawablePadding">8dp</item>
-        <item name="android:fontFamily">@font/font_manrope</item>
+        <item name="android:fontFamily">@font/manrope_regular</item>
         <item name="android:textColor">@color/collectra_ink</item>
         <item name="android:textColorHint">@color/collectra_text_secondary</item>
     </style>
@@ -150,7 +150,7 @@
 
     <style name="TextViewV2" parent="DefaultPadding">
         <item name="android:background">@color/collectra_ink</item>
-        <item name="android:fontFamily">@font/font_outfit</item>
+        <item name="android:fontFamily">@font/outfit_semibold</item>
         <item name="android:textColor">@color/collectra_signal</item>
         <item name="android:textSize">15sp</item>
         <item name="android:letterSpacing">-0.01</item>
@@ -399,4 +399,3 @@
         <item name="syncWarningIcon">@drawable/ic_connect_directory_sync</item>
     </style>
 </resources>
-

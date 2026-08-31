@@ -8,8 +8,8 @@
         <item name="colorControlActivated">@color/cc_brand_color</item>
         <item name="android:textColorSecondary">@color/collectra_text_secondary</item>
         <item name="android:textColorPrimary">@color/collectra_text_primary</item>
-        <item name="android:fontFamily">@font/font_manrope</item>
-        <item name="fontFamily">@font/font_manrope</item>
+        <item name="android:fontFamily">@font/manrope_regular</item>
+        <item name="fontFamily">@font/manrope_regular</item>
         <item name="buttonStyle">@style/Commcare.Button.Primary</item>
         <item name="materialButtonStyle">@style/Commcare.Button.Primary.Rounded</item>
         <item name="buttonBarButtonStyle">@style/AlertDialogButtonStyle</item>
@@ -111,7 +111,7 @@
 
     <style name="ActionBar.TitleTextStyle">
         <item name="android:textColor">@color/collectra_signal</item>
-        <item name="android:fontFamily">@font/font_outfit</item>
+        <item name="android:fontFamily">@font/outfit_semibold</item>
         <item name="android:paddingLeft">16dp</item>
         <item name="android:textSize">20sp</item>
     </style>
