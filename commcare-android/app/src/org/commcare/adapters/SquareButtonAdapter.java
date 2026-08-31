@@ -98,7 +98,8 @@ abstract class SquareButtonAdapter
 
     private static void setupViewHolder(Context context,
                                         HomeCardDisplayData cardDisplayData,
-                                        SquareButtonViewHolder squareButtonViewHolder) {
+                                        SquareButtonViewHolder squareButtonViewHolder,
+                                        int position) {
         final Drawable buttonDrawable =
                 ContextCompat.getDrawable(context, cardDisplayData.imageResource);
         squareButtonViewHolder.imageView.setImageDrawable(buttonDrawable);
@@ -118,11 +119,13 @@ abstract class SquareButtonAdapter
                     ContextCompat.getColor(context, cardDisplayData.bgColor));
         }
 
-        // Staggered chip pulse so tiles feel alive like the brand mark.
-        long delay = Math.max(0, squareButtonViewHolder.getBindingAdapterPosition()) * 90L;
-        CollectraMotion.startChipPulse(squareButtonViewHolder.iconChip, delay);
+        Object animated = squareButtonViewHolder.iconChip.getTag(R.id.collectra_motion_tag);
+        if (animated == null) {
+            long delay = Math.max(0, position) * 90L;
+            CollectraMotion.startChipPulse(squareButtonViewHolder.iconChip, delay);
+        }
 
-        squareButtonViewHolder.textView.setAlpha(0.85f);
+        squareButtonViewHolder.textView.setAlpha(0.88f);
         squareButtonViewHolder.textView.animate()
                 .alpha(1f)
                 .setDuration(280)
