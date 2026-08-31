@@ -1,16 +1,17 @@
 package org.commcare.adapters;
 
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import org.commcare.activities.StandardHomeActivity;
 import org.commcare.activities.HomeButtons;
 import org.commcare.dalvik.R;
+import org.commcare.views.CollectraMotion;
 import org.commcare.views.CustomBanner;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Shows home screen buttons and header banner
+ * Shows Collectra home actions with a lively brand masthead.
  *
  * @author Phillip Mates (pmates@dimagi.com)
  */
@@ -32,6 +33,7 @@ public class HomeScreenAdapter
     private final int screenHeight, screenWidth;
     private final int syncButtonPosition;
     private final HashMap<Integer, String> messagePayload = new HashMap<>();
+    private boolean mastheadAnimated;
 
     public HomeScreenAdapter(StandardHomeActivity activity,
                              Vector<String> buttonsToHide,
@@ -41,7 +43,6 @@ public class HomeScreenAdapter
         buttonData = HomeButtons.buildButtonData(activity, buttonsToHide, isDemoUser);
         syncButtonPosition = calcSyncButtonPos();
 
-        // get screen dimensions for drawing custom header image
         DisplayMetrics displaymetrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
         screenHeight = displaymetrics.heightPixels;
@@ -51,7 +52,6 @@ public class HomeScreenAdapter
     private int calcSyncButtonPos() {
         for (int i = 0; i < buttonData.length; i++) {
             if (buttonData[i].imageResource == R.drawable.home_sync) {
-                // pos in button array plus initial custom header
                 return i + 1;
             }
         }
@@ -62,7 +62,7 @@ public class HomeScreenAdapter
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_HEADER) {
             final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-            View header = inflater.inflate(R.layout.grid_header_top_banner, parent, false);
+            View header = inflater.inflate(R.layout.collectra_home_masthead, parent, false);
             return new HeaderViewHolder(header);
         } else {
             return super.onCreateViewHolder(parent, viewType);
@@ -101,20 +101,35 @@ public class HomeScreenAdapter
     }
 
     private void bindHeader(HeaderViewHolder headerHolder) {
-        StaggeredGridLayoutManager.LayoutParams layoutParams =
-                (StaggeredGridLayoutManager.LayoutParams)headerHolder.itemView.getLayoutParams();
-        layoutParams.setFullSpan(true);
+        ViewGroup.LayoutParams layoutParams = headerHolder.itemView.getLayoutParams();
+        layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        headerHolder.itemView.setLayoutParams(layoutParams);
 
-        boolean noCustomBanner =
-                !CustomBanner.useCustomBanner(context, screenHeight, screenWidth, headerHolder.headerImage, CustomBanner.Banner.HOME);
-        if (noCustomBanner) {
-            headerHolder.headerImage.setImageResource(R.drawable.commcare_by_dimagi);
+        boolean usedCustom = CustomBanner.useCustomBanner(
+                context, screenHeight, screenWidth, headerHolder.headerImage, CustomBanner.Banner.HOME);
+        if (!usedCustom) {
+            headerHolder.headerImage.setImageResource(R.drawable.collectra_mark);
+        }
+
+        if (!mastheadAnimated) {
+            mastheadAnimated = true;
+            CollectraMotion.startLogoPulse(headerHolder.headerImage);
+            CollectraMotion.playWordmarkEnter(headerHolder.wordmark);
+            CollectraMotion.startTitleLiveliness(headerHolder.greeting);
+            CollectraMotion.playAccentReveal(headerHolder.accent);
+            if (headerHolder.tagline != null) {
+                headerHolder.tagline.setAlpha(0f);
+                headerHolder.tagline.animate()
+                        .alpha(1f)
+                        .setStartDelay(220)
+                        .setDuration(360)
+                        .start();
+            }
         }
     }
 
     @Override
     public int getItemCount() {
-        // buttons and header
         return buttonData.length + 1;
     }
 
@@ -141,11 +156,18 @@ public class HomeScreenAdapter
 
     private static class HeaderViewHolder extends RecyclerView.ViewHolder {
         public final ImageView headerImage;
+        public final TextView wordmark;
+        public final TextView greeting;
+        public final TextView tagline;
+        public final View accent;
 
         public HeaderViewHolder(View itemView) {
             super(itemView);
-
             headerImage = itemView.findViewById(R.id.main_top_banner);
+            wordmark = itemView.findViewById(R.id.collectra_home_wordmark);
+            greeting = itemView.findViewById(R.id.collectra_home_greeting);
+            tagline = itemView.findViewById(R.id.collectra_home_tagline);
+            accent = itemView.findViewById(R.id.collectra_home_accent);
         }
     }
 }

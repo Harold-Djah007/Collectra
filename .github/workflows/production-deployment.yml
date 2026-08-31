@@ -1,0 +1,73 @@
+name: Production deployment validation
+
+on:
+  pull_request:
+    paths:
+      - "deploy/production/**"
+      - "collectra-hq/deployment/production/**"
+      - "collectra-hq/Dockerfile_incl"
+      - ".github/workflows/production-deployment.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deploy/production/**"
+      - "collectra-hq/deployment/production/**"
+      - "collectra-hq/Dockerfile_incl"
+      - ".github/workflows/production-deployment.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare validation environment
+        run: cp deploy/production/.env.example deploy/production/.env
+
+      - name: Validate shell scripts
+        run: bash -n deploy/production/*.sh
+
+      - name: Validate Python configuration syntax
+        run: python -m py_compile collectra-hq/deployment/production/localsettings.py
+
+      - name: Validate Docker Compose configuration
+        working-directory: deploy/production
+        run: docker compose config --quiet
+
+      - name: Validate Caddy configuration
+        working-directory: deploy/production
+        run: >-
+          docker run --rm
+          --env-file .env
+          -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro"
+          caddy:2.8.4-alpine
+          caddy validate --config /etc/caddy/Caddyfile
+
+  android-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Verify CommCare behavior and build Collectra
+        working-directory: commcare-android
+        run: |
+          ./gradlew \
+            :app:testCommcareDebugUnitTest \
+            --tests org.commcare.network.AppListEndpointProviderTest \
+            --tests org.commcare.network.AppInstallCodeResolverTest \
+            --tests org.commcare.utils.ConnectivityStatusTest \
+            --tests org.commcare.activities.CollectraMobilePresentationTest \
+            --no-daemon
+          ./gradlew \
+            :app:assembleCommcareDebug \
+            --no-daemon
