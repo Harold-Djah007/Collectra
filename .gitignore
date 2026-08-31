@@ -120,3 +120,7 @@ collectra-hq/submodules/commcare-translations/messages_en-2.txtcommcare-android/
 commcare-hq/submodules/commcare-translations/messages_en-2.txt
 commcare-android/app/instrumentation-tests/resources/basic_tests.ccz
 collectra-hq/submodules/commcare-translations/messages_en-2.txt
+
+# Production deployment secrets and local backups
+deploy/production/.env
+deploy/production/backups/

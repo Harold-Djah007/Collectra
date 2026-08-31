@@ -81,4 +81,6 @@ RUN npm shrinkwrap && \
 COPY --chown=cchq:cchq . /vendor/
 COPY --chown=cchq:cchq docker/min_settings.py /vendor/localsettings.py
 RUN mkdir /vendor/log
+RUN yarn build
+RUN python manage.py compilejsi18n
 RUN python manage.py collectstatic --noinput
