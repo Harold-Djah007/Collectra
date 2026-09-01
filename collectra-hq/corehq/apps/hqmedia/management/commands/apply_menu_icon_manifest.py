@@ -6,6 +6,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
+from PIL import Image, UnidentifiedImageError
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.hqmedia.audit import make_menu_fallback_image
@@ -14,6 +15,9 @@ from corehq.apps.hqmedia.management.commands.audit_app_multimedia import (
 )
 from corehq.apps.hqmedia.models import CommCareImage
 
+
+MAX_ICON_BYTES = 5 * 1024 * 1024
+MAX_ICON_DIMENSION = 2048
 
 REQUIRED_MAPPING_FIELDS = {
     'app_id',
@@ -35,6 +39,9 @@ def load_and_validate_manifest(manifest_path, domain):
     except (OSError, json.JSONDecodeError) as error:
         raise CommandError(f'Unable to read manifest: {error}') from error
 
+    if not isinstance(manifest, dict):
+        raise CommandError('Manifest root must be an object')
+
     if manifest.get('domain') != domain:
         raise CommandError(
             f'Manifest domain {manifest.get("domain")!r} does not match {domain!r}'
@@ -43,7 +50,10 @@ def load_and_validate_manifest(manifest_path, domain):
     mappings = manifest.get('mappings')
     if not isinstance(mappings, list) or not mappings:
         raise CommandError('Manifest must contain a non-empty mappings list')
-    if manifest.get('mapping_count') != len(mappings):
+    mapping_count = manifest.get('mapping_count')
+    if not isinstance(mapping_count, int) or isinstance(mapping_count, bool):
+        raise CommandError('Manifest mapping_count must be an integer')
+    if mapping_count != len(mappings):
         raise CommandError('Manifest mapping_count does not match mappings')
 
     root = manifest_path.parent
@@ -57,6 +67,12 @@ def load_and_validate_manifest(manifest_path, domain):
             raise CommandError(
                 f'Mapping {index} is missing: {", ".join(sorted(missing))}'
             )
+        for field in REQUIRED_MAPPING_FIELDS:
+            value = mapping[field]
+            if not isinstance(value, str) or not value.strip():
+                raise CommandError(
+                    f'Mapping {index} field {field!r} must be a non-empty string'
+                )
         if mapping['item_type'] not in {'module', 'form'}:
             raise CommandError(
                 f'Mapping {index} has unsupported item_type '
@@ -87,6 +103,30 @@ def load_and_validate_manifest(manifest_path, domain):
         if not icon_path.is_file() or icon_path.suffix.lower() != '.png':
             raise CommandError(
                 f'Mapping {index} icon is not a PNG file: {icon_path}'
+            )
+        try:
+            icon_size = icon_path.stat().st_size
+            if icon_size > MAX_ICON_BYTES:
+                raise CommandError(
+                    f'Mapping {index} icon exceeds {MAX_ICON_BYTES} bytes: '
+                    f'{icon_path}'
+                )
+            with Image.open(icon_path) as image:
+                image_format = image.format
+                width, height = image.size
+                image.verify()
+        except (OSError, UnidentifiedImageError, Image.DecompressionBombError) as error:
+            raise CommandError(
+                f'Mapping {index} icon is not a valid PNG: {icon_path}'
+            ) from error
+        if image_format != 'PNG':
+            raise CommandError(
+                f'Mapping {index} icon content is not PNG: {icon_path}'
+            )
+        if not width or not height or max(width, height) > MAX_ICON_DIMENSION:
+            raise CommandError(
+                f'Mapping {index} icon dimensions must be between 1 and '
+                f'{MAX_ICON_DIMENSION} pixels: {width}x{height}'
             )
 
         validated.append({**mapping, 'icon_path': icon_path})
