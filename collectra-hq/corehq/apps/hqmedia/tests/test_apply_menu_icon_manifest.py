@@ -467,3 +467,34 @@ def test_apply_assigns_exact_blank_slot_and_mapping():
         assert app.menu_item.media_image == {'en': target_path}
         assert app.created_mappings == [(media, target_path, False)]
         assert app.save_count == 1
+
+
+
+def test_complete_coverage_accepts_declared_empty_application():
+    manifest = {
+        'all_applications': True,
+        'application_count': 2,
+        'empty_applications': ['empty-id'],
+    }
+    apps = {
+        'app-id': FakeApp(),
+        'empty-id': SimpleNamespace(modules=[]),
+    }
+
+    validate_complete_coverage(
+        manifest,
+        apps,
+        [{'app_id': 'app-id'}],
+    )
+
+
+def test_complete_coverage_rejects_nonempty_declared_empty_application():
+    manifest = {
+        'all_applications': True,
+        'application_count': 1,
+        'empty_applications': ['app-id'],
+    }
+    apps = {'app-id': FakeApp()}
+
+    with pytest.raises(CommandError, match='now contain modules'):
+        validate_complete_coverage(manifest, apps, [])
