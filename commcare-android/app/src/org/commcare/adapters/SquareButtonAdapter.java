@@ -109,9 +109,8 @@ abstract class SquareButtonAdapter
             squareButtonViewHolder.subTextView.setOnClickListener(cardDisplayData.subTextListener);
         }
 
-        // Soft Collectra row; ink chip + signal/accent rail for identity.
-        squareButtonViewHolder.cardView.setBackground(
-                ContextCompat.getDrawable(context, R.drawable.collectra_home_card_surface));
+        // Keep the layout's selectable background so touch and keyboard
+        // interaction retain normal Android feedback.
         squareButtonViewHolder.iconChip.setBackground(
                 accentChipDrawable(context, R.color.collectra_ink));
         if (squareButtonViewHolder.accentRail != null) {
@@ -119,17 +118,20 @@ abstract class SquareButtonAdapter
                     ContextCompat.getColor(context, cardDisplayData.bgColor));
         }
 
-        Object animated = squareButtonViewHolder.iconChip.getTag(R.id.collectra_motion_tag);
-        if (animated == null) {
+        Object animated = squareButtonViewHolder.iconChip.getTag(
+                R.id.collectra_motion_complete_tag
+        );
+        if (!Boolean.TRUE.equals(animated)) {
+            squareButtonViewHolder.iconChip.setTag(
+                    R.id.collectra_motion_complete_tag,
+                    Boolean.TRUE
+            );
             long delay = Math.max(0, position) * 90L;
-            CollectraMotion.startChipPulse(squareButtonViewHolder.iconChip, delay);
+            CollectraMotion.startChipPulse(
+                    squareButtonViewHolder.iconChip,
+                    delay
+            );
         }
-
-        squareButtonViewHolder.textView.setAlpha(0.88f);
-        squareButtonViewHolder.textView.animate()
-                .alpha(1f)
-                .setDuration(280)
-                .start();
     }
 
     private static GradientDrawable accentChipDrawable(Context context, int bgColorResource) {
