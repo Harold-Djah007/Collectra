@@ -1,5 +1,5 @@
 import secrets
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 from django.db import IntegrityError, models, transaction
 from django.urls import reverse
@@ -7,6 +7,25 @@ from django.urls import reverse
 CODE_ALPHABET = 'abcdefghijkmnopqrstuvwxyz23456789'
 CODE_LENGTH = 7
 MAX_CODE_ATTEMPTS = 8
+ALLOWED_TARGET_SCHEMES = {'http', 'https'}
+
+
+def validate_target_url(target_url):
+    if not isinstance(target_url, str) or target_url != target_url.strip():
+        raise ValueError('Install target must be a clean absolute HTTP(S) URL')
+    if any(ord(character) < 32 for character in target_url):
+        raise ValueError('Install target contains control characters')
+
+    parsed = urlsplit(target_url)
+    if (
+        parsed.scheme not in ALLOWED_TARGET_SCHEMES
+        or not parsed.netloc
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
+        raise ValueError('Install target must be an absolute HTTP(S) URL')
+    return target_url
 
 
 class AppInstallCode(models.Model):
@@ -27,6 +46,7 @@ class AppInstallCode(models.Model):
 
     @classmethod
     def _get_or_create_mapping(cls, domain, target_url):
+        validate_target_url(target_url)
         existing = cls.objects.filter(domain=domain, target_url=target_url).first()
         if existing:
             return existing
