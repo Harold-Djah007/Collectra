@@ -71,11 +71,18 @@ jobs:
             corehq/apps/app_manager/tests/test_install_codes.py \
             deployment/production/localsettings.py
 
-      - name: Run multimedia unit tests
+      - name: Check for missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Apply database migrations
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run focused HQ tests
         run: |
           uv run pytest \
             corehq/apps/hqmedia/tests/test_audit.py \
-            corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py
+            corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
+            corehq/apps/app_manager/tests/test_install_codes.py
 
       - name: Check Django configuration
         run: uv run python manage.py check --deploy
