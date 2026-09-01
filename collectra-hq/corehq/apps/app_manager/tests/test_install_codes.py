@@ -103,6 +103,39 @@ class AppInstallCodeTests(TestCase):
         response = self.client.get(reverse('app_install_code', args=['missing']))
         self.assertEqual(response.status_code, 404)
 
+    def test_rejects_unsafe_target_when_creating_code(self):
+        unsafe_targets = [
+            'javascript:alert(1)',
+            '//attacker.example/profile.ccpr',
+            'https://user:password@example.test/profile.ccpr',
+            ' https://example.test/profile.ccpr',
+            'https://example.test/profile.ccpr\n',
+        ]
+
+        for target_url in unsafe_targets:
+            with self.subTest(target_url=target_url):
+                with self.assertRaises(ValueError):
+                    AppInstallCode.absolute_url_for(
+                        'plant',
+                        target_url,
+                        'https://hq.collectra.test',
+                    )
+
+        self.assertFalse(AppInstallCode.objects.exists())
+
+    def test_unsafe_existing_mapping_returns_404(self):
+        mapping = AppInstallCode.objects.create(
+            domain='plant',
+            code='bad2345',
+            target_url='javascript:alert(1)',
+        )
+
+        response = self.client.get(
+            reverse('app_install_code', args=[mapping.code])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_generate_shortened_url_falls_back_without_bitly(self):
         app = ApplicationBase()
         app.domain = 'plant'
