@@ -27,6 +27,17 @@ REQUIRED_MAPPING_FIELDS = {
     'target_path',
     'icon',
 }
+EXACT_ITEM_FIELDS = {'item_id', 'language', 'previous_target_path'}
+
+
+def _is_image_path(path):
+    return isinstance(path, str) and path.startswith(
+        'jr://file/commcare/image/'
+    )
+
+
+def _normalize_path(path):
+    return path or None
 
 
 def load_and_validate_manifest(manifest_path, domain):
@@ -56,9 +67,24 @@ def load_and_validate_manifest(manifest_path, domain):
     if mapping_count != len(mappings):
         raise CommandError('Manifest mapping_count does not match mappings')
 
+    all_applications = manifest.get('all_applications', False)
+    if not isinstance(all_applications, bool):
+        raise CommandError('Manifest all_applications must be a boolean')
+    if all_applications:
+        application_count = manifest.get('application_count')
+        if (
+            not isinstance(application_count, int)
+            or isinstance(application_count, bool)
+            or application_count < 1
+        ):
+            raise CommandError(
+                'A complete manifest requires a positive application_count'
+            )
+
     root = manifest_path.parent
     validated = []
-    seen = set()
+    seen_items = set()
+    target_icons = {}
     for index, mapping in enumerate(mappings, start=1):
         if not isinstance(mapping, dict):
             raise CommandError(f'Mapping {index} must be an object')
@@ -78,20 +104,52 @@ def load_and_validate_manifest(manifest_path, domain):
                 f'Mapping {index} has unsupported item_type '
                 f'{mapping["item_type"]!r}'
             )
-        if not mapping['target_path'].startswith(
-            'jr://file/commcare/image/'
-        ):
+        if not _is_image_path(mapping['target_path']):
             raise CommandError(
                 f'Mapping {index} is not a CommCare image path'
             )
 
-        key = (mapping['app_id'], mapping['target_path'])
-        if key in seen:
+        exact_fields = EXACT_ITEM_FIELDS & mapping.keys()
+        exact_item = bool(exact_fields)
+        if exact_item and exact_fields != EXACT_ITEM_FIELDS:
+            missing_exact = EXACT_ITEM_FIELDS - mapping.keys()
             raise CommandError(
-                f'Duplicate app/path mapping: {mapping["app_id"]} '
-                f'{mapping["target_path"]}'
+                f'Mapping {index} exact item reference is missing: '
+                f'{", ".join(sorted(missing_exact))}'
             )
-        seen.add(key)
+        if exact_item:
+            for field in ('item_id', 'language'):
+                value = mapping[field]
+                if not isinstance(value, str) or not value.strip():
+                    raise CommandError(
+                        f'Mapping {index} field {field!r} must be a '
+                        'non-empty string'
+                    )
+            previous_path = mapping['previous_target_path']
+            if previous_path is not None and not _is_image_path(previous_path):
+                raise CommandError(
+                    f'Mapping {index} previous_target_path must be null or a '
+                    'CommCare image path'
+                )
+            item_key = (
+                mapping['app_id'],
+                mapping['item_type'],
+                mapping['item_id'],
+                mapping['language'],
+            )
+        else:
+            item_key = (mapping['app_id'], mapping['target_path'])
+        if item_key in seen_items:
+            raise CommandError(f'Duplicate menu item mapping: {item_key}')
+        seen_items.add(item_key)
+
+        target_key = (mapping['app_id'], mapping['target_path'])
+        previous_icon = target_icons.setdefault(target_key, mapping['icon'])
+        if previous_icon != mapping['icon']:
+            raise CommandError(
+                f'Conflicting icons for app/path mapping: '
+                f'{mapping["app_id"]} {mapping["target_path"]}'
+            )
 
         icon_path = (root / mapping['icon']).resolve()
         try:
@@ -129,7 +187,9 @@ def load_and_validate_manifest(manifest_path, domain):
                 f'{MAX_ICON_DIMENSION} pixels: {width}x{height}'
             )
 
-        validated.append({**mapping, 'icon_path': icon_path})
+        validated.append(
+            {**mapping, 'icon_path': icon_path, 'exact_item': exact_item}
+        )
 
     return manifest_path, manifest, validated
 
@@ -155,10 +215,98 @@ def validate_app_reference(app, mapping):
         )
 
 
+def _menu_items(app, item_type):
+    for module in getattr(app, 'modules', ()):
+        if item_type == 'module':
+            yield module
+        else:
+            yield from getattr(module, 'forms', ())
+
+
+def _item_names(item):
+    name = getattr(item, 'name', None)
+    if isinstance(name, str):
+        return {name}
+    try:
+        values = name.values()
+    except AttributeError:
+        return {str(name)} if name is not None else set()
+    return {str(value) for value in values if value}
+
+
+def resolve_exact_item(app, mapping):
+    if mapping['language'] not in (getattr(app, 'langs', ()) or ()):
+        raise CommandError(
+            f'{app.name}: language {mapping["language"]!r} is not enabled'
+        )
+    matches = [
+        item
+        for item in _menu_items(app, mapping['item_type'])
+        if getattr(item, 'unique_id', None) == mapping['item_id']
+    ]
+    if len(matches) != 1:
+        raise CommandError(
+            f'{app.name}: expected one {mapping["item_type"]} with ID '
+            f'{mapping["item_id"]!r}, found {len(matches)}'
+        )
+    item = matches[0]
+    if mapping['item_name'] not in _item_names(item):
+        raise CommandError(
+            f'{app.name}: item name changed for {mapping["item_id"]}: '
+            f'{mapping["item_name"]!r}'
+        )
+
+    current_path = _normalize_path(
+        (getattr(item, 'media_image', None) or {}).get(mapping['language'])
+    )
+    expected_path = _normalize_path(mapping['previous_target_path'])
+    if current_path != expected_path:
+        raise CommandError(
+            f'{app.name}: menu image changed for {mapping["item_id"]} '
+            f'{mapping["language"]}: expected {expected_path!r}, '
+            f'found {current_path!r}'
+        )
+
+    target_references = [
+        reference
+        for reference in app.all_media()
+        if reference.path == mapping['target_path']
+    ]
+    if target_references and not all(
+        reference.is_menu_media and reference.media_class is CommCareImage
+        for reference in target_references
+    ):
+        raise CommandError(
+            f'{app.name}: target path is already used by non-menu media: '
+            f'{mapping["target_path"]}'
+        )
+    return item, current_path
+
+
+def validate_complete_coverage(manifest, apps, mappings):
+    if not manifest.get('all_applications'):
+        return
+    if manifest['application_count'] != len(apps):
+        raise CommandError(
+            'Manifest application_count does not match current domain drafts: '
+            f'{manifest["application_count"]} != {len(apps)}'
+        )
+    mapped_ids = {mapping['app_id'] for mapping in mappings}
+    app_ids = set(apps)
+    if mapped_ids != app_ids:
+        missing = sorted(app_ids - mapped_ids)
+        extra = sorted(mapped_ids - app_ids)
+        raise CommandError(
+            f'Complete manifest application coverage changed; '
+            f'missing={missing}, extra={extra}'
+        )
+
+
 class Command(BaseCommand):
     help = (
-        'Replace exact application menu-image mappings from a reviewed icon '
-        'manifest. The command is a dry run unless --apply is supplied.'
+        'Replace or assign exact application menu-image mappings from a '
+        'reviewed icon manifest. The command is a dry run unless --apply is '
+        'supplied.'
     )
 
     def add_arguments(self, parser):
@@ -167,7 +315,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--apply',
             action='store_true',
-            help='Save the validated menu-image mappings.',
+            help='Save the validated menu-image paths and mappings.',
         )
         parser.add_argument(
             '--report',
@@ -182,6 +330,7 @@ class Command(BaseCommand):
             app._id: app
             for app in get_apps_in_domain(domain, include_remote=False)
         }
+        validate_complete_coverage(manifest_data, apps, mappings)
 
         plans = []
         for mapping in mappings:
@@ -195,20 +344,28 @@ class Command(BaseCommand):
                     f'Application name changed for {app._id}: '
                     f'{mapping["app_name"]!r} -> {app.name!r}'
                 )
-            validate_app_reference(app, mapping)
+
+            item = None
+            previous_path = mapping['target_path']
+            if mapping['exact_item']:
+                item, previous_path = resolve_exact_item(app, mapping)
+            else:
+                validate_app_reference(app, mapping)
 
             source_data = mapping['icon_path'].read_bytes()
             converted_data, filename = make_menu_fallback_image(
                 source_data, mapping['target_path']
             )
-            previous = (app.multimedia_map or {}).get(mapping['target_path'])
+            previous = (app.multimedia_map or {}).get(previous_path)
             plans.append(
                 {
                     **mapping,
                     'app': app,
+                    'item': item,
                     'source_data': source_data,
                     'converted_size': len(converted_data),
                     'converted_filename': filename,
+                    'previous_path': previous_path,
                     'previous_multimedia_id': getattr(
                         previous, 'multimedia_id', None
                     ),
@@ -231,6 +388,10 @@ class Command(BaseCommand):
                             plan['target_path'],
                         )
                     )
+                if plan['item'] is not None:
+                    plan['item'].set_icon(
+                        plan['language'], plan['target_path']
+                    )
                 plan['app'].create_mapping(
                     media_cache[cache_key], plan['target_path'], save=False
                 )
@@ -240,7 +401,10 @@ class Command(BaseCommand):
                         'app_id': plan['app_id'],
                         'app_name': plan['app_name'],
                         'item_type': plan['item_type'],
+                        'item_id': plan.get('item_id'),
                         'item_name': plan['item_name'],
+                        'language': plan.get('language'),
+                        'previous_target_path': plan['previous_path'],
                         'target_path': plan['target_path'],
                         'icon': plan['icon'],
                         'previous_multimedia_id': plan[
@@ -260,6 +424,9 @@ class Command(BaseCommand):
             'manifest': str(manifest_path),
             'manifest_generated_at': manifest_data.get('generated_at'),
             'mode': 'apply' if apply else 'dry-run',
+            'complete_application_coverage': manifest_data.get(
+                'all_applications', False
+            ),
             'planned_mappings': len(plans),
             'applied_mappings': len(applied),
             'apps': dict(sorted(Counter(
@@ -270,7 +437,10 @@ class Command(BaseCommand):
                     'app_id': plan['app_id'],
                     'app_name': plan['app_name'],
                     'item_type': plan['item_type'],
+                    'item_id': plan.get('item_id'),
                     'item_name': plan['item_name'],
+                    'language': plan.get('language'),
+                    'previous_target_path': plan['previous_path'],
                     'target_path': plan['target_path'],
                     'icon': plan['icon'],
                     'previous_multimedia_id': plan['previous_multimedia_id'],
@@ -298,7 +468,7 @@ class Command(BaseCommand):
         self.stdout.write('')
         if apply:
             self.stdout.write(
-                'Only the validated menu-image multimedia mappings were changed.'
+                'Only validated menu-image paths and multimedia mappings were changed.'
             )
             self.stdout.write(
                 'Make and release new application versions after visual review.'
