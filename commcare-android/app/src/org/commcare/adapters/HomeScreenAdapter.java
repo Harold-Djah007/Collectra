@@ -106,10 +106,16 @@ public class HomeScreenAdapter
         headerHolder.itemView.setLayoutParams(layoutParams);
 
         boolean usedCustom = CustomBanner.useCustomBanner(
-                context, screenHeight, screenWidth, headerHolder.headerImage, CustomBanner.Banner.HOME);
-        if (!usedCustom) {
-            headerHolder.headerImage.setImageResource(R.drawable.collectra_mark);
-        }
+                context,
+                screenHeight,
+                screenWidth,
+                headerHolder.customBanner,
+                CustomBanner.Banner.HOME
+        );
+        headerHolder.customBanner.setVisibility(
+                usedCustom ? View.VISIBLE : View.GONE
+        );
+        headerHolder.headerImage.setImageResource(R.drawable.collectra_mark);
 
         if (!mastheadAnimated) {
             mastheadAnimated = true;
@@ -156,6 +162,7 @@ public class HomeScreenAdapter
 
     private static class HeaderViewHolder extends RecyclerView.ViewHolder {
         public final ImageView headerImage;
+        public final ImageView customBanner;
         public final TextView wordmark;
         public final TextView greeting;
         public final TextView tagline;
@@ -164,6 +171,9 @@ public class HomeScreenAdapter
         public HeaderViewHolder(View itemView) {
             super(itemView);
             headerImage = itemView.findViewById(R.id.main_top_banner);
+            customBanner = itemView.findViewById(
+                    R.id.collectra_custom_home_banner
+            );
             wordmark = itemView.findViewById(R.id.collectra_home_wordmark);
             greeting = itemView.findViewById(R.id.collectra_home_greeting);
             tagline = itemView.findViewById(R.id.collectra_home_tagline);
