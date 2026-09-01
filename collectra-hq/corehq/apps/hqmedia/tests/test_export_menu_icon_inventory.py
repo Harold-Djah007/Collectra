@@ -4,6 +4,10 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+from django.core.management.base import CommandError
+from redis.exceptions import ConnectionError as RedisConnectionError
+
 from corehq.apps.hqmedia.management.commands.export_menu_icon_inventory import (
     Command,
     build_inventory,
@@ -95,3 +99,20 @@ def test_command_writes_complete_read_only_report():
     assert result['applications'][0]['modules'][0]['forms'][0][
         'name'
     ] == {'en': 'Registration'}
+
+
+
+def test_command_explains_redis_dependency():
+    with TemporaryDirectory() as directory:
+        report = Path(directory) / 'inventory.json'
+        with (
+            patch(
+                'corehq.apps.hqmedia.management.commands.'
+                'export_menu_icon_inventory.get_apps_in_domain',
+                side_effect=RedisConnectionError('connection refused'),
+            ),
+            pytest.raises(CommandError, match='Start the local HQ services'),
+        ):
+            Command().handle('safisana', str(report))
+
+        assert not report.exists()
