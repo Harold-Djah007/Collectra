@@ -14,7 +14,9 @@ from corehq.apps.hqmedia.management.commands.apply_menu_icon_manifest import (
     AuditMultimediaCommand,
     Command,
     load_and_validate_manifest,
+    resolve_exact_item,
     validate_app_reference,
+    validate_complete_coverage,
 )
 from corehq.apps.hqmedia.models import CommCareImage
 
@@ -55,10 +57,23 @@ def mutate_manifest(path, mutation):
     path.write_text(json.dumps(manifest), encoding='utf-8')
 
 
+class FakeMenuItem:
+    def __init__(self):
+        self.unique_id = 'module-id'
+        self.name = {'en': 'Menu'}
+        self.media_image = {}
+
+    def set_icon(self, language, target_path):
+        self.media_image[language] = target_path
+
+
 class FakeApp:
     def __init__(self):
         self._id = 'app-id'
         self.name = 'App'
+        self.langs = ['en']
+        self.menu_item = FakeMenuItem()
+        self.modules = [self.menu_item]
         self.multimedia_map = {}
         self.created_mappings = []
         self.save_count = 0
@@ -311,4 +326,144 @@ def test_apply_changes_exact_mapping_and_saves_once():
         assert app.created_mappings == [
             (media, 'jr://file/commcare/image/module0.png', False)
         ]
+        assert app.save_count == 1
+
+
+
+def exact_manifest(tmp_path, *, complete=False):
+    path = write_manifest(tmp_path)
+
+    def add_exact_reference(manifest):
+        mapping = manifest['mappings'][0]
+        mapping.update({
+            'item_id': 'module-id',
+            'language': 'en',
+            'previous_target_path': None,
+            'target_path': (
+                'jr://file/commcare/image/collectra/'
+                'app-id/module-id-en.png'
+            ),
+        })
+        if complete:
+            manifest.update({
+                'all_applications': True,
+                'application_count': 1,
+            })
+
+    mutate_manifest(path, add_exact_reference)
+    return path
+
+
+def test_rejects_partial_exact_item_reference():
+    with TemporaryDirectory() as directory:
+        path = write_manifest(Path(directory))
+        mutate_manifest(
+            path,
+            lambda manifest: manifest['mappings'][0].update(
+                {'item_id': 'module-id'}
+            ),
+        )
+
+        with pytest.raises(CommandError, match='exact item reference is missing'):
+            load_and_validate_manifest(path, 'safisana')
+
+
+def test_resolves_exact_blank_menu_slot():
+    app = FakeApp()
+    mapping = {
+        'item_type': 'module',
+        'item_id': 'module-id',
+        'item_name': 'Menu',
+        'language': 'en',
+        'previous_target_path': None,
+        'target_path': 'jr://file/commcare/image/collectra/menu.png',
+    }
+
+    item, previous_path = resolve_exact_item(app, mapping)
+
+    assert item is app.menu_item
+    assert previous_path is None
+
+
+def test_rejects_changed_exact_menu_slot():
+    app = FakeApp()
+    app.menu_item.media_image['en'] = (
+        'jr://file/commcare/image/someone-else.png'
+    )
+    mapping = {
+        'item_type': 'module',
+        'item_id': 'module-id',
+        'item_name': 'Menu',
+        'language': 'en',
+        'previous_target_path': None,
+        'target_path': 'jr://file/commcare/image/collectra/menu.png',
+    }
+
+    with pytest.raises(CommandError, match='menu image changed'):
+        resolve_exact_item(app, mapping)
+
+
+def test_complete_coverage_requires_every_current_application():
+    manifest = {'all_applications': True, 'application_count': 2}
+    apps = {'app-id': FakeApp(), 'second-id': FakeApp()}
+    mappings = [
+        {'app_id': 'app-id'},
+        {'app_id': 'second-id'},
+    ]
+
+    validate_complete_coverage(manifest, apps, mappings)
+
+    with pytest.raises(CommandError, match='coverage changed'):
+        validate_complete_coverage(manifest, apps, mappings[:1])
+
+
+def test_complete_coverage_rejects_application_count_drift():
+    manifest = {'all_applications': True, 'application_count': 1}
+    apps = {'app-id': FakeApp(), 'second-id': FakeApp()}
+
+    with pytest.raises(CommandError, match='application_count'):
+        validate_complete_coverage(
+            manifest,
+            apps,
+            [{'app_id': 'app-id'}],
+        )
+
+
+def test_apply_assigns_exact_blank_slot_and_mapping():
+    with TemporaryDirectory() as directory:
+        tmp_path = Path(directory)
+        manifest = exact_manifest(tmp_path, complete=True)
+        report = tmp_path / 'exact-apply.json'
+        app = FakeApp()
+        media = SimpleNamespace(_id='media-id')
+        target_path = (
+            'jr://file/commcare/image/collectra/'
+            'app-id/module-id-en.png'
+        )
+
+        with (
+            patch(
+                'corehq.apps.hqmedia.management.commands.'
+                'apply_menu_icon_manifest.get_apps_in_domain',
+                return_value=[app],
+            ),
+            patch.object(
+                AuditMultimediaCommand,
+                '_get_or_create_fallback_media',
+                return_value=media,
+            ),
+        ):
+            Command().handle(
+                'safisana',
+                str(manifest),
+                apply=True,
+                report=str(report),
+            )
+
+        result = json.loads(report.read_text(encoding='utf-8'))
+        assert result['complete_application_coverage'] is True
+        assert result['planned_mappings'] == 1
+        assert result['applied_mappings'] == 1
+        assert app.menu_item.media_image == {'en': target_path}
+        assert app.created_mappings == [(media, target_path, False)]
         assert app.save_count == 1
