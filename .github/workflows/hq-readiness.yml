@@ -64,8 +64,10 @@ jobs:
             corehq/apps/hqmedia/audit.py \
             corehq/apps/hqmedia/management/commands/audit_app_multimedia.py \
             corehq/apps/hqmedia/management/commands/apply_menu_icon_manifest.py \
+            corehq/apps/hqmedia/management/commands/export_menu_icon_inventory.py \
             corehq/apps/hqmedia/tests/test_audit.py \
             corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
+            corehq/apps/hqmedia/tests/test_export_menu_icon_inventory.py \
             corehq/apps/app_manager/models/install_codes.py \
             corehq/apps/app_manager/views/install_codes.py \
             corehq/apps/app_manager/tests/test_install_codes.py \
@@ -82,6 +84,7 @@ jobs:
           uv run pytest \
             corehq/apps/hqmedia/tests/test_audit.py \
             corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
+            corehq/apps/hqmedia/tests/test_export_menu_icon_inventory.py \
             corehq/apps/app_manager/tests/test_install_codes.py
 
       - name: Check Django configuration
