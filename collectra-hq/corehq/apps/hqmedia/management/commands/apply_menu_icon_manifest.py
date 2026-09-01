@@ -80,6 +80,18 @@ def load_and_validate_manifest(manifest_path, domain):
             raise CommandError(
                 'A complete manifest requires a positive application_count'
             )
+        empty_applications = manifest.get('empty_applications', [])
+        if (
+            not isinstance(empty_applications, list)
+            or any(
+                not isinstance(app_id, str) or not app_id.strip()
+                for app_id in empty_applications
+            )
+            or len(empty_applications) != len(set(empty_applications))
+        ):
+            raise CommandError(
+                'Manifest empty_applications must be a unique list of app IDs'
+            )
 
     root = manifest_path.parent
     validated = []
@@ -292,13 +304,29 @@ def validate_complete_coverage(manifest, apps, mappings):
             f'{manifest["application_count"]} != {len(apps)}'
         )
     mapped_ids = {mapping['app_id'] for mapping in mappings}
+    empty_ids = set(manifest.get('empty_applications', []))
     app_ids = set(apps)
-    if mapped_ids != app_ids:
-        missing = sorted(app_ids - mapped_ids)
-        extra = sorted(mapped_ids - app_ids)
+    if mapped_ids & empty_ids:
+        raise CommandError(
+            'Applications cannot be both mapped and declared empty: '
+            f'{sorted(mapped_ids & empty_ids)}'
+        )
+    if mapped_ids | empty_ids != app_ids:
+        missing = sorted(app_ids - mapped_ids - empty_ids)
+        extra = sorted((mapped_ids | empty_ids) - app_ids)
         raise CommandError(
             f'Complete manifest application coverage changed; '
             f'missing={missing}, extra={extra}'
+        )
+    nonempty_declared_empty = sorted(
+        app_id
+        for app_id in empty_ids
+        if getattr(apps[app_id], 'modules', ())
+    )
+    if nonempty_declared_empty:
+        raise CommandError(
+            'Applications declared empty now contain modules: '
+            f'{nonempty_declared_empty}'
         )
 
 
@@ -426,6 +454,9 @@ class Command(BaseCommand):
             'mode': 'apply' if apply else 'dry-run',
             'complete_application_coverage': manifest_data.get(
                 'all_applications', False
+            ),
+            'empty_applications': manifest_data.get(
+                'empty_applications', []
             ),
             'planned_mappings': len(plans),
             'applied_mappings': len(applied),
