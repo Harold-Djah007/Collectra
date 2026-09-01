@@ -1,0 +1,105 @@
+name: Collectra HQ readiness
+
+on:
+  pull_request:
+    paths:
+      - "collectra-hq/**"
+      - "deploy/local-testing/**"
+      - ".github/workflows/hq-readiness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "collectra-hq/**"
+      - "deploy/local-testing/**"
+      - ".github/workflows/hq-readiness.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hq-readiness-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hq-python:
+    name: HQ Python quality
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: collectra-hq
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "collectra-hq/uv.lock"
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --compile-bytecode
+
+      - name: Lint Collectra HQ changes
+        run: |
+          uv run ruff check \
+            corehq/apps/hqmedia/audit.py \
+            corehq/apps/hqmedia/management/commands/audit_app_multimedia.py \
+            corehq/apps/hqmedia/management/commands/apply_menu_icon_manifest.py \
+            corehq/apps/hqmedia/tests/test_audit.py \
+            corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
+            corehq/apps/app_manager/models/install_codes.py \
+            corehq/apps/app_manager/views/install_codes.py \
+            corehq/apps/app_manager/tests/test_install_codes.py \
+            deployment/production/localsettings.py
+
+      - name: Run multimedia unit tests
+        run: |
+          uv run pytest \
+            corehq/apps/hqmedia/tests/test_audit.py \
+            corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py
+
+      - name: Check Django configuration
+        run: uv run python manage.py check --deploy
+
+  hq-assets:
+    name: HQ production assets
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: collectra-hq
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: yarn
+          cache-dependency-path: collectra-hq/yarn.lock
+
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - name: Build production browser assets
+        run: yarn build
+
+  local-origin:
+    name: Local optimized-origin validation
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate shell entry point
+        run: bash -n deploy/local-testing/start-optimized-origin.sh
+
+      - name: Validate Caddy configuration
+        run: >-
+          docker run --rm
+          -v "$PWD/deploy/local-testing/Caddyfile:/etc/caddy/Caddyfile:ro"
+          caddy:2.8.4-alpine
+          caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
