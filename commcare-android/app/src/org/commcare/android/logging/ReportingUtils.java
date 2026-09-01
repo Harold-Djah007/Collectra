@@ -95,7 +95,7 @@ public class ReportingUtils {
     }
 
     public static String getCommCareVersionString() {
-        return BuildConfig.VERSION_NAME;
+        return BuildConfig.COMMCARE_ENGINE_VERSION;
     }
 
     public static int getAppVersion() {

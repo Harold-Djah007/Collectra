@@ -169,7 +169,7 @@ public class CommcareRequestGenerator implements CommcareRequestEndpoints {
             headers.put(X_COMMCAREHQ_LAST_SYNC_TOKEN, lastToken);
         }
         headers.put(X_OPENROSA_DEVICEID, CommCareApplication.instance().getPhoneId());
-        headers.put(X_OPENROSA_COMMCARE_VERSION, BuildConfig.VERSION_NAME);
+        headers.put(X_OPENROSA_COMMCARE_VERSION, BuildConfig.COMMCARE_ENGINE_VERSION);
         return headers;
     }
 
