@@ -12,6 +12,7 @@
     tools:viewBindingIgnore="true">
 
     <LinearLayout
+        android:id="@+id/collectra_home_brand_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
@@ -37,6 +38,17 @@
             android:textSize="24sp"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/collectra_custom_home_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/application_name"
+        android:maxHeight="160dp"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/collectra_home_greeting"
