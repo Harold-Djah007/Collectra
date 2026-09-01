@@ -24,6 +24,20 @@ jobs:
   hq-python:
     name: HQ Python quality
     runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: commcarehq
+          POSTGRES_USER: commcarehq
+          POSTGRES_PASSWORD: commcarehq
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U commcarehq -d commcarehq"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: collectra-hq
