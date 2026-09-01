@@ -1,0 +1,12 @@
+:80 {
+	encode zstd gzip
+
+	request_body {
+		max_size 500MB
+	}
+
+	@static path /static/*
+	header @static Cache-Control "public, max-age=3600"
+
+	reverse_proxy host.docker.internal:8001
+}
