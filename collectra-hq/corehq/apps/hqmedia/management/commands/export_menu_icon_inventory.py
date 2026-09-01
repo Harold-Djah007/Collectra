@@ -5,6 +5,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
@@ -103,7 +104,14 @@ class Command(BaseCommand):
         if not domain.strip():
             raise CommandError('Domain must not be empty')
 
-        result = build_inventory(domain)
+        try:
+            result = build_inventory(domain)
+        except RedisConnectionError as error:
+            raise CommandError(
+                'Redis is unavailable. Start the local HQ services with '
+                '`./scripts/docker up -d redis couch`, wait until they are '
+                'healthy, and run this command again.'
+            ) from error
         report_path = Path(report).expanduser().resolve()
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(
