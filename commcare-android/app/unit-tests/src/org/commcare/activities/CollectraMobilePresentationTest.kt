@@ -67,6 +67,12 @@ class CollectraMobilePresentationTest {
         assertNotNull(view.findViewById(R.id.collectra_home_greeting))
         assertNotNull(view.findViewById(R.id.main_top_banner))
         assertNotNull(view.findViewById(R.id.collectra_home_wordmark))
+        assertNotNull(view.findViewById(R.id.collectra_home_brand_row))
+        assertNotNull(view.findViewById(R.id.collectra_custom_home_banner))
+        assertEquals(
+            View.GONE,
+            view.findViewById<View>(R.id.collectra_custom_home_banner).visibility,
+        )
         assertNotNull(view.findViewById(R.id.collectra_home_accent))
     }
 
