@@ -5,6 +5,12 @@
 		max_size 500MB
 	}
 
+	handle_path /formplayer/* {
+		reverse_proxy host.docker.internal:8080 {
+			header_up -Origin
+		}
+	}
+
 	@static path /static/*
 	header @static Cache-Control "public, max-age=3600"
 

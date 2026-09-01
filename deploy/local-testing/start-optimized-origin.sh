@@ -74,6 +74,7 @@ echo "Starting Collectra HQ on the private origin port 8001..."
 COLLECTRA_BASE_ADDRESS="$public_host" \
 COLLECTRA_DEFAULT_PROTOCOL=https \
 COLLECTRA_TRUST_PROXY_HTTPS=1 \
+COLLECTRA_FORMPLAYER_URL_WEBAPPS="https://$public_host/formplayer" \
 uv run python manage.py runserver 127.0.0.1:8001 --noreload \
     >"$log_path" 2>&1 &
 hq_pid=$!

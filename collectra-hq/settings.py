@@ -649,6 +649,9 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 FORMPLAYER_URL = 'http://localhost:8080'
+FORMPLAYER_URL_WEBAPPS = os.getenv(
+    'COLLECTRA_FORMPLAYER_URL_WEBAPPS', FORMPLAYER_URL
+)
 
 ####### SMS Queue Settings #######
 
