@@ -38,6 +38,18 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      couchdb:
+        image: apache/couchdb:3.5.0
+        env:
+          COUCHDB_USER: admin
+          COUCHDB_PASSWORD: commcarehq
+        ports:
+          - 5984:5984
+        options: >-
+          --health-cmd "bash -c 'exec 6<>/dev/tcp/127.0.0.1/5984'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: collectra-hq
