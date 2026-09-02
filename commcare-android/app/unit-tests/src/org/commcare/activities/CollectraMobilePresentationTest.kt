@@ -46,12 +46,59 @@ class CollectraMobilePresentationTest {
     }
 
     @Test
-    fun `home card uses a defined surface`() {
+    fun `home card uses Collectra list row surface`() {
         val view = inflater.inflate(R.layout.square_card, null)
         val card = view.findViewById<CardView>(R.id.home_card)
 
         assertNotNull(card.background)
         assertTrue(card.radius > 0)
+        assertNotNull(view.findViewById(R.id.card_icon_chip))
+        assertNotNull(view.findViewById(R.id.card_text))
+        assertEquals(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            card.layoutParams?.width
+                ?: android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+        )
+    }
+
+    @Test
+    fun `home masthead uses Collectra brand without legacy banner card`() {
+        val view = inflater.inflate(R.layout.collectra_home_masthead, null)
+        assertNotNull(view.findViewById(R.id.collectra_home_greeting))
+        assertNotNull(view.findViewById(R.id.main_top_banner))
+        assertNotNull(view.findViewById(R.id.collectra_home_wordmark))
+        assertNotNull(view.findViewById(R.id.collectra_home_brand_row))
+        assertNotNull(view.findViewById(R.id.collectra_custom_home_banner))
+        assertEquals(
+            View.GONE,
+            view.findViewById<View>(R.id.collectra_custom_home_banner).visibility,
+        )
+        assertNotNull(view.findViewById(R.id.collectra_home_accent))
+    }
+
+    @Test
+    fun `login banner uses Collectra typographic masthead`() {
+        val view = inflater.inflate(R.layout.grid_header_top_banner, null)
+        assertNotNull(view.findViewById(R.id.collectra_brand_wordmark))
+        assertEquals(View.GONE, view.findViewById<View>(R.id.main_top_banner).visibility)
+    }
+
+    @Test
+    fun `launch splash presents Collectra brand`() {
+        val view = inflater.inflate(R.layout.collectra_splash, null)
+        assertNotNull(view.findViewById(R.id.collectra_splash_mark))
+        assertNotNull(view.findViewById(R.id.collectra_splash_title))
+        assertNotNull(view.findViewById(R.id.collectra_splash_tagline))
+    }
+
+    @Test
+    fun `launch theme window matches Collectra splash surface`() {
+        val attrs = intArrayOf(android.R.attr.windowBackground)
+        val typed = ApplicationProvider.getApplicationContext<android.content.Context>()
+            .obtainStyledAttributes(R.style.CollectraLaunchTheme, attrs)
+        val windowBackground = typed.getDrawable(0)
+        typed.recycle()
+        assertNotNull(windowBackground)
     }
 
     @Test

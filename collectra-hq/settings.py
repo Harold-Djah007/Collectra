@@ -649,6 +649,9 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 FORMPLAYER_URL = 'http://localhost:8080'
+FORMPLAYER_URL_WEBAPPS = os.getenv(
+    'COLLECTRA_FORMPLAYER_URL_WEBAPPS', FORMPLAYER_URL
+)
 
 ####### SMS Queue Settings #######
 
@@ -1223,6 +1226,12 @@ if _collectra_base_address:
 _collectra_default_protocol = os.environ.get('COLLECTRA_DEFAULT_PROTOCOL')
 if _collectra_default_protocol:
     DEFAULT_PROTOCOL = _collectra_default_protocol
+
+# Collectra is self-hosted. Grant the full software-plan feature set unless
+# tests are running or the operator explicitly disables this with
+# COLLECTRA_ENTERPRISE_MODE=0.
+if not UNIT_TESTING and os.environ.get('COLLECTRA_ENTERPRISE_MODE', '1') == '1':
+    ENTERPRISE_MODE = True
 
 if os.environ.get('COLLECTRA_TRUST_PROXY_HTTPS') == '1':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

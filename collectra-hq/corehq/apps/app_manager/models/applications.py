@@ -134,6 +134,7 @@ from corehq.apps.users.dbaccessors import get_display_name_for_user_id
 from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
+from corehq.apps.app_manager.models.install_codes import AppInstallCode
 from corehq.util import bitly
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
@@ -629,39 +630,44 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def get_odk_qr_code(self, with_media=False, build_profile_id=None, download_target_version=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
-        filename = 'qrcode.png' if not download_target_version else 'qrcode-targeted.png'
+        url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+        kwargs = []
+        if build_profile_id is not None:
+            kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
+        if download_target_version:
+            kwargs.append('download_target_version=true')
+        if kwargs:
+            url += '?' + '&'.join(kwargs)
+
+        url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()[:16]
+        filename = f'qrcode-{url_hash}.png'
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
             from corehq.apps.settings.views import get_qrcode
-            url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            kwargs = []
-            if build_profile_id is not None:
-                kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
-            if download_target_version:
-                kwargs.append('download_target_version=true')
-            url += '?' + '&'.join(kwargs)
-
             qr_content = get_qrcode(url)
             self.lazy_put_attachment(qr_content, filename,
                                      content_type="image/png")
             return qr_content
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
+        view_url = reverse(view_name, args=[self.domain, self._id])
+        if build_profile_id is not None:
+            long_url = urljoin(
+                self.url_base,
+                f'{view_url}?profile={build_profile_id}'
+            )
+        else:
+            long_url = urljoin(self.url_base, view_url)
+
         try:
-            view_url = reverse(view_name, args=[self.domain, self._id])
-            if build_profile_id is not None:
-                long_url = urljoin(
-                    self.url_base,
-                    f'{view_url}?profile={build_profile_id}'
-                )
-            else:
-                long_url = urljoin(self.url_base, view_url)
             shortened_url = bitly.shorten(long_url)
+            if shortened_url:
+                return shortened_url
         except Exception:
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
-        else:
-            return shortened_url
+
+        return AppInstallCode.absolute_url_for(self.domain, long_url, self.url_base)
 
     def get_short_odk_url(self, with_media=False, build_profile_id=None):
         if not build_profile_id:

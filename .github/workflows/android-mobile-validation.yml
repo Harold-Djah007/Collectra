@@ -1,0 +1,75 @@
+name: Collectra Mobile validation
+
+on:
+  pull_request:
+    paths:
+      - "commcare-android/**"
+      - ".github/workflows/android-mobile-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "commcare-android/**"
+      - ".github/workflows/android-mobile-validation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Run complete CommCare debug unit suite
+        working-directory: commcare-android
+        run: >-
+          bash ./gradlew
+          :app:testCommcareDebugUnitTest
+          --no-daemon
+          --stacktrace
+
+      - name: Run Android lint
+        working-directory: commcare-android
+        run: >-
+          bash ./gradlew
+          :app:lintCommcareDebug
+          --no-daemon
+          --stacktrace
+
+      - name: Build Collectra debug APK
+        working-directory: commcare-android
+        run: >-
+          bash ./gradlew
+          :app:assembleCommcareDebug
+          --no-daemon
+          --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Collectra-debug
+          path: commcare-android/app/build/outputs/apk/commcare/debug/app-commcare-debug.apk
+          if-no-files-found: error
+
+      - name: Upload Android quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Collectra-Android-quality-reports
+          path: |
+            commcare-android/app/build/reports/tests/
+            commcare-android/app/build/reports/lint-results-*.html
+            commcare-android/app/build/reports/lint-results-*.xml
+          if-no-files-found: ignore
+          retention-days: 14

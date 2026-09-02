@@ -21,18 +21,18 @@
             android:id="@+id/nav_drawer_frame"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/white"
+            android:background="@drawable/collectra_screen_background"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/cc_core_bg"
+                android:background="@android:color/transparent"
                 android:orientation="vertical"
-                android:paddingStart="8dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="16dp"
+                android:paddingStart="4dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="4dp"
+                android:paddingBottom="20dp"
                 tools:viewBindingIgnore="true">
                 <androidx.core.widget.NestedScrollView
                     android:id="@+id/nsv_home_screen"
@@ -109,6 +109,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_below="@id/cvConnectMessage"
+                            android:layoutAnimation="@anim/collectra_list_cascade"
                             android:nestedScrollingEnabled="false"
                             android:scrollbars="vertical" />
                     </RelativeLayout>
