@@ -98,6 +98,8 @@ jobs:
         run: uv run python manage.py makemigrations --check --dry-run
 
       - name: Apply database migrations
+        env:
+          CCHQ_IS_FRESH_INSTALL: "1"
         run: uv run python manage.py migrate --noinput
 
       - name: Run focused HQ tests
