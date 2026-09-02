@@ -140,7 +140,7 @@ def test_rejects_mapping_count_mismatch():
             load_and_validate_manifest(path, 'safisana')
 
 
-def test_rejects_duplicate_app_path():
+def test_rejects_duplicate_menu_item_mapping():
     with TemporaryDirectory() as directory:
         path = write_manifest(Path(directory))
 
@@ -150,7 +150,7 @@ def test_rejects_duplicate_app_path():
 
         mutate_manifest(path, duplicate_mapping)
 
-        with pytest.raises(CommandError, match='Duplicate app/path'):
+        with pytest.raises(CommandError, match='Duplicate menu item mapping'):
             load_and_validate_manifest(path, 'safisana')
 
 
