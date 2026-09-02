@@ -59,19 +59,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:6.8.23
-        env:
-          discovery.type: single-node
-          xpack.security.enabled: "false"
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-        ports:
-          - 9200:9200
-        options: >-
-          --health-cmd "curl --fail http://localhost:9200/_cluster/health"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 20
     defaults:
       run:
         working-directory: collectra-hq
@@ -91,6 +78,32 @@ jobs:
 
       - name: Install Python dependencies
         run: uv sync --frozen --compile-bytecode
+
+      - name: Start CommCare-compatible Elasticsearch
+        run: |
+          docker build \
+            --tag collectra-elasticsearch6-ci \
+            --file docker/files/Dockerfile.es.6 \
+            docker
+
+          docker run --detach \
+            --name collectra-elasticsearch6-ci \
+            --publish 9200:9200 \
+            --env discovery.type=single-node \
+            --env ES_JAVA_OPTS="-Xms512m -Xmx512m" \
+            collectra-elasticsearch6-ci
+
+          for attempt in {1..30}; do
+            if curl --fail --silent \
+              http://127.0.0.1:9200/_cluster/health \
+              >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs collectra-elasticsearch6-ci
+          exit 1
 
       - name: Lint Collectra HQ changes
         run: |
