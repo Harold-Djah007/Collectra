@@ -126,7 +126,7 @@ jobs:
       - name: Apply database migrations
         env:
           CCHQ_IS_FRESH_INSTALL: "1"
-        run: uv run python manage.py migrate --noinput
+        run: uv run python manage.py migrate --noinput --no-reindex
 
       - name: Run focused HQ tests
         run: |
