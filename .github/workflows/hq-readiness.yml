@@ -130,6 +130,9 @@ jobs:
 
       - name: Run focused HQ tests
         run: |
+          if [ ! -e "$GITHUB_WORKSPACE/collectra-hq/.git" ]; then
+            ln -s "$GITHUB_WORKSPACE/.git" "$GITHUB_WORKSPACE/collectra-hq/.git"
+          fi
           uv run pytest --nomigrations \
             corehq/apps/hqmedia/tests/test_audit.py \
             corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
