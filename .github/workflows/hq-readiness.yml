@@ -130,7 +130,7 @@ jobs:
 
       - name: Run focused HQ tests
         run: |
-          uv run pytest \
+          uv run pytest --nomigrations \
             corehq/apps/hqmedia/tests/test_audit.py \
             corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
             corehq/apps/hqmedia/tests/test_export_menu_icon_inventory.py \
