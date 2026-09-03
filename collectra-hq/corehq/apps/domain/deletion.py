@@ -362,6 +362,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
     ModelDeletion('app_manager', 'CredentialApplication', 'domain'),
     ModelDeletion('app_manager', 'PublicWebform', 'domain'),
+    ModelDeletion('app_manager', 'AppInstallCode', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),

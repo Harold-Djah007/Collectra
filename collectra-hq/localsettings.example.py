@@ -90,3 +90,13 @@ LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
 #    'and_more': []
 }
+
+####### Email (Collectra) ########
+# Prefer env vars / ~/.config/collectra/email.env via start-collectra.
+# When COLLECTRA_EMAIL_LOGIN and COLLECTRA_EMAIL_PASSWORD are set, Collectra
+# switches to SMTP automatically (see settings.py).
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_LOGIN = 'you@gmail.com'
+# EMAIL_PASSWORD = 'your-app-password'
+# EMAIL_SMTP_HOST = 'smtp.gmail.com'
+# EMAIL_SMTP_PORT = 587

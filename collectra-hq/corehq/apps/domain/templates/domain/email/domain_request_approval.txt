@@ -2,19 +2,18 @@
 {% blocktrans %}Hi!{% endblocktrans %}
 
 {% blocktrans %}
-    {{ inviter }} has approved your request to join the {{ domain }} project space on CommCare.
+    {{ inviter }} has approved your request to join the {{ domain }} project space on Collectra.
     This approval expires in {{ days }} day(s).
 {% endblocktrans %}
 
-{% blocktrans %}CommCare is a tool that helps manage frontline workers around the world.{% endblocktrans %}
+{% blocktrans %}Collectra is a data collection and management platform for field teams and project spaces.{% endblocktrans %}
 
 {% blocktrans %}To confirm this approval go to: {{ url }}{% endblocktrans %}
 
 {% blocktrans %}
     If you think this is a mistake, you can go ahead and ignore this email.
-    To find out more about CommCare visit http://www.commcarehq.org/.
 {% endblocktrans %}
 
-{% blocktrans %}Thanks for using our site!{% endblocktrans %}
+{% blocktrans %}Thanks for using Collectra!{% endblocktrans %}
 
-{% blocktrans %}-The CommCare Team{% endblocktrans %}
+{% blocktrans %}-The Collectra Team{% endblocktrans %}
