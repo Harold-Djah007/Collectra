@@ -1031,10 +1031,10 @@ KAFKA_API_VERSION = None
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
 COMMCARE_HQ_NAME = {
-    "default": "CommCare HQ",
+    "default": "Collectra HQ",
 }
 COMMCARE_NAME = {
-    "default": "CommCare",
+    "default": "Collectra",
 }
 
 ALLOW_MAKE_SUPERUSER_COMMAND = True
