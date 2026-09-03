@@ -92,6 +92,7 @@ from .forms import (  # noqa: F401
     ScheduleVisit,
     ShadowForm,
 )
+from .install_codes import AppInstallCode  # noqa: F401
 from .mixins import (  # noqa: F401
     CommentMixin,
     CustomIcon,

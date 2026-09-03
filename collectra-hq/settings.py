@@ -1031,10 +1031,10 @@ KAFKA_API_VERSION = None
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
 COMMCARE_HQ_NAME = {
-    "default": "CommCare HQ",
+    "default": "Collectra HQ",
 }
 COMMCARE_NAME = {
-    "default": "CommCare",
+    "default": "Collectra",
 }
 
 ALLOW_MAKE_SUPERUSER_COMMAND = True
@@ -1223,6 +1223,12 @@ if _collectra_base_address:
 _collectra_default_protocol = os.environ.get('COLLECTRA_DEFAULT_PROTOCOL')
 if _collectra_default_protocol:
     DEFAULT_PROTOCOL = _collectra_default_protocol
+
+# Collectra is self-hosted. Grant the full software-plan feature set unless
+# tests are running or the operator explicitly disables this with
+# COLLECTRA_ENTERPRISE_MODE=0.
+if not UNIT_TESTING and os.environ.get('COLLECTRA_ENTERPRISE_MODE', '1') == '1':
+    ENTERPRISE_MODE = True
 
 if os.environ.get('COLLECTRA_TRUST_PROXY_HTTPS') == '1':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -1720,6 +1726,29 @@ EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 # EMAIL_USE_TLS is set above
 # so it can be overridden in localsettings (e.g. in a dev environment)
+
+# Collectra: enable real SMTP from env without committing secrets.
+# When COLLECTRA_EMAIL_LOGIN + COLLECTRA_EMAIL_PASSWORD are set, switch off the
+# console backend so invitation Resend reaches real inboxes.
+_collectra_email_login = os.environ.get('COLLECTRA_EMAIL_LOGIN')
+_collectra_email_password = os.environ.get('COLLECTRA_EMAIL_PASSWORD')
+if _collectra_email_login and _collectra_email_password:
+    EMAIL_LOGIN = _collectra_email_login
+    EMAIL_PASSWORD = _collectra_email_password
+    EMAIL_HOST_USER = _collectra_email_login
+    EMAIL_HOST_PASSWORD = _collectra_email_password
+    EMAIL_SMTP_HOST = os.environ.get('COLLECTRA_EMAIL_SMTP_HOST', EMAIL_SMTP_HOST)
+    EMAIL_HOST = EMAIL_SMTP_HOST
+    EMAIL_SMTP_PORT = int(os.environ.get('COLLECTRA_EMAIL_SMTP_PORT', EMAIL_SMTP_PORT))
+    EMAIL_PORT = EMAIL_SMTP_PORT
+    EMAIL_USE_TLS = os.environ.get('COLLECTRA_EMAIL_USE_TLS', '1') == '1'
+    EMAIL_BACKEND = os.environ.get(
+        'COLLECTRA_EMAIL_BACKEND',
+        'django.core.mail.backends.smtp.EmailBackend',
+    )
+    _collectra_from = os.environ.get('COLLECTRA_DEFAULT_FROM_EMAIL', _collectra_email_login)
+    DEFAULT_FROM_EMAIL = _collectra_from
+    SERVER_EMAIL = os.environ.get('COLLECTRA_SERVER_EMAIL', _collectra_from)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
