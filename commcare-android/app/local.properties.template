@@ -4,9 +4,18 @@
 ## Configure to the file containing your key properties
 #file.key.properties=
 
-## Set the below directories to pull in resources from the ant 
+## Set the below directories to pull in resources from the ant
 ## build targets from javarosa and commcare (point each to the
-## dist folders of those repos)  
+## dist folders of those repos)
 #build.source=true
 #javarosa.libs=
 #commcare.libs=
+
+## Collectra HQ base URL (compiled into the APK)
+## Required for field phones. Must be a public HTTPS host once you have a domain.
+## LAN-only example (same Wi-Fi as HQ only — will NOT work on cellular):
+#COLLECTRA_HQ_BASE_URL=http://192.168.1.195:8000
+## Field / production example (use after DNS + HTTPS are live):
+#COLLECTRA_HQ_BASE_URL=https://collectra.example.com
+## If blank: See Available Apps falls back to Dimagi CommCare HQ, and app codes
+## resolve via bit.ly — wrong for Collectra.

@@ -12,7 +12,10 @@ Set the public HTTPS base address in `local.properties` before building the APK:
 COLLECTRA_HQ_BASE_URL=https://collectra.example.com
 ```
 
-The value is compiled into the APK and is used by **See Available Apps**. Collectra app profiles
+The value is compiled into the APK and is used by **See Available Apps** and by **Enter
+your app code**. Collectra HQ issues local install codes at `/s/<code>` when Bitly is
+not configured. The same `COLLECTRA_HQ_BASE_URL` must be compiled into the APK so those
+codes resolve to Collectra HQ instead of `bit.ly`. Collectra app profiles
 must use the same public address for their restore, submission, update, and heartbeat URLs. A local
 address such as `192.168.x.x`, `172.x.x.x`, `localhost`, or a WSL address is reachable only on the
 corresponding local network and cannot work over cellular data.
@@ -34,6 +37,14 @@ remain as fallbacks for compatibility.
 - Keep the Android `INTERNET` and `ACCESS_NETWORK_STATE` permissions enabled.
 - Do not add a `NetworkType.UNMETERED` constraint to sync workers; `NetworkType.CONNECTED` allows
   both Wi-Fi and cellular data.
+
+Until a domain exists, build a LAN APK with:
+
+```bash
+./scripts/build-field-apk.sh http://192.168.1.195:8000
+```
+
+See `deploy/production/PRE_HOST_CHECKLIST.md` for what is blocked on hosting.
 
 ## Acceptance check
 

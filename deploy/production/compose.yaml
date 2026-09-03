@@ -1,0 +1,327 @@
+name: collectra
+
+x-hq-environment: &hq-environment
+  CUSTOMSETTINGS: deployment.production.localsettings
+  COLLECTRA_HOST: ${COLLECTRA_HOST:?COLLECTRA_HOST is required}
+  COLLECTRA_ADMIN_EMAIL: ${COLLECTRA_ADMIN_EMAIL:?COLLECTRA_ADMIN_EMAIL is required}
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ${POSTGRES_DB:-commcarehq}
+  POSTGRES_USER: ${POSTGRES_USER:-commcarehq}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+  COUCHDB_HOST: couch:5984
+  COUCHDB_DATABASE: ${COUCHDB_DATABASE:-commcarehq}
+  COUCHDB_USER: ${COUCHDB_USER:-collectra}
+  COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:?COUCHDB_PASSWORD is required}
+  REDIS_URL: redis://redis:6379
+  ELASTICSEARCH_HOST: elasticsearch6
+  ELASTICSEARCH_PORT: "9200"
+  KAFKA_BROKER: kafka:9092
+  MINIO_URL: http://minio:9980/
+  MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+  FORMPLAYER_URL: http://formplayer:8080
+  FORMPLAYER_AUTH_KEY: ${FORMPLAYER_AUTH_KEY:?FORMPLAYER_AUTH_KEY is required}
+  COLLECTRA_BASE_ADDRESS: ${COLLECTRA_HOST}
+  COLLECTRA_DEFAULT_PROTOCOL: https
+  COLLECTRA_TRUST_PROXY_HTTPS: "1"
+  # Optional SMTP (same vars as ~/.config/collectra/email.env). Leave blank → console backend.
+  COLLECTRA_EMAIL_LOGIN: ${COLLECTRA_EMAIL_LOGIN:-}
+  COLLECTRA_EMAIL_PASSWORD: ${COLLECTRA_EMAIL_PASSWORD:-}
+  COLLECTRA_EMAIL_SMTP_HOST: ${COLLECTRA_EMAIL_SMTP_HOST:-smtp.gmail.com}
+  COLLECTRA_EMAIL_SMTP_PORT: ${COLLECTRA_EMAIL_SMTP_PORT:-587}
+  COLLECTRA_EMAIL_USE_TLS: ${COLLECTRA_EMAIL_USE_TLS:-1}
+  COLLECTRA_DEFAULT_FROM_EMAIL: ${COLLECTRA_DEFAULT_FROM_EMAIL:-}
+  COLLECTRA_SERVER_EMAIL: ${COLLECTRA_SERVER_EMAIL:-}
+
+x-hq-service: &hq-service
+  image: collectra-hq:${COLLECTRA_IMAGE_TAG:-production}
+  build:
+    context: ../../collectra-hq
+    dockerfile: Dockerfile_incl
+  environment: *hq-environment
+  restart: unless-stopped
+  volumes:
+    - shared-files:/sharedfiles
+    - ${COLLECTRA_BACKUP_DIR:-./backups}:/backups
+  depends_on:
+    postgres:
+      condition: service_healthy
+    couch:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    elasticsearch6:
+      condition: service_healthy
+    kafka:
+      condition: service_healthy
+    minio:
+      condition: service_healthy
+
+services:
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    environment:
+      COLLECTRA_HOST: ${COLLECTRA_HOST}
+      CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL:?CADDY_ACME_EMAIL is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+      formplayer:
+        condition: service_started
+
+  web:
+    <<: *hq-service
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        mkdir -p /sharedfiles/log /sharedfiles/restore /sharedfiles/temp &&
+        uv run gunicorn
+        --bind 0.0.0.0:8000
+        --workers 2
+        --worker-class gevent
+        --timeout 900
+        --access-logfile -
+        --error-logfile -
+        deployment.gunicorn.collectra_wsgi:application
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import socket; socket.create_connection(('127.0.0.1', 8000), 5).close()
+      interval: 20s
+      timeout: 8s
+      retries: 10
+      start_period: 90s
+
+  celery:
+    <<: *hq-service
+    command:
+      - uv
+      - run
+      - celery
+      - -A
+      - corehq
+      - worker
+      - --loglevel=INFO
+      - --concurrency=2
+      - --queues=analytics_queue,async_restore_queue,background_queue,case_import_queue,case_rule_queue,celery,celery_periodic,email_queue,export_download_queue,geospatial_queue,icds_aggregation_queue,icds_dashboard_reports_queue,linked_domain_queue,logistics_background_queue,logistics_reminder_queue,malt_generation_queue,reminder_case_update_queue,reminder_queue,reminder_rule_queue,repeat_record_queue,saved_exports_queue,send_report_throttled,sms_queue,submission_reprocessing_queue,sumologic_logs_queue,ucr_indicator_queue,ucr_queue,ush_background_tasks
+
+  celery-beat:
+    <<: *hq-service
+    command:
+      - uv
+      - run
+      - celery
+      - -A
+      - corehq
+      - beat
+      - --loglevel=INFO
+      - --schedule=/sharedfiles/celerybeat-schedule
+
+  pillowtop:
+    <<: *hq-service
+    environment:
+      <<: *hq-environment
+      PILLOWTOP_MACHINE_ID: collectra-production
+    command:
+      - uv
+      - run
+      - python
+      - manage.py
+      - run_ptop
+      - --pillow-key=core
+      - --processor-chunk-size=1
+
+  formplayer:
+    image: dimagi/formplayer:latest
+    command: ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+    restart: unless-stopped
+    environment:
+      COMMCARE_HOST: http://web:8000
+      COMMCARE_ALTERNATE_ORIGINS: https://${COLLECTRA_HOST}
+      AUTH_KEY: ${FORMPLAYER_AUTH_KEY}
+      EXTERNAL_REQUEST_MODE: replace-host
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_DATABASE: ${FORMPLAYER_DATABASE:-formplayer}
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:-commcarehq}
+      # Formplayer's upstream property currently uses the misspelled
+      # POSTGRESQL_PASSWROD variable name. Set both names for compatibility.
+      POSTGRESQL_PASSWROD: ${POSTGRES_PASSWORD}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOSTNAME: redis
+      JAVA_TOOL_OPTIONS: -Xms256m -Xmx1024m
+    expose:
+      - "8080"
+      - "8081"
+    volumes:
+      - formplayer-data:/application/dbs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8081'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
+
+  postgres:
+    image: dimagi/docker-postgresql:14
+    restart: unless-stopped
+    shm_size: 1gb
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-commcarehq}
+      POSTGRES_USER: ${POSTGRES_USER:-commcarehq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      FORMPLAYER_DATABASE: ${FORMPLAYER_DATABASE:-formplayer}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-commcarehq} -d ${POSTGRES_DB:-commcarehq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  couch:
+    build:
+      context: ../../collectra-hq/docker/files
+      dockerfile: Dockerfile.couch
+    restart: unless-stopped
+    command: ["--with-haproxy"]
+    environment:
+      COUCHDB_USER: ${COUCHDB_USER:-collectra}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD}
+    volumes:
+      - couch-data:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:5984/_up >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  elasticsearch6:
+    build:
+      context: ../../collectra-hq/docker
+      dockerfile: files/Dockerfile.es.6
+    restart: unless-stopped
+    environment:
+      ES_JAVA_OPTS: -Xms750m -Xmx750m
+      discovery.type: single-node
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+      - ../../collectra-hq/docker/files/elasticsearch_6.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      interval: 15s
+      timeout: 8s
+      retries: 30
+      start_period: 30s
+
+  zookeeper:
+    image: zookeeper:3.7
+    restart: unless-stopped
+    environment:
+      ZOO_4LW_COMMANDS_WHITELIST: ruok
+      JVMFLAGS: -Xms128m -Xmx256m
+    volumes:
+      - zookeeper-data:/data
+      - zookeeper-log:/datalog
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc 127.0.0.1 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  kafka:
+    image: confluentinc/cp-kafka:7.2.14
+    restart: unless-stopped
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: "1"
+      KAFKA_INTER_BROKER_LISTENER_NAME: HQ_KAFKA
+      KAFKA_LISTENERS: HQ_KAFKA://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: HQ_KAFKA://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: HQ_KAFKA:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "cub kafka-ready -b 127.0.0.1:9092 1 20"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server --address :9980 --console-address :9981 /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-data:/data
+      - minio-config:/root/.minio
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mc alias set local http://127.0.0.1:9980
+          "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null &&
+          mc ready local
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  caddy-data:
+  caddy-config:
+  shared-files:
+  formplayer-data:
+  postgres-data:
+  couch-data:
+  redis-data:
+  elasticsearch-data:
+  zookeeper-data:
+  zookeeper-log:
+  kafka-data:
+  minio-data:
+  minio-config:

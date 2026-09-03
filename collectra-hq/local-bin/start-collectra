@@ -54,13 +54,46 @@ if [[ -z "$wsl_ip" ]]; then
     exit 1
 fi
 
+# Optional SMTP credentials for invitation / notification email.
+# Prefer a local env file so secrets are not committed to git:
+#   ~/.config/collectra/email.env
+# or:
+#   $state_root/email.env
+for email_env in \
+    "${COLLECTRA_EMAIL_ENV:-}" \
+    "$HOME/.config/collectra/email.env" \
+    "$state_root/email.env"
+do
+    if [[ -n "$email_env" && -f "$email_env" ]]; then
+        set -a
+        # shellcheck disable=SC1090
+        source "$email_env"
+        set +a
+        # Google App Passwords are often copied with spaces; SMTP wants 16 chars.
+        if [[ -n "${COLLECTRA_EMAIL_PASSWORD:-}" ]]; then
+            export COLLECTRA_EMAIL_PASSWORD="${COLLECTRA_EMAIL_PASSWORD// /}"
+        fi
+        echo "Loaded Collectra email settings from $email_env"
+        break
+    fi
+done
+
+if [[ -n "${COLLECTRA_EMAIL_LOGIN:-}" && -n "${COLLECTRA_EMAIL_PASSWORD:-}" ]]; then
+    echo "SMTP email enabled for ${COLLECTRA_EMAIL_LOGIN}"
+else
+    echo "SMTP email not configured (console backend). Set COLLECTRA_EMAIL_LOGIN/PASSWORD to enable Resend."
+fi
+
 if [[ -n "${COLLECTRA_BASE_ADDRESS:-}" ]]; then
-    export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-https}"
+    # Local LAN IPs and :8000 are almost always plain HTTP; require operators to set
+    # COLLECTRA_DEFAULT_PROTOCOL=https explicitly for TLS endpoints.
+    export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-http}"
 else
     export COLLECTRA_BASE_ADDRESS="${wsl_ip}:8000"
     export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-http}"
 fi
 export COMMCARE_HOST="http://${wsl_ip}:8000"
+export COMMCARE_ALTERNATE_ORIGINS="http://localhost:8000,http://127.0.0.1:8000,${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS},http://${wsl_ip}:8000"
 
 echo "Collectra address: http://localhost:8000"
 echo "Published mobile address: ${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS}"
@@ -70,7 +103,8 @@ echo "Starting Collectra services..."
 ./scripts/docker up -d \
     postgres couch redis elasticsearch6 \
     zookeeper kafka minio
-./scripts/docker up -d --force-recreate formplayer
+COMMCARE_HOST="$COMMCARE_HOST" COMMCARE_ALTERNATE_ORIGINS="$COMMCARE_ALTERNATE_ORIGINS" \
+    ./scripts/docker up -d --force-recreate formplayer
 
 echo "Waiting for PostgreSQL..."
 until docker exec hqservice-postgres-1 \
@@ -100,15 +134,34 @@ if fuser 8000/tcp >/dev/null 2>&1; then
     sleep 2
 fi
 
-# Stop legacy Docker workers. The managed workers below use the current checkout.
-docker stop hqservice-pillowtop-1 hqservice-celery-1 >/dev/null 2>&1 || true
+# Stop legacy Docker app containers. Host gunicorn + managed workers use this checkout.
+# Leaving hqservice-web-1 running causes port-8000 fights and confusing 404s.
+legacy_containers=(
+    hqservice-web-1
+    hqservice-pillowtop-1
+    hqservice-celery-1
+    hqservice-config-1
+)
+stopped_orphans=()
+for container in "${legacy_containers[@]}"
+do
+    if docker stop "$container" >/dev/null 2>&1; then
+        stopped_orphans+=("$container")
+    fi
+done
+if ((${#stopped_orphans[@]})); then
+    echo "Stopped legacy Docker containers: ${stopped_orphans[*]}"
+fi
 stop_managed_process "$state_root/pillowtop.pid" "manage.py run_ptop"
 stop_managed_process "$state_root/celery.pid" "celery -A corehq worker"
 
 echo "Checking Collectra configuration..."
 uv run python manage.py check
 
-celery_queues="celery,analytics_queue,async_restore_queue,case_import_queue,email_queue,export_download_queue,saved_exports_queue,submission_reprocessing_queue"
+echo "Applying database migrations..."
+uv run python manage.py migrate --noinput
+
+celery_queues="celery,analytics_queue,async_restore_queue,background_queue,case_import_queue,case_rule_queue,email_queue,export_download_queue,reminder_case_update_queue,reminder_queue,reminder_rule_queue,repeat_record_queue,saved_exports_queue,sms_queue,submission_reprocessing_queue,ucr_queue"
 
 echo "Starting Celery worker..."
 uv run celery -A corehq worker \

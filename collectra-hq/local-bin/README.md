@@ -1,7 +1,8 @@
 # Collectra local launchers
 
 Use `./local-bin/start-collectra` for normal development on the laptop or the
-same local network.
+same local network. It stops leftover `hqservice-web-1` / celery / pillowtop
+Docker containers so they cannot fight the host gunicorn on port 8000.
 
 Use `./local-bin/start-collectra-public` for a temporary cellular-data test. It
 starts a Cloudflare Quick Tunnel, publishes a temporary HTTPS hostname, and

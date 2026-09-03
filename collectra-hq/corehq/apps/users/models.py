@@ -2856,11 +2856,11 @@ class Invitation(models.Model):
             if domain_request is None:
                 text_content = render_to_string("domain/email/domain_invite.txt", params)
                 html_content = render_to_string("domain/email/bootstrap3/domain_invite.html", params)
-                subject = _('Invitation from %s to join CommCareHQ') % inviter.formatted_name
+                subject = _('Invitation from %s to join Collectra HQ') % inviter.formatted_name
             else:
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
                 html_content = render_to_string("domain/email/domain_request_approval.html", params)
-                subject = _('Request to join CommCareHQ approved')
+                subject = _('Request to join Collectra HQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[inviter.get_email()],
@@ -2891,7 +2891,7 @@ class Invitation(models.Model):
         :return:
         """
         invited_user = self.email
-        subject = _('{} accepted your invitation to CommCare HQ').format(invited_user)
+        subject = _('{} accepted your invitation to Collectra HQ').format(invited_user)
         recipient = WebUser.get_by_user_id(self.invited_by).get_email()
         context = {
             'invited_user': invited_user,

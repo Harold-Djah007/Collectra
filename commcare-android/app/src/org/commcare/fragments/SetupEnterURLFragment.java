@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import org.commcare.dalvik.R;
+import org.commcare.network.AppInstallCodeResolver;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -81,11 +82,7 @@ public class SetupEnterURLFragment extends Fragment {
         if (url == null || url.length() == 0) {
             return url;
         }
-        // if it's not the last (which should be "Raw") choice, we'll use the prefix
-        if (!url.contains("://")) { // if there is no (http|jr):// prefix, we'll assume it's a http://bit.ly/ URL
-            url = "http://bit.ly/" + url;
-        }
-        return url;
+        return AppInstallCodeResolver.resolve(url);
     }
 
     @Override

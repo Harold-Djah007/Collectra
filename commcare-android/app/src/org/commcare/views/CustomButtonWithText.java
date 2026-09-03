@@ -3,8 +3,8 @@ package org.commcare.views;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -86,22 +86,30 @@ public abstract class CustomButtonWithText extends RelativeLayout {
     }
 
     private void setColor(int backgroundColor) {
-        ColorDrawable colorDrawable = new ColorDrawable(backgroundColor);
-        ColorDrawable disabledColor = new ColorDrawable(getResources().getColor(R.color.grey));
+        float radius = getResources().getDisplayMetrics().density * 18f;
 
-        int color = ViewUtil.getColorDrawableColor(colorDrawable);
+        GradientDrawable colorDrawable = new GradientDrawable();
+        colorDrawable.setShape(GradientDrawable.RECTANGLE);
+        colorDrawable.setCornerRadius(radius);
+        colorDrawable.setColor(backgroundColor);
 
+        GradientDrawable disabledColor = new GradientDrawable();
+        disabledColor.setShape(GradientDrawable.RECTANGLE);
+        disabledColor.setCornerRadius(radius);
+        disabledColor.setColor(getResources().getColor(R.color.grey));
+
+        int color = backgroundColor;
         float[] hsvOutput = new float[3];
         Color.colorToHSV(color, hsvOutput);
-
-        hsvOutput[2] = (float)(hsvOutput[2] / 1.5);
-
+        hsvOutput[2] = (float)(hsvOutput[2] / 1.35);
         int selectedColor = Color.HSVToColor(hsvOutput);
 
-        ColorDrawable pressedBackground = new ColorDrawable(selectedColor);
+        GradientDrawable pressedBackground = new GradientDrawable();
+        pressedBackground.setShape(GradientDrawable.RECTANGLE);
+        pressedBackground.setCornerRadius(radius);
+        pressedBackground.setColor(selectedColor);
 
         StateListDrawable sld = new StateListDrawable();
-
         sld.addState(new int[]{-android.R.attr.state_enabled}, disabledColor);
         sld.addState(new int[]{android.R.attr.state_pressed}, pressedBackground);
         sld.addState(StateSet.WILD_CARD, colorDrawable);

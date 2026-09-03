@@ -41,7 +41,7 @@ public abstract class ConnectionDiagnosticTask<R> extends CommCareTask<Void, Str
 
     //strings used to in various diagnostics tests. Change these values if the URLs/HTML code is changed.
     private static final String googleURL = "www.google.com";
-    private static final String commcareURL = "http://www.commcarehq.org/serverup.txt";
+    private static final String defaultCommcareURL = "https://www.commcarehq.org/serverup.txt";
     private static final String commcareHTML = "success";
     private static final String pingPrefix = "ping -c 1 ";
 
@@ -63,6 +63,11 @@ public abstract class ConnectionDiagnosticTask<R> extends CommCareTask<Void, Str
         TAG = ConnectionDiagnosticTask.class.getSimpleName();
     }
 
+    private String hqServerUpUrl() {
+        String configured = org.commcare.network.CollectraHostUrls.getServerUpUrl();
+        return configured != null && !configured.isEmpty() ? configured : defaultCommcareURL;
+    }
+
     @Override
     protected Test doTaskBackground(Void... params) {
         Test out = null;
@@ -71,7 +76,7 @@ public abstract class ConnectionDiagnosticTask<R> extends CommCareTask<Void, Str
             Logger.log(CONNECTION_DIAGNOSTIC_REPORT, logNotConnectedMessage);
         } else if (!pingSuccess(googleURL)) {
             out = Test.googlePing;
-        } else if (!pingCC(commcareURL)) {
+        } else if (!pingCC(hqServerUpUrl())) {
             out = Test.commCarePing;
         } else {
             Logger.log(CONNECTION_DIAGNOSTIC_REPORT, logConnectionSuccessMessage);

@@ -92,9 +92,19 @@ public class SigningUtil {
         }
 
         String host = url.getHost();
-        if (!WHITELISTED_URL_HOSTS_REGEX.matcher(host).find()) {
+        if (!WHITELISTED_URL_HOSTS_REGEX.matcher(host).find()
+                && !isConfiguredCollectraHost(host)) {
             throw new DisallowedSMSInstallURLException(url + " is not an approved URL.");
         }
+    }
+
+    /**
+     * Allow SMS install links that target the Collectra HQ host baked into this
+     * APK via COLLECTRA_HQ_BASE_URL (in addition to *.commcarehq.org).
+     */
+    private static boolean isConfiguredCollectraHost(String host) {
+        String collectraHost = org.commcare.network.CollectraHostUrls.getConfiguredHost();
+        return collectraHost != null && collectraHost.equalsIgnoreCase(host);
     }
 
     // given the raw trimmed byte paylaod, return the message (everything before the signature)
