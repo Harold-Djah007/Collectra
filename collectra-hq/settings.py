@@ -1751,13 +1751,13 @@ if _collectra_email_login and _collectra_email_password:
     SERVER_EMAIL = os.environ.get('COLLECTRA_SERVER_EMAIL', _collectra_from)
 
 NO_HTML_EMAIL_MESSAGE = """
-This is an email from CommCare HQ. You're seeing this message because your
-email client chose to display the plaintext version of an email that CommCare
+This is an email from Collectra HQ. You're seeing this message because your
+email client chose to display the plaintext version of an email that Collectra
 HQ can only provide in HTML.  Please set your email client to view this email
 in HTML or read this email in a client that supports HTML email.
 
 Thanks,
-The CommCare Team"""
+The Collectra Team"""
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',

@@ -91,6 +91,11 @@ LOCAL_PILLOWTOPS = {
 #    'and_more': []
 }
 
+####### Collectra self-host ########
+# ENTERPRISE_MODE is enabled by default via COLLECTRA_ENTERPRISE_MODE=1 in
+# settings.py (needed for Safisana-style entitlements). Set
+# COLLECTRA_ENTERPRISE_MODE=0 only if you intentionally want SaaS-style plans.
+
 ####### Email (Collectra) ########
 # Prefer env vars / ~/.config/collectra/email.env via start-collectra.
 # When COLLECTRA_EMAIL_LOGIN and COLLECTRA_EMAIL_PASSWORD are set, Collectra

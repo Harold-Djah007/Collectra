@@ -113,16 +113,46 @@ FORMPLAYER_URL = os.environ.get("FORMPLAYER_URL", "http://formplayer:8080")
 FORMPLAYER_URL_WEBAPPS = f"https://{COLLECTRA_HOST}/formplayer"
 FORMPLAYER_INTERNAL_AUTH_KEY = required("FORMPLAYER_AUTH_KEY")
 
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend",
+# Prefer COLLECTRA_EMAIL_* (same as local start-collectra / email.env).
+# Fall back to EMAIL_* for older .env files.
+_email_login = os.environ.get("COLLECTRA_EMAIL_LOGIN") or os.environ.get("EMAIL_LOGIN", "")
+_email_password = os.environ.get("COLLECTRA_EMAIL_PASSWORD") or os.environ.get("EMAIL_PASSWORD", "")
+if _email_password:
+    _email_password = _email_password.replace(" ", "")
+EMAIL_LOGIN = _email_login
+EMAIL_PASSWORD = _email_password
+EMAIL_SMTP_HOST = (
+    os.environ.get("COLLECTRA_EMAIL_SMTP_HOST")
+    or os.environ.get("EMAIL_SMTP_HOST")
+    or "smtp.gmail.com"
 )
-EMAIL_LOGIN = os.environ.get("EMAIL_LOGIN", "")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
-EMAIL_SMTP_HOST = os.environ.get("EMAIL_SMTP_HOST", "")
-EMAIL_SMTP_PORT = integer("EMAIL_SMTP_PORT", 587)
-EMAIL_USE_TLS = True
+EMAIL_SMTP_PORT = int(
+    os.environ.get("COLLECTRA_EMAIL_SMTP_PORT")
+    or os.environ.get("EMAIL_SMTP_PORT")
+    or "587"
+)
+EMAIL_USE_TLS = os.environ.get("COLLECTRA_EMAIL_USE_TLS", "1") not in ("0", "false", "False")
+if EMAIL_LOGIN and EMAIL_PASSWORD:
+    EMAIL_BACKEND = os.environ.get(
+        "COLLECTRA_EMAIL_BACKEND",
+        os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"),
+    )
+    _from = (
+        os.environ.get("COLLECTRA_DEFAULT_FROM_EMAIL")
+        or os.environ.get("EMAIL_FROM")
+        or EMAIL_LOGIN
+    )
+    DEFAULT_FROM_EMAIL = _from
+    SERVER_EMAIL = os.environ.get("COLLECTRA_SERVER_EMAIL", _from)
+else:
+    EMAIL_BACKEND = os.environ.get(
+        "EMAIL_BACKEND",
+        "django.core.mail.backends.console.EmailBackend",
+    )
 ADMINS = (("Collectra Administrator", required("COLLECTRA_ADMIN_EMAIL")),)
+
+COMMCARE_HQ_NAME = {"default": "Collectra HQ"}
+COMMCARE_NAME = {"default": "Collectra"}
 
 BITLY_OAUTH_TOKEN = None
 ENABLE_PRELOGIN_SITE = True

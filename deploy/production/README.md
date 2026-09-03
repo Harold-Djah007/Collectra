@@ -21,6 +21,9 @@ off-host backups, monitoring, and a documented recovery procedure.
 Render Free is not supported for this stack because its database and filesystem
 limits cannot safely retain Collectra production data.
 
+**Hosting on hold?** Use `PRE_HOST_CHECKLIST.md` and keep running on LAN until
+you have a domain. Do not run `bootstrap.sh` against a placeholder hostname.
+
 ## First deployment
 
 1. Point the production hostname to the server's static IP.
@@ -28,8 +31,11 @@ limits cannot safely retain Collectra production data.
 3. Change to `deploy/production`.
 4. Copy `.env.example` to `.env` and replace every placeholder with an
    independent random secret. Keep `.env` mode `0600` and never commit it.
-5. Run `./bootstrap.sh`.
-6. Run `./healthcheck.sh`.
+5. Set `COLLECTRA_EMAIL_LOGIN` / `COLLECTRA_EMAIL_PASSWORD` (Google App Password)
+   in `.env` so invitation Resend works on the VPS (same vars as local
+   `~/.config/collectra/email.env`).
+6. Run `./bootstrap.sh`.
+7. Run `./healthcheck.sh`.
 
 Caddy obtains and renews the TLS certificate automatically. Do not publish app
 builds or QR codes until the public health check passes over cellular data.

@@ -134,8 +134,24 @@ if fuser 8000/tcp >/dev/null 2>&1; then
     sleep 2
 fi
 
-# Stop legacy Docker workers. The managed workers below use the current checkout.
-docker stop hqservice-pillowtop-1 hqservice-celery-1 >/dev/null 2>&1 || true
+# Stop legacy Docker app containers. Host gunicorn + managed workers use this checkout.
+# Leaving hqservice-web-1 running causes port-8000 fights and confusing 404s.
+legacy_containers=(
+    hqservice-web-1
+    hqservice-pillowtop-1
+    hqservice-celery-1
+    hqservice-config-1
+)
+stopped_orphans=()
+for container in "${legacy_containers[@]}"
+do
+    if docker stop "$container" >/dev/null 2>&1; then
+        stopped_orphans+=("$container")
+    fi
+done
+if ((${#stopped_orphans[@]})); then
+    echo "Stopped legacy Docker containers: ${stopped_orphans[*]}"
+fi
 stop_managed_process "$state_root/pillowtop.pid" "manage.py run_ptop"
 stop_managed_process "$state_root/celery.pid" "celery -A corehq worker"
 

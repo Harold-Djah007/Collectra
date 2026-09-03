@@ -38,6 +38,14 @@ remain as fallbacks for compatibility.
 - Do not add a `NetworkType.UNMETERED` constraint to sync workers; `NetworkType.CONNECTED` allows
   both Wi-Fi and cellular data.
 
+Until a domain exists, build a LAN APK with:
+
+```bash
+./scripts/build-field-apk.sh http://192.168.1.195:8000
+```
+
+See `deploy/production/PRE_HOST_CHECKLIST.md` for what is blocked on hosting.
+
 ## Acceptance check
 
 1. Install an app while connected to Wi-Fi.
