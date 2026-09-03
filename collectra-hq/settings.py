@@ -1727,6 +1727,29 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 # EMAIL_USE_TLS is set above
 # so it can be overridden in localsettings (e.g. in a dev environment)
 
+# Collectra: enable real SMTP from env without committing secrets.
+# When COLLECTRA_EMAIL_LOGIN + COLLECTRA_EMAIL_PASSWORD are set, switch off the
+# console backend so invitation Resend reaches real inboxes.
+_collectra_email_login = os.environ.get('COLLECTRA_EMAIL_LOGIN')
+_collectra_email_password = os.environ.get('COLLECTRA_EMAIL_PASSWORD')
+if _collectra_email_login and _collectra_email_password:
+    EMAIL_LOGIN = _collectra_email_login
+    EMAIL_PASSWORD = _collectra_email_password
+    EMAIL_HOST_USER = _collectra_email_login
+    EMAIL_HOST_PASSWORD = _collectra_email_password
+    EMAIL_SMTP_HOST = os.environ.get('COLLECTRA_EMAIL_SMTP_HOST', EMAIL_SMTP_HOST)
+    EMAIL_HOST = EMAIL_SMTP_HOST
+    EMAIL_SMTP_PORT = int(os.environ.get('COLLECTRA_EMAIL_SMTP_PORT', EMAIL_SMTP_PORT))
+    EMAIL_PORT = EMAIL_SMTP_PORT
+    EMAIL_USE_TLS = os.environ.get('COLLECTRA_EMAIL_USE_TLS', '1') == '1'
+    EMAIL_BACKEND = os.environ.get(
+        'COLLECTRA_EMAIL_BACKEND',
+        'django.core.mail.backends.smtp.EmailBackend',
+    )
+    _collectra_from = os.environ.get('COLLECTRA_DEFAULT_FROM_EMAIL', _collectra_email_login)
+    DEFAULT_FROM_EMAIL = _collectra_from
+    SERVER_EMAIL = os.environ.get('COLLECTRA_SERVER_EMAIL', _collectra_from)
+
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
 email client chose to display the plaintext version of an email that CommCare

@@ -54,6 +54,32 @@ if [[ -z "$wsl_ip" ]]; then
     exit 1
 fi
 
+# Optional SMTP credentials for invitation / notification email.
+# Prefer a local env file so secrets are not committed to git:
+#   ~/.config/collectra/email.env
+# or:
+#   $state_root/email.env
+for email_env in \
+    "${COLLECTRA_EMAIL_ENV:-}" \
+    "$HOME/.config/collectra/email.env" \
+    "$state_root/email.env"
+do
+    if [[ -n "$email_env" && -f "$email_env" ]]; then
+        set -a
+        # shellcheck disable=SC1090
+        source "$email_env"
+        set +a
+        echo "Loaded Collectra email settings from $email_env"
+        break
+    fi
+done
+
+if [[ -n "${COLLECTRA_EMAIL_LOGIN:-}" && -n "${COLLECTRA_EMAIL_PASSWORD:-}" ]]; then
+    echo "SMTP email enabled for ${COLLECTRA_EMAIL_LOGIN}"
+else
+    echo "SMTP email not configured (console backend). Set COLLECTRA_EMAIL_LOGIN/PASSWORD to enable Resend."
+fi
+
 if [[ -n "${COLLECTRA_BASE_ADDRESS:-}" ]]; then
     # Local LAN IPs and :8000 are almost always plain HTTP; require operators to set
     # COLLECTRA_DEFAULT_PROTOCOL=https explicitly for TLS endpoints.

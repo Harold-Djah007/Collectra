@@ -115,12 +115,20 @@ BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localho
 
 
 """######## Email setup ########"""
-# email settings: these ones are the custom hq ones
-EMAIL_LOGIN = "notifications@dimagi.com"
-EMAIL_PASSWORD = "******"
-EMAIL_SMTP_HOST = "smtp.gmail.com"
-EMAIL_SMTP_PORT = 587
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Default is console (prints to HQ/Celery logs). For real invitation delivery,
+# export COLLECTRA_EMAIL_LOGIN / COLLECTRA_EMAIL_PASSWORD (see settings.py) or
+# put them in ~/.config/collectra/email.env and restart start-collectra.
+EMAIL_LOGIN = os.environ.get("COLLECTRA_EMAIL_LOGIN", "notifications@example.com")
+EMAIL_PASSWORD = os.environ.get("COLLECTRA_EMAIL_PASSWORD", "")
+EMAIL_SMTP_HOST = os.environ.get("COLLECTRA_EMAIL_SMTP_HOST", "smtp.gmail.com")
+EMAIL_SMTP_PORT = int(os.environ.get("COLLECTRA_EMAIL_SMTP_PORT", "587"))
+if EMAIL_LOGIN and EMAIL_PASSWORD:
+    EMAIL_BACKEND = os.environ.get(
+        "COLLECTRA_EMAIL_BACKEND",
+        "django.core.mail.backends.smtp.EmailBackend",
+    )
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 """####### Bitly ########"""
 
