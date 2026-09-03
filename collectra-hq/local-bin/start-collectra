@@ -69,6 +69,10 @@ do
         # shellcheck disable=SC1090
         source "$email_env"
         set +a
+        # Google App Passwords are often copied with spaces; SMTP wants 16 chars.
+        if [[ -n "${COLLECTRA_EMAIL_PASSWORD:-}" ]]; then
+            export COLLECTRA_EMAIL_PASSWORD="${COLLECTRA_EMAIL_PASSWORD// /}"
+        fi
         echo "Loaded Collectra email settings from $email_env"
         break
     fi
