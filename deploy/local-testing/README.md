@@ -5,10 +5,12 @@ compression. In this checkout that bundle can exceed 40 MB, which makes a
 Quick Tunnel slow and can trigger Chrome's `ERR_CACHE_WRITE_FAILURE`.
 
 `start-optimized-origin.sh` builds minified, cache-busted assets and inserts a
-local Caddy proxy between Django and the existing Cloudflare tunnel. Caddy
-compresses responses and gives static assets a one-hour browser cache. It does
-not change CommCare forms, installation, sync, cases, submissions, or project
-routing.
+local Caddy proxy between Gunicorn and the existing Cloudflare tunnel. Caddy
+compresses responses, reuses origin connections, and gives static assets a
+six-hour browser cache with stale-while-revalidate support. Gunicorn serves two
+concurrent gevent workers by default instead of Django's development server.
+It does not change CommCare forms, installation, sync, cases, submissions, or
+project routing.
 
 ## Keep the current Quick Tunnel URL
 
@@ -39,6 +41,25 @@ script:
 
 ```bash
 cloudflared tunnel --protocol http2 --url http://127.0.0.1:8000
+```
+
+On a machine with more CPU and memory, increase web concurrency without
+editing the script:
+
+```bash
+COLLECTRA_WEB_WORKERS=3 \
+  COLLECTRA_SKIP_ASSET_BUILD=1 \
+  ./deploy/local-testing/start-optimized-origin.sh \
+  tribute-legislation-yrs-invalid.trycloudflare.com
+```
+
+If the public URL returns `502`, either the optimized origin on port 8000 or
+the `cloudflared` process is no longer running. Check both before rebuilding:
+
+```bash
+curl -I http://127.0.0.1:8000/
+pgrep -af cloudflared
+tail -n 100 "$HOME/collectra-optimized-hq.log"
 ```
 
 Quick Tunnels have no uptime guarantee. The permanent production deployment in

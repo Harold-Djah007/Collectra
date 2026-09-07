@@ -24,8 +24,14 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/../.." && pwd)
 hq_root="$repo_root/collectra-hq"
 log_path=${COLLECTRA_LOCAL_HQ_LOG:-"$HOME/collectra-optimized-hq.log"}
+web_workers=${COLLECTRA_WEB_WORKERS:-2}
 container_name=collectra-local-accelerator
 hq_pid=''
+
+if [[ ! "$web_workers" =~ ^[1-9][0-9]*$ ]]; then
+    echo "COLLECTRA_WEB_WORKERS must be a positive integer." >&2
+    exit 2
+fi
 
 cleanup() {
     local status=$?
@@ -70,12 +76,16 @@ fi
 echo "Generating the complete JavaScript translation catalog..."
 uv run python manage.py compilejsi18n
 
-echo "Starting Collectra HQ on the private origin port 8001..."
+echo "Starting the complete Collectra stack with $web_workers Gunicorn workers on private port 8001..."
 COLLECTRA_BASE_ADDRESS="$public_host" \
 COLLECTRA_DEFAULT_PROTOCOL=https \
 COLLECTRA_TRUST_PROXY_HTTPS=1 \
 COLLECTRA_FORMPLAYER_URL_WEBAPPS="https://$public_host/formplayer" \
-uv run python manage.py runserver 127.0.0.1:8001 --noreload \
+COLLECTRA_PROJECT_ROOT="$hq_root" \
+COLLECTRA_BIND_HOST=0.0.0.0 \
+COLLECTRA_BIND_PORT=8001 \
+COLLECTRA_WEB_WORKERS="$web_workers" \
+"$hq_root/local-bin/start-collectra" \
     >"$log_path" 2>&1 &
 hq_pid=$!
 
