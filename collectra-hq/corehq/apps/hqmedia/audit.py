@@ -5,7 +5,11 @@ from pathlib import PurePosixPath
 from couchdbkit.exceptions import ResourceNotFound
 from PIL import Image
 
-from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
+from corehq.apps.hqmedia.models import (
+    CommCareAudio,
+    CommCareImage,
+    CommCareMultimedia,
+)
 
 
 REPAIRABLE_IMAGE_SUFFIXES = {'.jpeg', '.jpg', '.png'}
@@ -31,6 +35,13 @@ def _can_replace_with_menu_icon(path, references):
             reference.is_menu_media and reference.media_class is CommCareImage
             for reference in references
         )
+    )
+
+
+def _can_clear_menu_audio(references):
+    return bool(references) and all(
+        reference.is_menu_media and reference.media_class is CommCareAudio
+        for reference in references
     )
 
 
@@ -94,8 +105,9 @@ def audit_app_multimedia(app, media_loader=None):
     """Return every broken multimedia path referenced by an app draft.
 
     A path is only marked as automatically repairable when every use is a
-    module/form menu image. Replacing question media would change form meaning,
-    so those paths are reported but never assigned a generic fallback.
+    module/form menu image. Broken audio can only be cleared automatically when
+    every use is optional module/form menu narration. Question media is always
+    reported for manual repair because changing it could change form meaning.
     """
     media_loader = media_loader or _load_media
     references_by_path = defaultdict(list)
@@ -124,6 +136,7 @@ def audit_app_multimedia(app, media_loader=None):
                     'repairable_menu_image': _can_replace_with_menu_icon(
                         path, references
                     ),
+                    'clearable_menu_audio': _can_clear_menu_audio(references),
                     'references': [
                         _reference_details(reference)
                         for reference in references
