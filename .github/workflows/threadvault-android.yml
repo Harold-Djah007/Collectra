@@ -1,0 +1,83 @@
+name: ThreadVault Android Build
+
+on:
+  push:
+    branches:
+      - threadvault-build-0.7.5
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter 3.47.2
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Restore ThreadVault source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/threadvault_ci
+          base64 -d threadvault_ci/threadvault_ci_pkg.tar.gz.b64 > /tmp/threadvault_ci/pkg.tar.gz
+          tar -xzf /tmp/threadvault_ci/pkg.tar.gz -C /tmp/threadvault_ci
+          ls -la /tmp/threadvault_ci/threadvault_ci_pkg
+
+      - name: Create clean Flutter Android scaffold
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf /tmp/threadvault_build
+          flutter create --platforms=android --org com.threadvault --project-name threadvault /tmp/threadvault_build
+          rm -rf /tmp/threadvault_build/lib /tmp/threadvault_build/test
+          cp -R /tmp/threadvault_ci/threadvault_ci_pkg/lib /tmp/threadvault_build/lib
+          cp -R /tmp/threadvault_ci/threadvault_ci_pkg/test /tmp/threadvault_build/test
+          cp /tmp/threadvault_ci/threadvault_ci_pkg/pubspec.yaml /tmp/threadvault_build/pubspec.yaml
+          cp /tmp/threadvault_ci/threadvault_ci_pkg/android_overlay/app/build.gradle /tmp/threadvault_build/android/app/build.gradle
+          cp /tmp/threadvault_ci/threadvault_ci_pkg/android_overlay/app/src/main/AndroidManifest.xml /tmp/threadvault_build/android/app/src/main/AndroidManifest.xml
+          rm -rf /tmp/threadvault_build/android/app/src/main/kotlin
+          mkdir -p /tmp/threadvault_build/android/app/src/main/kotlin/com/threadvault/app
+          cp /tmp/threadvault_ci/threadvault_ci_pkg/android_overlay/app/src/main/kotlin/com/threadvault/app/MainActivity.kt /tmp/threadvault_build/android/app/src/main/kotlin/com/threadvault/app/MainActivity.kt
+
+      - name: Get dependencies
+        working-directory: /tmp/threadvault_build
+        run: flutter pub get
+
+      - name: Static analysis
+        working-directory: /tmp/threadvault_build
+        run: flutter analyze
+
+      - name: Unit tests
+        working-directory: /tmp/threadvault_build
+        run: flutter test --reporter expanded
+
+      - name: Build debug APK
+        working-directory: /tmp/threadvault_build
+        run: flutter build apk --debug
+
+      - name: Verify APK exists
+        shell: bash
+        run: |
+          set -euxo pipefail
+          test -s /tmp/threadvault_build/build/app/outputs/flutter-apk/app-debug.apk
+          sha256sum /tmp/threadvault_build/build/app/outputs/flutter-apk/app-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: threadvault-0.7.5-debug-apk
+          path: /tmp/threadvault_build/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
