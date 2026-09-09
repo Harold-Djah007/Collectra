@@ -95,7 +95,7 @@ for attempt in {1..60}; do
         tail -n 100 "$log_path" >&2 || true
         exit 1
     fi
-    if curl -fsS --max-time 2 http://127.0.0.1:8001/ >/dev/null; then
+    if curl -fsS --max-time 2 http://127.0.0.1:8001/ >/dev/null 2>&1; then
         break
     fi
     if [[ "$attempt" == 60 ]]; then
@@ -116,7 +116,7 @@ docker run --rm \
 caddy_pid=$!
 
 for attempt in {1..30}; do
-    if curl -fsS --max-time 2 http://127.0.0.1:8000/ >/dev/null; then
+    if curl -fsS --max-time 2 http://127.0.0.1:8000/ >/dev/null 2>&1; then
         break
     fi
     if [[ "$attempt" == 30 ]]; then

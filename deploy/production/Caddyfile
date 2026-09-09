@@ -13,6 +13,13 @@
 		reverse_proxy formplayer:8080
 	}
 
+	@static path /static/*
+	header @static {
+		Cache-Control "public, max-age=21600, stale-while-revalidate=604800"
+		X-Content-Type-Options "nosniff"
+		-Set-Cookie
+	}
+
 	handle {
 		reverse_proxy web:8000
 	}

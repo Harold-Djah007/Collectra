@@ -26,6 +26,17 @@ Build the configured APK with:
 ./gradlew assembleCommcareDebug
 ```
 
+For a shareable field-test artifact, run the **Collectra Mobile validation** workflow manually in
+GitHub Actions and supply the stable HTTPS HQ origin when prompted. Download
+`Collectra-field-debug` only after the workflow succeeds, then keep its `build-metadata.txt` and
+`SHA256SUMS` files with the APK. Pull-request builds intentionally leave the address blank and are
+generic compatibility builds rather than field-configured APKs.
+
+The field-test artifact uses Android debug signing. It is suitable for a controlled test session,
+but separate CI runs may use different debug certificates and therefore are not a production
+upgrade path. Before onboarding workers, configure a protected release keystore, increment the
+version code for every release, and verify an in-place upgrade on a phone containing test data.
+
 If `COLLECTRA_HQ_BASE_URL` is blank, the upstream CommCare production and India app-list endpoints
 remain as fallbacks for compatibility.
 

@@ -1,6 +1,12 @@
 name: Collectra Mobile validation
 
 on:
+  workflow_dispatch:
+    inputs:
+      collectra_hq_base_url:
+        description: Stable HTTPS Collectra HQ base URL for a field-test APK
+        required: true
+        type: string
   pull_request:
     paths:
       - "commcare-android/**"
@@ -22,6 +28,9 @@ jobs:
   compatibility:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      COLLECTRA_HQ_BASE_URL: ${{ inputs.collectra_hq_base_url || '' }}
+      APK_BASENAME: ${{ github.event_name == 'workflow_dispatch' && 'Collectra-field-debug' || 'Collectra-debug' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +40,15 @@ jobs:
           java-version: "17"
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate configured Collectra HQ address
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          if [[ ! "$COLLECTRA_HQ_BASE_URL" =~ ^https://[^/]+/?$ ]]; then
+            echo "collectra_hq_base_url must be an HTTPS origin without a path."
+            exit 1
+          fi
 
       - name: Run complete CommCare debug unit suite
         working-directory: commcare-android
@@ -53,13 +71,25 @@ jobs:
         run: >-
           bash ./gradlew
           :app:assembleCommcareDebug
+          -PCOLLECTRA_HQ_BASE_URL="$COLLECTRA_HQ_BASE_URL"
           --no-daemon
           --stacktrace
 
+      - name: Package field-test APK and build metadata
+        shell: bash
+        run: |
+          mkdir -p field-apk
+          cp commcare-android/app/build/outputs/apk/commcare/debug/app-commcare-debug.apk \
+            "field-apk/${APK_BASENAME}.apk"
+          printf 'commit=%s\ncollectra_hq_base_url=%s\nbuilt_utc=%s\n' \
+            "$GITHUB_SHA" "$COLLECTRA_HQ_BASE_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > field-apk/build-metadata.txt
+          sha256sum "field-apk/${APK_BASENAME}.apk" > field-apk/SHA256SUMS
+
       - uses: actions/upload-artifact@v4
         with:
-          name: Collectra-debug
-          path: commcare-android/app/build/outputs/apk/commcare/debug/app-commcare-debug.apk
+          name: ${{ env.APK_BASENAME }}
+          path: field-apk/
           if-no-files-found: error
 
       - name: Upload Android quality reports

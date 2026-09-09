@@ -140,7 +140,7 @@ services:
       - --processor-chunk-size=1
 
   formplayer:
-    image: dimagi/formplayer:latest
+    image: dimagi/formplayer@sha256:b5e9a96c77160dd74c426c606b2712075021558da5d4a3db4d8ce622e4905319
     command: ["java", "org.springframework.boot.loader.launch.JarLauncher"]
     restart: unless-stopped
     environment:
@@ -282,7 +282,7 @@ services:
       start_period: 30s
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     restart: unless-stopped
     command: server --address :9980 --console-address :9981 /data
     environment:

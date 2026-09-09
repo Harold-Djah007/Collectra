@@ -36,11 +36,11 @@ COLLECTRA_SKIP_ASSET_BUILD=1 \
 
 Keep both the optimized-origin terminal and the `cloudflared` terminal open.
 If the Quick Tunnel process exits, its random hostname expires. Start a new
-tunnel with HTTP/2, copy its reported hostname, and pass that hostname to the
-script:
+tunnel with QUIC, copy its reported hostname, and pass that hostname to the
+script. Keep the tunnel terminal open:
 
 ```bash
-cloudflared tunnel --protocol http2 --url http://127.0.0.1:8000
+cloudflared tunnel --protocol quic --url http://127.0.0.1:8000
 ```
 
 On a machine with more CPU and memory, increase web concurrency without

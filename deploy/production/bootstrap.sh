@@ -37,8 +37,8 @@ if [[ "$COLLECTRA_BACKUP_DIR" != /* ]]; then
     exit 1
 fi
 
-if [[ "$COLLECTRA_HOST" == *://* || "$COLLECTRA_HOST" == */* ]]; then
-    echo "COLLECTRA_HOST must be a hostname without a scheme or path."
+if [[ ! "$COLLECTRA_HOST" =~ ^([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
+    echo "COLLECTRA_HOST must be a valid fully qualified hostname without a scheme, port, or path."
     exit 1
 fi
 

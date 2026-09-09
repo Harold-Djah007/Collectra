@@ -5,6 +5,9 @@ Docker host. It preserves the tested CommCare engine and exposes only Caddy on
 ports 80 and 443. PostgreSQL, CouchDB, Redis, Elasticsearch, Kafka, MinIO,
 Formplayer, Celery, and Pillowtop remain private.
 
+Formplayer and MinIO are pinned by image digest so a later upstream `latest` image cannot silently
+change the field stack. Update either digest only through a tested release-candidate change.
+
 This is the recommended baseline for approximately 50 mobile workers. It is a
 single-host deployment, not a high-availability cluster. Use provider snapshots,
 off-host backups, monitoring, and a documented recovery procedure.

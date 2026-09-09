@@ -24,7 +24,8 @@ redirect, or installation-page failure.
 ## 2. Test-1 phone acceptance
 
 1. Connect the phone to Wi-Fi.
-2. Install Collectra from the CI-built APK for the release candidate.
+2. Install Collectra from the field-configured CI APK for the release candidate. Confirm its
+   `build-metadata.txt` contains the same permanent HTTPS host used by the installation URL.
 3. Install the released Test-1 application using its QR code or installation
    URL.
 4. Sign in and complete the first restore.
@@ -82,6 +83,10 @@ Confirm all of the following:
 Record the APK workflow run, application build IDs, form IDs, UTC timestamps,
 phone model, Android version, and screenshots. Keep that evidence with the
 release record.
+
+For production onboarding, also verify that the APK is signed with the protected Collectra release
+key, has a higher version code than the installed release, and upgrades in place without deleting
+saved or unsent forms. A debug-signed APK is limited to controlled testing.
 
 ## 5. Release decision
 
