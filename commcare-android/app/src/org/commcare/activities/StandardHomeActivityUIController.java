@@ -14,7 +14,6 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import org.commcare.CommCareApp;
 import org.commcare.CommCareApplication;
@@ -34,6 +33,7 @@ import org.commcare.personalId.UnlockPolicy;
 import org.commcare.preferences.DeveloperPreferences;
 import org.commcare.preferences.HiddenPreferences;
 import org.commcare.suite.model.Profile;
+import org.commcare.views.CollectraMotion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +71,7 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
         activity.toggleDrawerSetUp(true);
         activity.checkForDrawerSetUp();
         setUpToolBar();
+        CollectraMotion.playScreenEnter(activity.findViewById(R.id.nav_drawer_frame));
     }
 
     private void setUpToolBar() {
@@ -80,7 +81,13 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
             ActionBar actionBar = activity.getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setDisplayHomeAsUpEnabled(true);
-                actionBar.setTitle(CommCareActivity.getTopLevelTitleName(activity));
+                actionBar.setDisplayShowTitleEnabled(false);
+                actionBar.setDisplayShowCustomEnabled(true);
+                View titleView = activity.getLayoutInflater()
+                        .inflate(R.layout.collectra_toolbar_title, toolbar, false);
+                actionBar.setCustomView(titleView);
+                CollectraMotion.startTitleLiveliness(
+                        titleView.findViewById(R.id.collectra_toolbar_title_text));
             }
         }
     }
@@ -271,9 +278,9 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
         final RecyclerView grid = activity.findViewById(R.id.home_gridview_buttons);
         grid.setHasFixedSize(false);
 
-        StaggeredGridLayoutManager gridView =
-                new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        grid.setLayoutManager(gridView);
+        LinearLayoutManager listLayout =
+                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        grid.setLayoutManager(listLayout);
         grid.setItemAnimator(null);
         grid.setAdapter(adapter);
 

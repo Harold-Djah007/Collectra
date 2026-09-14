@@ -21,6 +21,9 @@ WHITELIST = [
     # warnings that may be resolved with a library upgrade
     ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
+    # couchdbkit is unmaintained and still contains non-raw regex strings.
+    # Python 3.13 reports them while compiling the module, before HQ can start.
+    ("", "invalid escape sequence", SyntaxWarning),
     ("ddtrace.internal.module", "pkg_resources is deprecated as an API"),
     ("eulxml", "pkg_resources is deprecated as an API"),
     ("pkg_resources", "pkg_resources.declare_namespace"),

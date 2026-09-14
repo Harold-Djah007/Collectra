@@ -79,6 +79,7 @@ public class SyncDetailCalculations {
         Spannable unsentFormsIndicator = activity.localize(
                 "home.unsent.forms.indicator",
                 new String[]{String.valueOf(numUnsentForms)});
+        squareButtonSubtext.setVisibility(android.view.View.VISIBLE);
         squareButtonSubtext.setText(
                 buildSyncSubtext(
                         notificationText,

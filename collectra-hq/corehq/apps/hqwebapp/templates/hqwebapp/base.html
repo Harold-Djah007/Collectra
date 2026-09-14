@@ -236,34 +236,24 @@
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
     <script>
-      // Keep the application usable in local/demo environments even when the generated
-      // Django JS translation catalog has not been built yet.
+      // Keep local/demo pages usable when the generated Django JS catalog is missing.
+      // Webpack modules use the complete public API, including interpolate.
+      window.pluralidx = window.pluralidx || function (count) { return count === 1 ? 0 : 1; };
       window.gettext = window.gettext || function (message) { return message; };
       window.ngettext = window.ngettext || function (singular, plural, count) {
-        return count === 1 ? singular : plural;
+        return window.pluralidx(count) === 0 ? singular : plural;
       };
       window.pgettext = window.pgettext || function (context, message) { return message; };
       window.gettext_noop = window.gettext_noop || function (message) { return message; };
-    </script>
-    <script>
-      // Keep the application usable in local/demo environments even when the generated
-      // Django JS translation catalog has not been built yet.
-      window.gettext = window.gettext || function (message) { return message; };
-      window.ngettext = window.ngettext || function (singular, plural, count) {
-        return count === 1 ? singular : plural;
+      window.interpolate = window.interpolate || function (format, values, named) {
+        if (named) {
+          return format.replace(/%\(\w+\)s/g, function (match) {
+            return String(values[match.slice(2, -2)]);
+          });
+        }
+        var index = 0;
+        return format.replace(/%s/g, function () { return String(values[index++]); });
       };
-      window.pgettext = window.pgettext || function (context, message) { return message; };
-      window.gettext_noop = window.gettext_noop || function (message) { return message; };
-    </script>
-    <script>
-      // Keep the application usable in local/demo environments even when the generated
-      // Django JS translation catalog has not been built yet.
-      window.gettext = window.gettext || function (message) { return message; };
-      window.ngettext = window.ngettext || function (singular, plural, count) {
-        return count === 1 ? singular : plural;
-      };
-      window.pgettext = window.pgettext || function (context, message) { return message; };
-      window.gettext_noop = window.gettext_noop || function (message) { return message; };
     </script>
 
     {% include "hqwebapp/partials/webpack.html" %} {# must come after statici18n above #}

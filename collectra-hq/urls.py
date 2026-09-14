@@ -10,6 +10,7 @@ from corehq.apps.enterprise.urls import \
     domain_specific as enterprise_domain_specific
 from corehq.apps.api.urls import user_urlpatterns as user_api_urlpatterns
 from corehq.apps.app_manager.views.formdesigner import ping
+from corehq.apps.app_manager.views.install_codes import app_install_code
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
@@ -160,6 +161,7 @@ urlpatterns = [
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
+    url(r'^s/(?P<code>[\w]+)/?$', app_install_code, name='app_install_code'),
 ] + LOCAL_APP_URLS
 
 if not os.getenv('CCHQ_WITHOUT_SSO'):

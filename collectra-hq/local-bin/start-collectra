@@ -3,11 +3,23 @@ set -euo pipefail
 
 project_root="${COLLECTRA_PROJECT_ROOT:-$HOME/projects/Collectra-Cursor/collectra-hq}"
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}/collectra"
+bind_host="${COLLECTRA_BIND_HOST:-0.0.0.0}"
+bind_port="${COLLECTRA_BIND_PORT:-8000}"
+web_workers="${COLLECTRA_WEB_WORKERS:-1}"
 mkdir -p "$state_root"
 cd "$project_root"
 
 celery_pid=""
 pillowtop_pid=""
+
+if [[ ! "$bind_port" =~ ^[0-9]+$ ]] || (( bind_port < 1 || bind_port > 65535 )); then
+    echo "COLLECTRA_BIND_PORT must be an integer from 1 through 65535." >&2
+    exit 2
+fi
+if [[ ! "$web_workers" =~ ^[1-9][0-9]*$ ]]; then
+    echo "COLLECTRA_WEB_WORKERS must be a positive integer." >&2
+    exit 2
+fi
 
 stop_managed_process() {
     local pid_file="$1"
@@ -57,12 +69,12 @@ fi
 if [[ -n "${COLLECTRA_BASE_ADDRESS:-}" ]]; then
     export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-https}"
 else
-    export COLLECTRA_BASE_ADDRESS="${wsl_ip}:8000"
+    export COLLECTRA_BASE_ADDRESS="${wsl_ip}:${bind_port}"
     export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-http}"
 fi
-export COMMCARE_HOST="http://${wsl_ip}:8000"
+export COMMCARE_HOST="http://${wsl_ip}:${bind_port}"
 
-echo "Collectra address: http://localhost:8000"
+echo "Collectra address: http://localhost:${bind_port}"
 echo "Published mobile address: ${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS}"
 echo "Formplayer callback: ${COMMCARE_HOST}"
 echo "Starting Collectra services..."
@@ -94,9 +106,9 @@ do
     sleep 2
 done
 
-if fuser 8000/tcp >/dev/null 2>&1; then
-    echo "Stopping the previous process on port 8000..."
-    fuser -k 8000/tcp >/dev/null 2>&1 || true
+if fuser "${bind_port}/tcp" >/dev/null 2>&1; then
+    echo "Stopping the previous process on port ${bind_port}..."
+    fuser -k "${bind_port}/tcp" >/dev/null 2>&1 || true
     sleep 2
 fi
 
@@ -140,6 +152,16 @@ if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
 fi
 
 echo "Background logs: $state_root"
-echo "Starting Collectra at http://localhost:8000"
+echo "Starting Collectra at http://localhost:${bind_port} with ${web_workers} web worker(s)"
 echo "Press Ctrl+C once to stop Collectra and its background workers."
-uv run gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class gevent --timeout 900 --access-logfile - --error-logfile - deployment.gunicorn.collectra_wsgi:application
+uv run gunicorn \
+    --bind "${bind_host}:${bind_port}" \
+    --workers "$web_workers" \
+    --worker-class gevent \
+    --timeout 900 \
+    --keep-alive 65 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --access-logfile - \
+    --error-logfile - \
+    deployment.gunicorn.collectra_wsgi:application

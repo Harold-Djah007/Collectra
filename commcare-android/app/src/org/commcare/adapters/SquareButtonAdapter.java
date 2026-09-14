@@ -1,25 +1,23 @@
 package org.commcare.adapters;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.StateListDrawable;
-import android.os.Build;
+import android.graphics.drawable.GradientDrawable;
+
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import android.util.StateSet;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import org.commcare.dalvik.R;
-import org.commcare.views.ViewUtil;
+import org.commcare.views.CollectraMotion;
 
 import java.util.List;
 
 /**
- * Inflation and binding of square cards used on home screen and other places.
+ * Inflation and binding of Collectra home action rows.
  *
  * @author Phillip Mates (pmates@dimagi.com).
  */
@@ -76,7 +74,7 @@ abstract class SquareButtonAdapter
 
         cardDisplayData.textSetter.update(cardDisplayData,
                 squareButtonViewHolder, context, notificationText);
-        setupViewHolder(context, cardDisplayData, squareButtonViewHolder);
+        setupViewHolder(context, cardDisplayData, squareButtonViewHolder, i);
     }
 
     /**
@@ -100,46 +98,53 @@ abstract class SquareButtonAdapter
 
     private static void setupViewHolder(Context context,
                                         HomeCardDisplayData cardDisplayData,
-                                        SquareButtonViewHolder squareButtonViewHolder) {
+                                        SquareButtonViewHolder squareButtonViewHolder,
+                                        int position) {
         final Drawable buttonDrawable =
                 ContextCompat.getDrawable(context, cardDisplayData.imageResource);
         squareButtonViewHolder.imageView.setImageDrawable(buttonDrawable);
         squareButtonViewHolder.cardView.setOnClickListener(cardDisplayData.listener);
 
-        if(cardDisplayData.subTextListener != null) {
+        if (cardDisplayData.subTextListener != null) {
             squareButtonViewHolder.subTextView.setOnClickListener(cardDisplayData.subTextListener);
         }
 
-        StateListDrawable bgDrawable = bgDrawStates(context, cardDisplayData.bgColor);
-        squareButtonViewHolder.cardView.setBackground(bgDrawable);
+        // Keep the layout's selectable background so touch and keyboard
+        // interaction retain normal Android feedback.
+        squareButtonViewHolder.iconChip.setBackground(
+                accentChipDrawable(context, R.color.collectra_ink));
+        if (squareButtonViewHolder.accentRail != null) {
+            squareButtonViewHolder.accentRail.setBackgroundColor(
+                    ContextCompat.getColor(context, cardDisplayData.bgColor));
+        }
+
+        Object animated = squareButtonViewHolder.iconChip.getTag(
+                R.id.collectra_motion_complete_tag
+        );
+        if (!Boolean.TRUE.equals(animated)) {
+            squareButtonViewHolder.iconChip.setTag(
+                    R.id.collectra_motion_complete_tag,
+                    Boolean.TRUE
+            );
+            long delay = Math.max(0, position) * 90L;
+            CollectraMotion.startChipPulse(
+                    squareButtonViewHolder.iconChip,
+                    delay
+            );
+        }
     }
 
-    /**
-     * Build drawable with default state being the provided color resource,
-     * pressed color state being that color with less saturation, and disabled
-     * state being gray.
-     */
-    private static StateListDrawable bgDrawStates(Context context,
-                                                  int bgColorResource) {
-        ColorDrawable disabledColor =
-                new ColorDrawable(context.getResources().getColor(R.color.grey));
-        ColorDrawable colorDrawable =
-                new ColorDrawable(context.getResources().getColor(bgColorResource));
-        ColorDrawable pressedBackground = desaturateColor(colorDrawable);
-
-        StateListDrawable sld = new StateListDrawable();
-        sld.addState(new int[]{-android.R.attr.state_enabled}, disabledColor);
-        sld.addState(new int[]{android.R.attr.state_pressed}, pressedBackground);
-        sld.addState(StateSet.WILD_CARD, colorDrawable);
-        return sld;
-    }
-
-    private static ColorDrawable desaturateColor(ColorDrawable colorDrawable) {
-        float[] hsvOutput = new float[3];
-        int color = ViewUtil.getColorDrawableColor(colorDrawable);
-        Color.colorToHSV(color, hsvOutput);
-        hsvOutput[2] = (float)(hsvOutput[2] / 1.5);
-        return new ColorDrawable(Color.HSVToColor(hsvOutput));
+    private static GradientDrawable accentChipDrawable(Context context, int bgColorResource) {
+        float radius = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                14f,
+                context.getResources().getDisplayMetrics()
+        );
+        GradientDrawable chip = new GradientDrawable();
+        chip.setShape(GradientDrawable.RECTANGLE);
+        chip.setCornerRadius(radius);
+        chip.setColor(ContextCompat.getColor(context, bgColorResource));
+        return chip;
     }
 
     @Override

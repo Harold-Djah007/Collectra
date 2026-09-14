@@ -776,3 +776,48 @@ body {
     animation: none !important;
   }
 }
+
+/* Collectra application-builder visibility and dividers. */
+.appmanager-main-container
+#formdesigner
+.btn-form-action.custom-button-style {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background-color: var(--collectra-ink, #12324a) !important;
+  border: 1px solid var(--collectra-ink, #12324a) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.appmanager-main-container
+#formdesigner
+.btn-form-action.custom-button-style:hover,
+.appmanager-main-container
+#formdesigner
+.btn-form-action.custom-button-style:focus {
+  background-color: var(--collectra-teal, #0aa69a) !important;
+  border-color: var(--collectra-teal, #0aa69a) !important;
+  color: #fff !important;
+}
+
+.appmanager-sidebar {
+  border-right: 1px solid var(--collectra-line, #d8e2e8) !important;
+  box-shadow: 1px 0 0 rgba(19, 47, 76, 0.04);
+}
+
+.appmanager-main-container #formdesigner .fd-content-left {
+  border-right: 1px solid var(--collectra-line, #d8e2e8) !important;
+  box-shadow: 1px 0 0 rgba(19, 47, 76, 0.04);
+}
+
+.appmanager-main-container #formdesigner .fd-content-right {
+  border-left: 1px solid var(--collectra-line, #d8e2e8) !important;
+}
+
+.preview-phone-wrapper {
+  border-left: 1px solid var(--collectra-line, #d8e2e8) !important;
+  box-shadow: -1px 0 0 rgba(19, 47, 76, 0.04);
+}

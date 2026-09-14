@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system splash must match CollectraLaunchTheme / collectra_splash. -->
+    <style name="CollectraLaunchTheme" parent="CommonTheme.NoActionBar">
+        <item name="android:windowBackground">@drawable/collectra_launch_window</item>
+        <item name="android:statusBarColor">@color/collectra_ink</item>
+        <item name="android:navigationBarColor">@color/collectra_ink</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowSplashScreenBackground">@color/collectra_ink</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/collectra_mark</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/collectra_ink</item>
+    </style>
+</resources>

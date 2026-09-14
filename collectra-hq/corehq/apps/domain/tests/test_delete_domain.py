@@ -25,6 +25,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.app_manager.models import (
+    AppInstallCode,
     AppReleaseByLocation,
     GlobalAppConfig,
 )
@@ -404,6 +405,7 @@ class TestDeleteDomain(TestCase):
             AppReleaseByLocation.objects.filter(domain=domain_name),
             GlobalAppConfig.objects.filter(domain=domain_name),
             ResourceOverride.objects.filter(domain=domain_name),
+            AppInstallCode.objects.filter(domain=domain_name),
         ], count)
 
     def test_app_manager(self):
@@ -420,6 +422,11 @@ class TestDeleteDomain(TestCase):
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
             ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
                                             pre_id='456', post_id='789')
+            AppInstallCode.objects.create(
+                domain=domain_name,
+                code=f'{domain_name}code',
+                target_url=f'https://example.test/{domain_name}/profile.ccpr',
+            )
             self._assert_app_manager_counts(domain_name, 1)
 
         self.domain.delete()

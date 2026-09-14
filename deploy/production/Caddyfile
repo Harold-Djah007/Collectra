@@ -1,0 +1,33 @@
+{
+	email {$CADDY_ACME_EMAIL}
+}
+
+{$COLLECTRA_HOST} {
+	encode zstd gzip
+
+	request_body {
+		max_size 500MB
+	}
+
+	handle_path /formplayer/* {
+		reverse_proxy formplayer:8080
+	}
+
+	@static path /static/*
+	header @static {
+		Cache-Control "public, max-age=21600, stale-while-revalidate=604800"
+		X-Content-Type-Options "nosniff"
+		-Set-Cookie
+	}
+
+	handle {
+		reverse_proxy web:8000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

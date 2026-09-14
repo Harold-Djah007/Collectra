@@ -1,0 +1,181 @@
+name: Collectra HQ readiness
+
+on:
+  pull_request:
+    paths:
+      - "collectra-hq/**"
+      - "deploy/local-testing/**"
+      - ".github/workflows/hq-readiness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "collectra-hq/**"
+      - "deploy/local-testing/**"
+      - ".github/workflows/hq-readiness.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hq-readiness-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hq-python:
+    name: HQ Python quality
+    runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: commcarehq
+          POSTGRES_USER: commcarehq
+          POSTGRES_PASSWORD: commcarehq
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U commcarehq -d commcarehq"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      couchdb:
+        image: apache/couchdb:3.5.0
+        env:
+          COUCHDB_USER: admin
+          COUCHDB_PASSWORD: commcarehq
+        ports:
+          - 5984:5984
+        options: >-
+          --health-cmd "bash -c 'exec 6<>/dev/tcp/127.0.0.1/5984'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: collectra-hq
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "collectra-hq/uv.lock"
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --compile-bytecode
+
+      - name: Start CommCare-compatible Elasticsearch
+        run: |
+          docker build \
+            --tag collectra-elasticsearch6-ci \
+            --file docker/files/Dockerfile.es.6 \
+            docker
+
+          docker run --detach \
+            --name collectra-elasticsearch6-ci \
+            --publish 9200:9200 \
+            --env discovery.type=single-node \
+            --env ES_JAVA_OPTS="-Xms512m -Xmx512m" \
+            collectra-elasticsearch6-ci
+
+          for attempt in {1..30}; do
+            if curl --fail --silent \
+              http://127.0.0.1:9200/_cluster/health \
+              >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs collectra-elasticsearch6-ci
+          exit 1
+
+      - name: Lint Collectra HQ changes
+        run: |
+          uv run ruff check \
+            corehq/apps/hqmedia/audit.py \
+            corehq/apps/hqmedia/management/commands/audit_app_multimedia.py \
+            corehq/apps/hqmedia/management/commands/apply_menu_icon_manifest.py \
+            corehq/apps/hqmedia/management/commands/export_menu_icon_inventory.py \
+            corehq/apps/hqmedia/tests/test_audit.py \
+            corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
+            corehq/apps/hqmedia/tests/test_export_menu_icon_inventory.py \
+            corehq/apps/app_manager/models/install_codes.py \
+            corehq/apps/app_manager/views/install_codes.py \
+            corehq/apps/app_manager/tests/test_install_codes.py \
+            deployment/production/localsettings.py
+
+      - name: Check for missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Apply database migrations
+        env:
+          CCHQ_IS_FRESH_INSTALL: "1"
+        run: uv run python manage.py migrate --noinput --no-reindex
+
+      - name: Run focused HQ tests
+        run: |
+          if [ ! -e "$GITHUB_WORKSPACE/collectra-hq/.git" ]; then
+            ln -s "$GITHUB_WORKSPACE/.git" "$GITHUB_WORKSPACE/collectra-hq/.git"
+          fi
+          uv run pytest --nomigrations \
+            corehq/apps/hqmedia/tests/test_audit.py \
+            corehq/apps/hqmedia/tests/test_apply_menu_icon_manifest.py \
+            corehq/apps/hqmedia/tests/test_export_menu_icon_inventory.py \
+            corehq/apps/app_manager/tests/test_install_codes.py
+
+      - name: Check Django configuration
+        run: uv run python manage.py check --deploy
+
+  hq-assets:
+    name: HQ production assets
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: collectra-hq
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: yarn
+          cache-dependency-path: collectra-hq/yarn.lock
+
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - name: Build production browser assets
+        run: yarn build
+
+  local-origin:
+    name: Local optimized-origin validation
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate shell entry point
+        run: bash -n deploy/local-testing/start-optimized-origin.sh
+
+      - name: Validate Caddy configuration
+        run: >-
+          docker run --rm
+          -v "$PWD/deploy/local-testing/Caddyfile:/etc/caddy/Caddyfile:ro"
+          caddy:2.8.4-alpine
+          caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile

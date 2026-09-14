@@ -41,10 +41,21 @@ class IntegrityTokenViewModel(application: Application) : AndroidViewModel(appli
      * Also note that each app instance can only prepare the integrity token up to 5 times per minute.
      */
     private fun prepareTokenProvider() {
-        val standardIntegrityManager = IntegrityManagerFactory.createStandard(getApplication())
         val cloudProjectNumber = BuildConfig.GOOGLE_CLOUD_PROJECT_NUMBER
-        require(cloudProjectNumber!= -1L) { "Google Cloud Project Number is not defined" }
+        if (cloudProjectNumber == -1L) {
+            val exception = IllegalStateException(
+                "Google Cloud Project Number is not defined"
+            )
+            _providerState.postValue(TokenProviderState.Failure(exception))
+            Logger.exception(
+                "Unable to prepare Google Play Integrity token provider",
+                exception
+            )
+            return
+        }
 
+        val standardIntegrityManager =
+            IntegrityManagerFactory.createStandard(getApplication())
         standardIntegrityManager.prepareIntegrityToken(
             PrepareIntegrityTokenRequest.builder()
                 .setCloudProjectNumber(cloudProjectNumber)

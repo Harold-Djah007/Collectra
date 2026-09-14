@@ -2,11 +2,16 @@ package org.commcare.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.text.Spannable;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import org.commcare.adapters.HomeCardDisplayData;
 import org.commcare.adapters.SquareButtonViewHolder;
@@ -58,41 +63,48 @@ public class HomeButtons {
 
         HomeCardDisplayData[] allButtons = new HomeCardDisplayData[]{
                 HomeCardDisplayData.homeCardDataWithStaticText(Localization.get(homeMessageKey),
-                        R.color.white,
+                        R.color.collectra_text_primary,
                         R.drawable.home_start,
-                        R.color.start_home_button,
+                        R.color.collectra_signal,
                         getStartButtonListener(activity)),
-                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("training.root.title"), R.color.white,
-                        R.drawable.home_training, R.color.cc_dark_cool_accent_color,
+                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("training.root.title"),
+                        R.color.collectra_text_primary,
+                        R.drawable.home_training, R.color.collectra_action_training,
                         getTrainingButtonListener(activity)),
                 HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.forms.saved"),
-                        R.color.white,
+                        R.color.collectra_text_primary,
                         R.drawable.home_saved,
-                        R.color.start_save_button,
+                        R.color.collectra_action_saved,
                         getViewOldFormsListener(activity)),
-                HomeCardDisplayData.homeCardDataWithDynamicText(Localization.get("home.forms.incomplete"), R.color.white,
+                HomeCardDisplayData.homeCardDataWithDynamicText(Localization.get("home.forms.incomplete"),
+                        R.color.collectra_text_primary,
                         R.drawable.home_incomplete,
-                        R.color.red_incomplete,
+                        R.color.collectra_action_incomplete,
                         getIncompleteButtonListener(activity),
                         null,
                         getIncompleteButtonTextSetter(activity)),
-                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.connect"), R.color.white,
-                        R.drawable.quick_reference, R.color.orange_500,
+                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.connect"),
+                        R.color.collectra_text_primary,
+                        R.drawable.quick_reference, R.color.collectra_action_connect,
                         getConnectButtonListener(activity)),
-                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(syncKey), R.color.white,
-                        R.color.white,
+                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(syncKey),
+                        R.color.collectra_text_primary,
+                        R.color.collectra_text_secondary,
                         R.drawable.home_sync,
-                        R.color.start_sync_button,
-                        R.color.start_sync_dark_button,
+                        R.color.collectra_action_sync,
+                        R.color.collectra_action_sync,
                         getSyncButtonListener(activity),
                         getSyncButtonSubTextListener(activity),
                         getSyncButtonTextSetter(activity)),
-                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.report"), R.color.white,
-                        R.drawable.home_report, R.color.cc_attention_negative_color,
+                HomeCardDisplayData.homeCardDataWithStaticText(Localization.get("home.report"),
+                        R.color.collectra_text_primary,
+                        R.drawable.home_report, R.color.collectra_action_report,
                         getReportButtonListener(activity)),
-                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(logoutMessageKey), R.color.white,
-                        R.color.white,
-                        R.drawable.home_logout, R.color.start_logout_button, R.color.cc_core_text,
+                HomeCardDisplayData.homeCardDataWithNotification(Localization.get(logoutMessageKey),
+                        R.color.collectra_text_primary,
+                        R.color.collectra_text_secondary,
+                        R.drawable.home_logout, R.color.collectra_action_logout,
+                        R.color.collectra_action_logout,
                         getLogoutButtonListener(activity),
                         null,
                         getLogoutButtonTextSetter(activity)),
@@ -157,7 +169,9 @@ public class HomeButtons {
                 return;
             }
 
-            squareButtonViewHolder.subTextView.setBackgroundColor(activity.getResources().getColor(cardDisplayData.subTextBgColor));
+            squareButtonViewHolder.subTextView.setVisibility(View.VISIBLE);
+            squareButtonViewHolder.subTextView.setBackground(
+                    softSubtextChip(context, cardDisplayData.subTextBgColor));
             squareButtonViewHolder.textView.setTextColor(context.getResources().getColor(cardDisplayData.textColor));
             squareButtonViewHolder.textView.setText(cardDisplayData.text);
         };
@@ -243,10 +257,32 @@ public class HomeButtons {
         return (cardDisplayData, squareButtonViewHolder, context, notificationText) -> {
             squareButtonViewHolder.textView.setText(cardDisplayData.text);
             squareButtonViewHolder.textView.setTextColor(context.getResources().getColor(cardDisplayData.textColor));
+            squareButtonViewHolder.subTextView.setVisibility(View.VISIBLE);
             squareButtonViewHolder.subTextView.setText(activity.getActivityTitle());
             squareButtonViewHolder.subTextView.setTextColor(context.getResources().getColor(cardDisplayData.subTextColor));
-            squareButtonViewHolder.subTextView.setBackgroundColor(activity.getResources().getColor(cardDisplayData.subTextBgColor));
+            squareButtonViewHolder.subTextView.setBackground(
+                    softSubtextChip(context, cardDisplayData.subTextBgColor));
         };
+    }
+
+    private static Drawable softSubtextChip(Context context, int colorResource) {
+        float radius = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                10f,
+                context.getResources().getDisplayMetrics()
+        );
+        int accent = ContextCompat.getColor(context, colorResource);
+        int soft = Color.argb(
+                36,
+                Color.red(accent),
+                Color.green(accent),
+                Color.blue(accent)
+        );
+        GradientDrawable chip = new GradientDrawable();
+        chip.setShape(GradientDrawable.RECTANGLE);
+        chip.setCornerRadius(radius);
+        chip.setColor(soft);
+        return chip;
     }
 
     private static View.OnClickListener getReportButtonListener(final StandardHomeActivity activity) {

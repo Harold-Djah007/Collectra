@@ -149,6 +149,7 @@
         <activity
             android:label="@string/application_name"
             android:exported="true"
+            android:theme="@style/CollectraLaunchTheme"
             android:name="org.commcare.activities.DispatchActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

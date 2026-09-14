@@ -27,7 +27,7 @@ public class HomeCardDisplayData {
                                                                  int imageResource,
                                                                  int bgColor,
                                                                  View.OnClickListener listener) {
-        return new HomeCardDisplayData(text, textColor, R.color.white,
+        return new HomeCardDisplayData(text, textColor, R.color.collectra_text_secondary,
                 imageResource, bgColor, R.color.cc_brand_color,
                 listener, null, new DefaultTextSetter());
     }
@@ -42,7 +42,7 @@ public class HomeCardDisplayData {
                                                                   View.OnClickListener listener,
                                                                   View.OnClickListener subTextListener,
                                                                   HomeButtons.TextSetter textSetter) {
-        return new HomeCardDisplayData(text, textColor, R.color.white,
+        return new HomeCardDisplayData(text, textColor, R.color.collectra_text_secondary,
                 imageResource, bgColor, R.color.cc_brand_color,
                 listener, subTextListener, textSetter);
     }
