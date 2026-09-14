@@ -260,6 +260,66 @@ static def getDate() {
     return formattedDate
 }
 
+def isCollectraReleaseTaskRequested() {
+    gradle.startParameter.taskNames.any { taskName ->
+        def normalized = taskName.toLowerCase()
+        normalized.contains('commcarerelease') &&
+                (normalized.contains('assemble') || normalized.contains('bundle'))
+    }
+}
+
+def validateCollectraReleaseInputs() {
+    if (!isCollectraReleaseTaskRequested()) {
+        return
+    }
+
+    def errors = []
+    def configuredUrl = project.ext.COLLECTRA_HQ_BASE_URL?.trim()
+    try {
+        def uri = new java.net.URI(configuredUrl ?: '')
+        if (uri.scheme != 'https' || !uri.host || (uri.path && uri.path != '/') ||
+                uri.query || uri.fragment || uri.userInfo || uri.port != -1) {
+            errors << 'COLLECTRA_HQ_BASE_URL must be an HTTPS origin without a path, port, query, or fragment.'
+        }
+    } catch (java.net.URISyntaxException ignored) {
+        errors << 'COLLECTRA_HQ_BASE_URL must be a valid HTTPS origin.'
+    }
+
+    def configuredVersionCode = project.findProperty('versionCode')?.toString()
+    try {
+        if (!configuredVersionCode || configuredVersionCode.toInteger() <= 1) {
+            errors << 'A field release requires -PversionCode with an integer greater than 1.'
+        }
+    } catch (NumberFormatException ignored) {
+        errors << 'versionCode must be an integer greater than 1.'
+    }
+
+    if (!project.findProperty('versionName')?.toString()?.trim()) {
+        errors << 'A field release requires -PversionName.'
+    }
+
+    [
+            RELEASE_STORE_PASSWORD: project.ext.RELEASE_STORE_PASSWORD,
+            RELEASE_KEY_ALIAS: project.ext.RELEASE_KEY_ALIAS,
+            RELEASE_KEY_PASSWORD: project.ext.RELEASE_KEY_PASSWORD,
+    ].each { name, value ->
+        if (!value?.toString()?.trim()) {
+            errors << "${name} must be configured for a field release."
+        }
+    }
+    if (!project.ext.RELEASE_STORE_FILE?.toString()?.trim() ||
+            !file(project.ext.RELEASE_STORE_FILE).isFile()) {
+        errors << 'RELEASE_STORE_FILE must point to an existing protected keystore.'
+    }
+
+    if (errors) {
+        throw new GradleException('Collectra field release configuration is invalid:\n - ' +
+                errors.join('\n - '))
+    }
+}
+
+validateCollectraReleaseInputs()
+
 android {
     namespace 'org.commcare.dalvik'
     compileSdk 36
@@ -299,7 +359,7 @@ android {
         ]
 
         versionCode 1
-        versionName "2.65"
+        versionName (project.findProperty('versionName') ?: "2.65").toString()
 
         // when set, app won't show install screen and try to install
         // resources from assets folder
