@@ -1,0 +1,47 @@
+name: Repository hygiene
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-hygiene-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tracked-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject secrets, generated packages, and manual backups
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden="$(git ls-files | grep -E '(^|/)_collectra_brand_backup/|(^|/)\.env$|\.(apk|aab|jks|keystore)$' || true)"
+          if [[ -n "$forbidden" ]]; then
+            echo "Forbidden generated, secret, or backup files are tracked:"
+            printf '%s\n' "$forbidden"
+            exit 1
+          fi
+
+      - name: Reject unexpectedly large files
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS= read -r -d '' file; do
+            size="$(wc -c < "$file")"
+            if (( size > 20 * 1024 * 1024 )); then
+              echo "Tracked file exceeds 20 MiB: $file ($size bytes)"
+              failed=1
+            fi
+          done < <(git ls-files -z)
+          exit "$failed"
+
+      - name: Check whitespace errors
+        run: git diff --check HEAD~1 HEAD

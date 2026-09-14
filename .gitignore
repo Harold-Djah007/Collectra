@@ -116,10 +116,11 @@ docker-compose.override.yml
 commcare-android/test_assets/keys/key_for_tests.pem
 
 # Windows junction used by CommCare translations
-collectra-hq/submodules/commcare-translations/messages_en-2.txtcommcare-android/app/instrumentation-tests/resources/basic_tests.ccz
-commcare-hq/submodules/commcare-translations/messages_en-2.txt
-commcare-android/app/instrumentation-tests/resources/basic_tests.ccz
 collectra-hq/submodules/commcare-translations/messages_en-2.txt
+
+# Generated/manual Android artifacts and local branding snapshots
+commcare-android/app/instrumentation-tests/resources/basic_tests.ccz
+commcare-android/_collectra_brand_backup/
 
 # Production deployment secrets and local backups
 deploy/production/.env
