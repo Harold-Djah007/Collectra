@@ -19,12 +19,19 @@ if [[ -z "$public_host" ]]; then
     usage >&2
     exit 2
 fi
+if [[ "$public_host" == "NEW-HOSTNAME.trycloudflare.com" ]] ||
+        [[ ! "$public_host" =~ ^([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
+    echo "PUBLIC_HOSTNAME must be the real fully qualified hostname printed by cloudflared." >&2
+    exit 2
+fi
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/../.." && pwd)
 hq_root="$repo_root/collectra-hq"
 log_path=${COLLECTRA_LOCAL_HQ_LOG:-"$HOME/collectra-optimized-hq.log"}
 web_workers=${COLLECTRA_WEB_WORKERS:-2}
+hq_ready_attempts=${COLLECTRA_HQ_READY_ATTEMPTS:-120}
+caddy_ready_attempts=${COLLECTRA_CADDY_READY_ATTEMPTS:-60}
 container_name=collectra-local-accelerator
 hq_pid=''
 
@@ -32,6 +39,13 @@ if [[ ! "$web_workers" =~ ^[1-9][0-9]*$ ]]; then
     echo "COLLECTRA_WEB_WORKERS must be a positive integer." >&2
     exit 2
 fi
+for setting_name in hq_ready_attempts caddy_ready_attempts; do
+    setting_value="${!setting_name}"
+    if [[ ! "$setting_value" =~ ^[1-9][0-9]*$ ]]; then
+        echo "${setting_name} must be a positive integer." >&2
+        exit 2
+    fi
+done
 
 cleanup() {
     local status=$?
@@ -89,7 +103,7 @@ COLLECTRA_WEB_WORKERS="$web_workers" \
     >"$log_path" 2>&1 &
 hq_pid=$!
 
-for attempt in {1..60}; do
+for ((attempt = 1; attempt <= hq_ready_attempts; attempt++)); do
     if ! kill -0 "$hq_pid" 2>/dev/null; then
         echo "Collectra HQ stopped before becoming ready." >&2
         tail -n 100 "$log_path" >&2 || true
@@ -98,8 +112,8 @@ for attempt in {1..60}; do
     if curl -fsS --max-time 2 http://127.0.0.1:8001/ >/dev/null 2>&1; then
         break
     fi
-    if [[ "$attempt" == 60 ]]; then
-        echo "Collectra HQ did not become ready within two minutes." >&2
+    if (( attempt == hq_ready_attempts )); then
+        echo "Collectra HQ did not become ready within $((hq_ready_attempts * 2)) seconds." >&2
         tail -n 100 "$log_path" >&2 || true
         exit 1
     fi
@@ -115,12 +129,12 @@ docker run --rm \
     caddy:2.8.4-alpine &
 caddy_pid=$!
 
-for attempt in {1..30}; do
+for ((attempt = 1; attempt <= caddy_ready_attempts; attempt++)); do
     if curl -fsS --max-time 2 http://127.0.0.1:8000/ >/dev/null 2>&1; then
         break
     fi
-    if [[ "$attempt" == 30 ]]; then
-        echo "The compressed origin did not become ready." >&2
+    if (( attempt == caddy_ready_attempts )); then
+        echo "The compressed origin did not become ready within ${caddy_ready_attempts} seconds." >&2
         exit 1
     fi
     sleep 1

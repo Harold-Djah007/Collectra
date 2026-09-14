@@ -127,3 +127,15 @@ docker compose up -d --wait
 
 Never run `docker compose down -v` in production because `-v` deletes the
 persistent data volumes.
+
+
+## Security and capacity defaults
+
+Production browser sessions expire when the browser closes, after eight hours, or after eight hours
+of inactivity. Adjust `COLLECTRA_SESSION_AGE_SECONDS` and
+`COLLECTRA_INACTIVITY_TIMEOUT_MINUTES` only through a reviewed deployment change.
+
+`healthcheck.sh` also fails when the backup filesystem has less than
+`COLLECTRA_MIN_FREE_DISK_GB` available and rejects containers that report an unhealthy or
+still-starting health state. Run the check from monitoring after every deployment and at least every
+five minutes. Alert an operator on the first failure.
