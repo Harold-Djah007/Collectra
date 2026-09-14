@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 if [[ $# -ne 1 ]]; then
     echo "Usage: $0 DOMAIN"
@@ -14,6 +15,11 @@ fi
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$here"
+
+if [[ ! -f .env ]]; then
+    echo "Missing deploy/production/.env. Copy .env.example and configure it first."
+    exit 1
+fi
 
 set -a
 source .env

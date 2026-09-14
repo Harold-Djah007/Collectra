@@ -59,3 +59,22 @@ remain as fallbacks for compatibility.
 4. Confirm the unsent-form count becomes zero and the submission appears in Collectra HQ.
 5. From a clean installation, use **See Available Apps** over cellular data and confirm the
    configured Collectra applications are listed.
+
+
+## Produce separate test and field APKs
+
+Use `assembleCommcareDebug` only for controlled testing. Debug APKs are debuggable and use an
+Android debug certificate, so they must never be distributed as production field releases.
+
+A production field APK must be created by the **Collectra Android field release** workflow. The
+workflow requires a stable HTTPS HQ origin, an increasing version code, a human-readable version
+name, and the protected signing secrets listed below:
+
+- `COLLECTRA_ANDROID_KEYSTORE_BASE64`
+- `COLLECTRA_ANDROID_STORE_PASSWORD`
+- `COLLECTRA_ANDROID_KEY_ALIAS`
+- `COLLECTRA_ANDROID_KEY_PASSWORD`
+
+The workflow refuses to build when the hostname has a path or port, when the version code is not
+greater than one, when the keystore is missing, or when any signing credential is blank. Preserve
+the uploaded `build-metadata.txt`, `signing-certificate.txt`, and `SHA256SUMS` beside every APK.

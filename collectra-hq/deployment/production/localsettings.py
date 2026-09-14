@@ -35,6 +35,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = integer("COLLECTRA_SESSION_AGE_SECONDS", 8 * 60 * 60)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
 # Caddy is the only public entry point and performs the HTTP-to-HTTPS redirect.
 # Keeping the internal web listener on HTTP allows Formplayer callbacks.
 SECURE_SSL_REDIRECT = False
@@ -135,5 +139,5 @@ CACHE_REPORTS = True
 COMPRESS_OFFLINE = False
 RESTORE_PAYLOAD_DIR_NAME = "restore"
 SHARED_TEMP_DIR_NAME = "temp"
-INACTIVITY_TIMEOUT = 60 * 24 * 365
+INACTIVITY_TIMEOUT = integer("COLLECTRA_INACTIVITY_TIMEOUT_MINUTES", 8 * 60)
 REPORTING_DATABASES = {"default": "default", "ucr": "default", "aaa-data": "default"}
