@@ -161,7 +161,7 @@ function CommcareSettings(options) {
                     } else {
                         upgradeText = gettext('Upgrade to CommCare %s!');
                     }
-                    return interpolate(upgradeText, [setting.requiredVersion().option]);
+                    return upgradeText.replace('%s', setting.requiredVersion().option);
                 } else {
                     var condition = setting.parsedCondition();
                     var names = _(condition.settings).map(function (setting) {
