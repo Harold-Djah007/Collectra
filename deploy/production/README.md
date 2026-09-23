@@ -125,6 +125,16 @@ docker compose up -d --wait
 ./healthcheck.sh
 ```
 
+### Invitation and password-reset email
+
+HQ writes email to the container logs by default. To deliver invitations and
+password resets, configure the SMTP settings shown in `.env.example` in the
+production `.env`, then restart `web`, `celery`, and `celery-beat` with
+`docker compose up -d --wait web celery celery-beat`. Use a real sender address
+authorized by your mail provider and send a test invitation before onboarding
+workers. If SMTP is selected without a host or credentials, HQ now fails at
+startup instead of silently losing outgoing email.
+
 Never run `docker compose down -v` in production because `-v` deletes the
 persistent data volumes.
 
