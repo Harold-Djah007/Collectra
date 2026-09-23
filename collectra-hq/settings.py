@@ -1219,6 +1219,15 @@ except ImportError as error:
 
 # Allow launchers and hosted environments to publish Collectra at a stable
 # address without rewriting the developer's untracked localsettings.py file.
+_collectra_formplayer_port = os.environ.get('COLLECTRA_FORMPLAYER_PORT')
+if _collectra_formplayer_port and FORMPLAYER_URL == 'http://localhost:8080':
+    # Keep the host-side Python API and browser preview on the same port as
+    # the locally published Formplayer container. Container port stays 8080.
+    _old_formplayer_url = FORMPLAYER_URL
+    FORMPLAYER_URL = f'http://localhost:{_collectra_formplayer_port}'
+    if FORMPLAYER_URL_WEBAPPS == _old_formplayer_url:
+        FORMPLAYER_URL_WEBAPPS = FORMPLAYER_URL
+
 _collectra_base_address = os.environ.get('COLLECTRA_BASE_ADDRESS')
 if _collectra_base_address:
     BASE_ADDRESS = _collectra_base_address

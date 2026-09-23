@@ -711,6 +711,20 @@ FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 LOCAL_APPS += ('django_extensions',)
 ```
 
+If another local service uses port 8080, set a different host port before
+starting the Docker services **and** HQ from the same terminal:
+
+```sh
+export COLLECTRA_FORMPLAYER_PORT=18080
+./scripts/docker up -d formplayer
+```
+
+Formplayer still listens on port 8080 inside Docker. With the standard local
+`FORMPLAYER_URL = 'http://localhost:8080'`, HQ and Web Apps use the selected
+host port automatically. Keep the variable set when running management
+commands or starting HQ. A custom Formplayer URL in `localsettings.py` is
+left unchanged.
+
 **IMPORTANT:** When running HQ, be sure to use `runserver_plus`
 
 ```sh
