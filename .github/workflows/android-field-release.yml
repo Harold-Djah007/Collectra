@@ -1,6 +1,6 @@
 name: Collectra Android field release
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       collectra_hq_base_url:
@@ -10,7 +10,7 @@ on:
       version_code:
         description: Increasing Android integer version code
         required: true
-        type: number
+        type: string
       version_name:
         description: Human-readable release version
         required: true
@@ -28,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      COLLECTRA_HQ_BASE_URL: ${{ inputs.collectra_hq_base_url }}
-      COLLECTRA_VERSION_CODE: ${{ inputs.version_code }}
-      COLLECTRA_VERSION_NAME: ${{ inputs.version_name }}
-      KEYSTORE_PATH: ${{ runner.temp }}/collectra-release.jks
+      COLLECTRA_HQ_BASE_URL: ${{ github.event.inputs.collectra_hq_base_url }}
+      COLLECTRA_VERSION_CODE: ${{ github.event.inputs.version_code }}
+      COLLECTRA_VERSION_NAME: ${{ github.event.inputs.version_name }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -51,23 +51,37 @@ jobs:
           KEY_PASSWORD: ${{ secrets.COLLECTRA_ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
+
           if [[ ! "$COLLECTRA_HQ_BASE_URL" =~ ^https://[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?/?$ ]]; then
             echo "collectra_hq_base_url must be a permanent HTTPS origin without a port or path."
             exit 1
           fi
-          if (( COLLECTRA_VERSION_CODE <= 1 )); then
-            echo "version_code must be greater than 1 and higher than the previous field release."
+
+          if [[ ! "$COLLECTRA_VERSION_CODE" =~ ^[0-9]+$ ]] || (( COLLECTRA_VERSION_CODE <= 1 )); then
+            echo "version_code must be an integer greater than 1 and higher than the previous field release."
             exit 1
           fi
+
+          if [[ -z "$COLLECTRA_VERSION_NAME" ]]; then
+            echo "version_name is required."
+            exit 1
+          fi
+
           for value in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
             if [[ -z "${!value}" ]]; then
               echo "Required signing secret is missing: ${value}"
               exit 1
             fi
           done
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
-          chmod 0600 "$KEYSTORE_PATH"
-          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+
+          keystore_path="$RUNNER_TEMP/collectra-release.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          chmod 0600 "$keystore_path"
+          keytool -list \
+            -keystore "$keystore_path" \
+            -storepass "$STORE_PASSWORD" \
+            -alias "$KEY_ALIAS" >/dev/null
+          echo "KEYSTORE_PATH=$keystore_path" >> "$GITHUB_ENV"
 
       - name: Run unit tests
         working-directory: commcare-android
@@ -84,18 +98,36 @@ jobs:
           KEY_ALIAS: ${{ secrets.COLLECTRA_ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.COLLECTRA_ANDROID_KEY_PASSWORD }}
         run: |
-          bash ./gradlew :app:assembleCommcareRelease             -PCOLLECTRA_HQ_BASE_URL="$COLLECTRA_HQ_BASE_URL"             -PversionCode="$COLLECTRA_VERSION_CODE"             -PversionName="$COLLECTRA_VERSION_NAME"             -PRELEASE_STORE_FILE="$KEYSTORE_PATH"             -PRELEASE_STORE_PASSWORD="$STORE_PASSWORD"             -PRELEASE_KEY_ALIAS="$KEY_ALIAS"             -PRELEASE_KEY_PASSWORD="$KEY_PASSWORD"             --no-daemon             --stacktrace
+          bash ./gradlew :app:assembleCommcareRelease \
+            -PCOLLECTRA_HQ_BASE_URL="$COLLECTRA_HQ_BASE_URL" \
+            -PversionCode="$COLLECTRA_VERSION_CODE" \
+            -PversionName="$COLLECTRA_VERSION_NAME" \
+            -PRELEASE_STORE_FILE="$KEYSTORE_PATH" \
+            -PRELEASE_STORE_PASSWORD="$STORE_PASSWORD" \
+            -PRELEASE_KEY_ALIAS="$KEY_ALIAS" \
+            -PRELEASE_KEY_PASSWORD="$KEY_PASSWORD" \
+            --no-daemon \
+            --stacktrace
 
       - name: Package and verify field release
         shell: bash
         run: |
           set -euo pipefail
+
           apk="commcare-android/app/build/outputs/apk/commcare/release/app-commcare-release.apk"
           test -s "$apk"
           mkdir -p field-release
           cp "$apk" "field-release/Collectra-field-v${COLLECTRA_VERSION_NAME}.apk"
           keytool -printcert -jarfile "$apk" > field-release/signing-certificate.txt
-          printf 'commit=%s\ncollectra_hq_base_url=%s\nversion_code=%s\nversion_name=%s\nbuilt_utc=%s\n'             "$GITHUB_SHA" "$COLLECTRA_HQ_BASE_URL" "$COLLECTRA_VERSION_CODE"             "$COLLECTRA_VERSION_NAME" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"             > field-release/build-metadata.txt
+
+          printf 'commit=%s\ncollectra_hq_base_url=%s\nversion_code=%s\nversion_name=%s\nbuilt_utc=%s\n' \
+            "$GITHUB_SHA" \
+            "$COLLECTRA_HQ_BASE_URL" \
+            "$COLLECTRA_VERSION_CODE" \
+            "$COLLECTRA_VERSION_NAME" \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > field-release/build-metadata.txt
+
           (
             cd field-release
             sha256sum "Collectra-field-v${COLLECTRA_VERSION_NAME}.apk" > SHA256SUMS
@@ -104,7 +136,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Collectra-field-v${{ inputs.version_name }}
+          name: Collectra-field-v${{ github.event.inputs.version_name }}
           path: field-release/
           if-no-files-found: error
           retention-days: 30
@@ -112,4 +144,4 @@ jobs:
       - name: Remove temporary keystore
         if: always()
         shell: bash
-        run: rm -f "$KEYSTORE_PATH"
+        run: rm -f "$RUNNER_TEMP/collectra-release.jks"
