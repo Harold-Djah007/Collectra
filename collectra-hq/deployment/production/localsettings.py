@@ -126,6 +126,18 @@ EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
 EMAIL_SMTP_HOST = os.environ.get("EMAIL_SMTP_HOST", "")
 EMAIL_SMTP_PORT = integer("EMAIL_SMTP_PORT", 587)
 EMAIL_USE_TLS = True
+if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+    if not EMAIL_SMTP_HOST or not EMAIL_LOGIN or not EMAIL_PASSWORD:
+        raise RuntimeError(
+            "SMTP email requires EMAIL_SMTP_HOST, EMAIL_LOGIN, and EMAIL_PASSWORD"
+        )
+DEFAULT_FROM_EMAIL = (
+    os.environ.get("COLLECTRA_FROM_EMAIL")
+    or EMAIL_LOGIN
+    or required("COLLECTRA_ADMIN_EMAIL")
+)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_SUBJECT_PREFIX = "[Collectra] "
 ADMINS = (("Collectra Administrator", required("COLLECTRA_ADMIN_EMAIL")),)
 
 BITLY_OAUTH_TOKEN = None

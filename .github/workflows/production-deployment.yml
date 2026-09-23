@@ -37,6 +37,10 @@ jobs:
       - name: Validate Python configuration syntax
         run: python -m py_compile collectra-hq/deployment/production/localsettings.py
 
+      - name: Check production email settings
+        working-directory: collectra-hq
+        run: python -m unittest discover -s deployment/production/tests -p 'test_*.py'
+
       - name: Validate Docker Compose configuration
         working-directory: deploy/production
         run: docker compose config --quiet

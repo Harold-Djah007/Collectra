@@ -26,6 +26,12 @@ x-hq-environment: &hq-environment
   COLLECTRA_BASE_ADDRESS: ${COLLECTRA_HOST}
   COLLECTRA_DEFAULT_PROTOCOL: https
   COLLECTRA_TRUST_PROXY_HTTPS: "1"
+  EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+  EMAIL_LOGIN: ${EMAIL_LOGIN:-}
+  EMAIL_PASSWORD: ${EMAIL_PASSWORD:-}
+  EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-}
+  EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-587}
+  COLLECTRA_FROM_EMAIL: ${COLLECTRA_FROM_EMAIL:-}
 
 x-hq-service: &hq-service
   image: collectra-hq:${COLLECTRA_IMAGE_TAG:-production}
