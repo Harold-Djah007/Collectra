@@ -42,6 +42,14 @@ class FakeMedia:
         yield SimpleNamespace(read=lambda size: b'x'[:size])
 
 
+class EmptyMedia(FakeMedia):
+    @contextmanager
+    def fetch_attachment(self, attachment_id, stream=False):
+        assert attachment_id == self.attachment_id
+        assert stream
+        yield SimpleNamespace(read=lambda size: b'')
+
+
 class FakeMenuItem:
     def __init__(self, media_audio=None, form_id=None):
         self.media_audio = media_audio or {}
@@ -81,6 +89,20 @@ class ApplicationMultimediaAuditTest(SimpleTestCase):
             audit_app_multimedia(app, media_loader=lambda item: FakeMedia()),
             [],
         )
+
+    def test_empty_menu_image_is_reported_as_repairable(self):
+        path = 'jr://file/commcare/image/module0_en.png'
+        mapping = SimpleNamespace(
+            media_type='CommCareImage', multimedia_id='media-id'
+        )
+        app = FakeApp([image_reference(path)], {path: mapping})
+
+        issues = audit_app_multimedia(
+            app, media_loader=lambda item: EmptyMedia()
+        )
+
+        self.assertEqual(issues[0]['status'], 'empty_blob')
+        self.assertTrue(issues[0]['repairable_menu_image'])
 
     def test_missing_menu_mapping_is_repairable(self):
         path = 'jr://file/commcare/image/module0_en.png'
