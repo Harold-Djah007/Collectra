@@ -92,7 +92,8 @@ def _validate_mapping(map_item, references, media_loader):
 
     try:
         with media.fetch_attachment(attachment_id, stream=True) as stream:
-            stream.read(1)
+            if not stream.read(1):
+                return 'empty_blob', f'Blob {attachment_id} is empty'
     except ResourceNotFound:
         return 'missing_blob', f'Blob {attachment_id} was not found'
     except Exception as error:
