@@ -16,6 +16,7 @@
 {% initial_page_data 'dashboard_tiles' dashboard_tiles %}
 {% registerurl 'dashboard_tile' domain '---' %}
 {% registerurl 'dashboard_tile_total' domain '---' %}
+{% if show_operational_alerts %}{% registerurl 'dashboard_operational_alerts' domain %}{% endif %}
 
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
   <div class="collectra-dashboard-inner">
@@ -48,6 +49,40 @@
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
     {% elif should_show_pending_notice %}
       {% include 'hqwebapp/partials/pending_plan_notice.html' %}
+    {% endif %}
+
+    {% if show_operational_alerts %}
+      <section id="operational-alerts" class="collectra-alerts" aria-label="Operations needing attention">
+        <div class="collectra-alerts-header">
+          <div>
+            <p class="collectra-alerts-eyebrow">Safisana operations</p>
+            <h2>Operational alerts <span class="collectra-alerts-count" data-bind="visible: alerts().length, text: alerts().length"></span></h2>
+            <p>Issues reported in Morning Checks and Metering Round submissions over the last 14 days.</p>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: refresh, disable: loading">Refresh</button>
+        </div>
+        <div class="collectra-alerts-message" data-bind="visible: loading">Loading recent submissions…</div>
+        <div class="collectra-alerts-message" data-bind="visible: error">
+          Could not load alerts. Select Refresh to try again.
+        </div>
+        <div class="collectra-alerts-message" data-bind="visible: !loading() &amp;&amp; !error() &amp;&amp; !alerts().length">
+          No issues have been reported in these forms in the last 14 days.
+        </div>
+        <div class="collectra-alerts-list" data-bind="foreach: alerts, visible: !loading() &amp;&amp; !error()">
+          <article class="collectra-alert" data-bind="css: {'collectra-alert-urgent': severity === 'urgent'}">
+            <div class="collectra-alert-summary">
+              <span class="collectra-alert-severity" data-bind="text: severity === 'urgent' ? 'Urgent' : 'Follow up'"></span>
+              <strong data-bind="text: form_name"></strong>
+              <time data-bind="text: when, attr: {datetime: received_on}"></time>
+            </div>
+            <ul class="collectra-alert-checks" data-bind="foreach: checks, visible: checks.length">
+              <li data-bind="text: $data"></li>
+            </ul>
+            <p class="collectra-alert-note" data-bind="text: note"></p>
+            <a data-bind="attr: {href: url}">View submission <span aria-hidden="true">→</span></a>
+          </article>
+        </div>
+      </section>
     {% endif %}
 
     <section id="dashboard-tiles" aria-label="Collectra dashboard">
