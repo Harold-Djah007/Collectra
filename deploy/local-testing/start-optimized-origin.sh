@@ -124,6 +124,7 @@ echo "Starting the compressed, cacheable origin on port 8000..."
 docker run --rm \
     --name "$container_name" \
     --add-host host.docker.internal:host-gateway \
+    --env COLLECTRA_FORMPLAYER_PORT="${COLLECTRA_FORMPLAYER_PORT:-8080}" \
     --publish 8000:80 \
     --volume "$script_dir/Caddyfile:/etc/caddy/Caddyfile:ro" \
     caddy:2.8.4-alpine &

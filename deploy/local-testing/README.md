@@ -34,6 +34,17 @@ COLLECTRA_SKIP_ASSET_BUILD=1 \
   tribute-legislation-yrs-invalid.trycloudflare.com
 ```
 
+If another project uses port 8080, export a free Formplayer host port in the
+terminal running this script. The launcher, local HQ checks, and Caddy proxy
+will all use that port:
+
+```bash
+export COLLECTRA_FORMPLAYER_PORT=18080
+COLLECTRA_SKIP_ASSET_BUILD=1 \
+  ./deploy/local-testing/start-optimized-origin.sh \
+  YOUR-CURRENT-TUNNEL-HOST.trycloudflare.com
+```
+
 Keep both the optimized-origin terminal and the `cloudflared` terminal open.
 If the Quick Tunnel process exits, its random hostname expires. Start a new
 tunnel with QUIC, copy its reported hostname, and pass that hostname to the
