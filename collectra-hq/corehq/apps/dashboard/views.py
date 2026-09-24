@@ -1,10 +1,12 @@
 from django.contrib import messages
+from django.core.cache import cache
 from django.http import HttpResponseRedirect
-from django.http.response import Http404
+from django.http.response import Http404, HttpResponseForbidden
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.views.decorators.http import require_GET
 
 from django_prbac.utils import has_privilege
 
@@ -25,6 +27,7 @@ from corehq.apps.dashboard.models import (
     ReportsPaginator,
     Tile,
 )
+from corehq.apps.dashboard.operational_alerts import recent_operational_alerts
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     login_and_domain_required,
@@ -69,6 +72,24 @@ def dashboard_tile(request, domain, slug):
 def dashboard_tile_total(request, domain, slug):
     tile = _get_tile(request, slug)
     return json_response({'total': tile.paginator.total})
+
+
+@login_and_domain_required
+@require_GET
+def dashboard_operational_alerts(request, domain):
+    if (domain != 'safisana' or not user_can_view_reports(request.project, request.couch_user)
+            or not has_privilege(request, privileges.PROJECT_ACCESS)
+            or not request.can_access_all_locations):
+        return HttpResponseForbidden()
+    cache_key = f'collectra:operational-alerts:{domain}:v1'
+    alerts = cache.get(cache_key)
+    if alerts is None:
+        alerts = recent_operational_alerts(domain)
+        cache.set(cache_key, alerts, 60)
+    return json_response({'alerts': [
+        dict(alert, url=reverse('render_form_data', args=[domain, alert['form_id']]))
+        for alert in alerts
+    ]})
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -119,6 +140,12 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
             'show_create_form': any(tile['slug'] == 'applications' for tile in tile_contexts),
             'user_can_view_odata_feed': user_can_view_odata_feed(
                 self.domain, self.request.couch_user
+            ),
+            'show_operational_alerts': (
+                self.domain == 'safisana'
+                and user_can_view_reports(self.request.project, self.request.couch_user)
+                and has_privilege(self.request, privileges.PROJECT_ACCESS)
+                and self.request.can_access_all_locations
             ),
         }
         context.update(get_paused_plan_context(self.request, self.domain))
