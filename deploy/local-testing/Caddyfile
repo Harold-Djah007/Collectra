@@ -6,7 +6,7 @@
 	}
 
 	handle_path /formplayer/* {
-		reverse_proxy host.docker.internal:8080 {
+		reverse_proxy host.docker.internal:{$COLLECTRA_FORMPLAYER_PORT:8080} {
 			header_up -Origin
 		}
 	}
