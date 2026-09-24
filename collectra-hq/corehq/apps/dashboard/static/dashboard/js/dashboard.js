@@ -114,4 +114,35 @@ $(function () {
     $("#dashboard-tiles").koApplyBindings(dashboardModel({
         tiles: initialPageData.get("dashboard_tiles"),
     }));
+
+    var alertsPanel = $("#operational-alerts");
+    if (alertsPanel.length) {
+        var alertsModel = {
+            alerts: ko.observableArray([]),
+            loading: ko.observable(true),
+            error: ko.observable(false),
+        };
+        alertsModel.refresh = function () {
+            alertsModel.loading(true);
+            alertsModel.error(false);
+            $.getJSON(initialPageData.reverse("dashboard_operational_alerts"))
+                .done(function (data) {
+                    alertsModel.alerts(_.map(data.alerts, function (alert) {
+                        alert.when = new Date(alert.received_on).toLocaleString();
+                        return alert;
+                    }));
+                })
+                .fail(function () {
+                    alertsModel.error(true);
+                })
+                .always(function () {
+                    alertsModel.loading(false);
+                });
+        };
+        alertsPanel.koApplyBindings(alertsModel);
+        alertsModel.refresh();
+        window.setInterval(function () {
+            if (!document.hidden) { alertsModel.refresh(); }
+        }, 60000);
+    }
 });
