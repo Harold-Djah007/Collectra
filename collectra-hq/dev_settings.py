@@ -109,10 +109,11 @@ INACTIVITY_TIMEOUT = 60 * 24 * 365
 CACHE_REPORTS = False
 
 # Make a dir to use for storing attachments as blobs on the filesystem
-shared_dirname = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                              'sharedfiles')
+shared_dirname = os.environ.get('COLLECTRA_SHARED_DRIVE_ROOT') or os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'sharedfiles'
+)
 if not os.path.exists(shared_dirname):
-    os.mkdir(shared_dirname)
+    os.makedirs(shared_dirname)
 SHARED_DRIVE_ROOT = shared_dirname
 
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
