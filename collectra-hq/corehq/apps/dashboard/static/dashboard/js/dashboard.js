@@ -212,6 +212,35 @@ $(function () {
                         request.when = new Date(request.received_on).toLocaleString();
                         request.bedLabel = request.bed === "other" ? "Other drying bed"
                             : "Drying bed " + request.bed.replace("dry_bed_", "");
+                        request.reviewOpen = ko.observable(false);
+                        request.caseId = ko.observable("");
+                        request.checking = ko.observable(false);
+                        request.reviewError = ko.observable("");
+                        request.candidate = ko.observable(null);
+                        request.caseId.subscribe(function () { request.candidate(null); });
+                        request.toggleReview = function () {
+                            request.reviewOpen(!request.reviewOpen());
+                        };
+                        request.verify = function () {
+                            request.candidate(null);
+                            request.reviewError("");
+                            if (!request.caseId().trim()) {
+                                request.reviewError("Enter the original case ID from Case List.");
+                                return;
+                            }
+                            request.checking(true);
+                            $.getJSON(initialPageData.reverse("dashboard_reopen_preview"), {
+                                request_id: request.form_id,
+                                case_id: request.caseId().trim(),
+                            }).done(function (candidate) {
+                                if (request.caseId().trim() === candidate.case_id) {
+                                    request.candidate(candidate);
+                                }
+                            }).fail(function (xhr) {
+                                request.reviewError(xhr.responseJSON && xhr.responseJSON.error
+                                    ? xhr.responseJSON.error : "Could not check that case. Try again.");
+                            }).always(function () { request.checking(false); });
+                        };
                         return request;
                     }));
                     reopenModel.loaded(true);
