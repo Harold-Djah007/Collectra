@@ -28,6 +28,7 @@ from corehq.apps.dashboard.models import (
     Tile,
 )
 from corehq.apps.dashboard.operational_alerts import recent_operational_alerts
+from corehq.apps.dashboard.reopen_requests import recent_reopen_requests
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     login_and_domain_required,
@@ -92,6 +93,26 @@ def dashboard_operational_alerts(request, domain):
     ]})
 
 
+@login_and_domain_required
+@location_safe
+@require_GET
+def dashboard_reopen_requests(request, domain):
+    if (domain != 'safisana' or not request.couch_user.can_edit_data()
+            or not user_can_view_reports(request.project, request.couch_user)
+            or not has_privilege(request, privileges.PROJECT_ACCESS)
+            or not request.can_access_all_locations):
+        return HttpResponseForbidden()
+    cache_key = f'collectra:reopen-requests:{domain}:v1'
+    requests = cache.get(cache_key)
+    if requests is None:
+        requests = recent_reopen_requests(domain)
+        cache.set(cache_key, requests, 60)
+    return json_response({'requests': [
+        dict(item, url=reverse('render_form_data', args=[domain, item['form_id']]))
+        for item in requests
+    ]})
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(always_allow_project_access, name='dispatch')
 @location_safe
@@ -143,6 +164,13 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
             ),
             'show_operational_alerts': (
                 self.domain == 'safisana'
+                and user_can_view_reports(self.request.project, self.request.couch_user)
+                and has_privilege(self.request, privileges.PROJECT_ACCESS)
+                and self.request.can_access_all_locations
+            ),
+            'show_reopen_requests': (
+                self.domain == 'safisana'
+                and self.request.couch_user.can_edit_data()
                 and user_can_view_reports(self.request.project, self.request.couch_user)
                 and has_privilege(self.request, privileges.PROJECT_ACCESS)
                 and self.request.can_access_all_locations
