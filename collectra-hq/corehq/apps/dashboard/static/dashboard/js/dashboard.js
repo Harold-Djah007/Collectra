@@ -12,6 +12,13 @@ var tileModel = function (options) {
     self.title = options.title;
     self.slug = options.slug;
     self.icon = options.icon;
+    self.cardClasses = 'collectra-card-' + options.slug;
+    self.kicker = ({applications: '01 / BUILD', reports: '02 / MONITOR', data: '03 / EXPORT',
+        users: '04 / TEAM', messaging: '05 / CONNECT', settings: '06 / CONFIGURE',
+        help: '07 / SUPPORT'})[options.slug] || 'COLLECTRA';
+    self.actionText = ({applications: 'Manage applications', reports: 'View reports',
+        data: 'Explore data', users: 'Manage users', messaging: 'Open messaging',
+        settings: 'Open settings', help: 'Find answers'})[options.slug] || 'Open tool';
     self.url = options.url;
     self.helpText = options.help_text;
     self.hasError = ko.observable(false);
@@ -107,6 +114,18 @@ var tileModel = function (options) {
 var dashboardModel = function (options) {
     var self = {};
     self.tiles = _.map(options.tiles, function (t) { return tileModel(t); });
+    self.query = ko.observable("");
+    self.clearSearch = function () { self.query(""); };
+    self.filteredTiles = ko.pureComputed(function () {
+        var needle = self.query().trim().toLocaleLowerCase();
+        if (!needle) { return self.tiles; }
+        return _.filter(self.tiles, function (tile) {
+            return [tile.title, tile.helpText].concat(_.pluck(tile.items(), "name"))
+                .some(function (text) {
+                    return String(text || "").toLocaleLowerCase().includes(needle);
+                });
+        });
+    });
     return self;
 };
 
@@ -114,4 +133,122 @@ $(function () {
     $("#dashboard-tiles").koApplyBindings(dashboardModel({
         tiles: initialPageData.get("dashboard_tiles"),
     }));
+
+    var alertsPanel = $("#operational-alerts");
+    if (alertsPanel.length) {
+        var alertsModel = {
+            alerts: ko.observableArray([]),
+            loading: ko.observable(true),
+            error: ko.observable(false),
+            lastUpdated: ko.observable(""),
+            selectedSeverity: ko.observable("all"),
+        };
+        alertsModel.filteredAlerts = ko.pureComputed(function () {
+            var selected = alertsModel.selectedSeverity();
+            if (selected === "all") { return alertsModel.alerts(); }
+            return _.filter(alertsModel.alerts(), function (alert) { return alert.severity === selected; });
+        });
+        alertsModel.showAll = function () { alertsModel.selectedSeverity("all"); };
+        alertsModel.showUrgent = function () { alertsModel.selectedSeverity("urgent"); };
+        alertsModel.showFollowUp = function () { alertsModel.selectedSeverity("follow_up"); };
+        alertsModel.emptyTitle = ko.pureComputed(function () {
+            if (alertsModel.selectedSeverity() === "urgent") { return "No urgent issues reported"; }
+            if (alertsModel.selectedSeverity() === "follow_up") { return "No follow-up issues reported"; }
+            return "No reported issues";
+        });
+        alertsModel.emptyDescription = ko.pureComputed(function () {
+            return alertsModel.selectedSeverity() === "all"
+                ? "No issues have been reported in these forms in the last 14 days."
+                : "Select Reported issues to see all recent submissions needing attention.";
+        });
+        alertsModel.urgentCount = ko.pureComputed(function () {
+            return _.filter(alertsModel.alerts(), function (alert) { return alert.severity === "urgent"; }).length;
+        });
+        alertsModel.followUpCount = ko.pureComputed(function () {
+            return alertsModel.alerts().length - alertsModel.urgentCount();
+        });
+        alertsModel.refresh = function () {
+            if (alertsModel.loading() && alertsModel.lastUpdated()) { return; }
+            alertsModel.loading(true);
+            alertsModel.error(false);
+            $.getJSON(initialPageData.reverse("dashboard_operational_alerts"))
+                .done(function (data) {
+                    alertsModel.alerts(_.map(data.alerts, function (alert) {
+                        alert.when = new Date(alert.received_on).toLocaleString();
+                        return alert;
+                    }));
+                    alertsModel.lastUpdated("Updated " + new Date().toLocaleTimeString([], {
+                        hour: "numeric", minute: "2-digit",
+                    }));
+                })
+                .fail(function () {
+                    alertsModel.error(true);
+                })
+                .always(function () {
+                    alertsModel.loading(false);
+                });
+        };
+        alertsPanel.koApplyBindings(alertsModel);
+        alertsModel.refresh();
+        window.setInterval(function () {
+            if (!document.hidden) { alertsModel.refresh(); }
+        }, 60000);
+    }
+
+    var reopenPanel = $("#reopen-requests");
+    if (reopenPanel.length) {
+        var reopenModel = {
+            requests: ko.observableArray([]),
+            loading: ko.observable(true),
+            loaded: ko.observable(false),
+            error: ko.observable(false),
+        };
+        reopenModel.refresh = function () {
+            reopenModel.loading(true);
+            reopenModel.error(false);
+            $.getJSON(initialPageData.reverse("dashboard_reopen_requests"))
+                .done(function (data) {
+                    reopenModel.requests(_.map(data.requests, function (request) {
+                        request.when = new Date(request.received_on).toLocaleString();
+                        request.bedLabel = request.bed === "other" ? "Other drying bed"
+                            : "Drying bed " + request.bed.replace("dry_bed_", "");
+                        request.reviewOpen = ko.observable(false);
+                        request.caseId = ko.observable("");
+                        request.checking = ko.observable(false);
+                        request.reviewError = ko.observable("");
+                        request.candidate = ko.observable(null);
+                        request.caseId.subscribe(function () { request.candidate(null); });
+                        request.toggleReview = function () {
+                            request.reviewOpen(!request.reviewOpen());
+                        };
+                        request.verify = function () {
+                            request.candidate(null);
+                            request.reviewError("");
+                            if (!request.caseId().trim()) {
+                                request.reviewError("Enter the original case ID from Case List.");
+                                return;
+                            }
+                            request.checking(true);
+                            $.getJSON(initialPageData.reverse("dashboard_reopen_preview"), {
+                                request_id: request.form_id,
+                                case_id: request.caseId().trim(),
+                            }).done(function (candidate) {
+                                if (request.caseId().trim() === candidate.case_id) {
+                                    request.candidate(candidate);
+                                }
+                            }).fail(function (xhr) {
+                                request.reviewError(xhr.responseJSON && xhr.responseJSON.error
+                                    ? xhr.responseJSON.error : "Could not check that case. Try again.");
+                            }).always(function () { request.checking(false); });
+                        };
+                        return request;
+                    }));
+                    reopenModel.loaded(true);
+                })
+                .fail(function () { reopenModel.error(true); })
+                .always(function () { reopenModel.loading(false); });
+        };
+        reopenPanel.koApplyBindings(reopenModel);
+        reopenModel.refresh();
+    }
 });

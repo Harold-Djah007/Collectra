@@ -1,10 +1,14 @@
+import logging
+
 from django.contrib import messages
-from django.http import HttpResponseRedirect
-from django.http.response import Http404
+from django.core.cache import cache
+from django.http import HttpResponseRedirect, JsonResponse
+from django.http.response import Http404, HttpResponseForbidden
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.views.decorators.http import require_GET
 
 from django_prbac.utils import has_privilege
 
@@ -25,6 +29,12 @@ from corehq.apps.dashboard.models import (
     ReportsPaginator,
     Tile,
 )
+from corehq.apps.dashboard.operational_alerts import recent_operational_alerts
+from corehq.apps.dashboard.reopen_requests import (
+    closing_form_for_reopen,
+    recent_reopen_requests,
+    validate_reopen_request,
+)
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     login_and_domain_required,
@@ -42,7 +52,13 @@ from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import DefaultProjectUserSettingsView, require_POST
+from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml, XFormNotFound
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from lxml import etree
 from corehq.util.context_processors import commcare_hq_names
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_tile(request, slug):
@@ -69,6 +85,104 @@ def dashboard_tile(request, domain, slug):
 def dashboard_tile_total(request, domain, slug):
     tile = _get_tile(request, slug)
     return json_response({'total': tile.paginator.total})
+
+
+@login_and_domain_required
+@require_GET
+def dashboard_operational_alerts(request, domain):
+    if (domain != 'safisana' or not user_can_view_reports(request.project, request.couch_user)
+            or not has_privilege(request, privileges.PROJECT_ACCESS)
+            or not request.can_access_all_locations):
+        return HttpResponseForbidden()
+    cache_key = f'collectra:operational-alerts:{domain}:v1'
+    alerts = cache.get(cache_key)
+    if alerts is None:
+        alerts = recent_operational_alerts(domain)
+        cache.set(cache_key, alerts, 60)
+    return json_response({'alerts': [
+        dict(alert, url=reverse('render_form_data', args=[domain, alert['form_id']]))
+        for alert in alerts
+    ]})
+
+
+@login_and_domain_required
+@location_safe
+@require_GET
+def dashboard_reopen_requests(request, domain):
+    if (domain != 'safisana' or not request.couch_user.can_edit_data()
+            or not user_can_view_reports(request.project, request.couch_user)
+            or not has_privilege(request, privileges.PROJECT_ACCESS)
+            or not request.can_access_all_locations):
+        return HttpResponseForbidden()
+    cache_key = f'collectra:reopen-requests:{domain}:v1'
+    requests = cache.get(cache_key)
+    if requests is None:
+        requests = recent_reopen_requests(domain)
+        cache.set(cache_key, requests, 60)
+    return json_response({'requests': [
+        dict(item, url=reverse('render_form_data', args=[domain, item['form_id']]))
+        for item in requests
+    ]})
+
+
+def _can_reopen_from_dashboard(request, domain):
+    return (domain == 'safisana' and request.couch_user.can_edit_data()
+            and user_can_view_reports(request.project, request.couch_user)
+            and has_privilege(request, privileges.PROJECT_ACCESS)
+            and request.can_access_all_locations)
+
+
+def _reopen_candidates(domain, request_id, case_id):
+    if not request_id or not case_id or len(request_id) > 80 or len(case_id) > 80:
+        raise ValueError('Provide the request ID and the original case ID')
+    worker_request = XFormInstance.objects.get_form(request_id, domain)
+    validate_reopen_request(worker_request)
+    case = CommCareCase.objects.get_case(case_id, domain)
+    closing_form = closing_form_for_reopen(case)
+    return case, closing_form
+
+
+@login_and_domain_required
+@location_safe
+@require_GET
+def dashboard_reopen_preview(request, domain):
+    if not _can_reopen_from_dashboard(request, domain):
+        return HttpResponseForbidden()
+    try:
+        case, closing_form = _reopen_candidates(
+            domain, request.GET.get('request_id'), request.GET.get('case_id'))
+    except (CaseNotFound, XFormNotFound, MissingFormXml, ValueError, etree.XMLSyntaxError) as error:
+        return JsonResponse({'error': str(error)}, status=400)
+    return JsonResponse({
+        'case_id': case.case_id,
+        'case_name': case.name,
+        'closing_form_id': closing_form.form_id,
+        'case_url': reverse('case_data', args=[domain, case.case_id]),
+        'form_url': reverse('render_form_data', args=[domain, closing_form.form_id]),
+    })
+
+
+@login_and_domain_required
+@location_safe
+@require_POST
+def dashboard_reopen_approved(request, domain):
+    if not _can_reopen_from_dashboard(request, domain):
+        return HttpResponseForbidden()
+    try:
+        case_id = request.POST.get('case_id')
+        case, closing_form = _reopen_candidates(domain, request.POST.get('request_id'), case_id)
+        if (request.POST.get('closing_form_id') != closing_form.form_id
+                or request.POST.get('acknowledge_archive') != 'yes'):
+            raise ValueError('Review the closing submission and confirm the archive warning')
+        closing_form.archive(user_id=request.couch_user._id)
+        logger.info('Safisana reopening approved: request=%s case=%s closing_form=%s supervisor=%s',
+                    request.POST.get('request_id'), case.case_id, closing_form.form_id,
+                    request.couch_user._id)
+        messages.success(request, f'Archived the closing submission for {case.name}. '
+                         'Sync the worker device to see the reopened case.')
+    except (CaseNotFound, XFormNotFound, MissingFormXml, ValueError, etree.XMLSyntaxError) as error:
+        messages.error(request, f'Case was not reopened: {error}')
+    return HttpResponseRedirect(reverse('dashboard_domain', args=[domain]))
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -119,6 +233,19 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
             'show_create_form': any(tile['slug'] == 'applications' for tile in tile_contexts),
             'user_can_view_odata_feed': user_can_view_odata_feed(
                 self.domain, self.request.couch_user
+            ),
+            'show_operational_alerts': (
+                self.domain == 'safisana'
+                and user_can_view_reports(self.request.project, self.request.couch_user)
+                and has_privilege(self.request, privileges.PROJECT_ACCESS)
+                and self.request.can_access_all_locations
+            ),
+            'show_reopen_requests': (
+                self.domain == 'safisana'
+                and self.request.couch_user.can_edit_data()
+                and user_can_view_reports(self.request.project, self.request.couch_user)
+                and has_privilege(self.request, privileges.PROJECT_ACCESS)
+                and self.request.can_access_all_locations
             ),
         }
         context.update(get_paused_plan_context(self.request, self.domain))
@@ -196,7 +323,7 @@ def _get_default_tiles(request):
 
     def apps_link(urlname, req):
         return (
-            '' if domain_has_apps(req.domain)
+            reverse('default_new_app', args=[req.domain]) if domain_has_apps(req.domain)
             else reverse(urlname, args=[req.domain])
         )
 

@@ -82,4 +82,61 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp"
         android:background="@color/collectra_signal" />
+
+    <TextView
+        android:id="@+id/collectra_today_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:fontFamily="@font/outfit_semibold"
+        android:text="@string/collectra_today_title"
+        android:textColor="@color/collectra_text_primary"
+        android:textSize="19sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/collectra_today_sync_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/collectra_today_checking_sync"
+        android:textColor="@color/collectra_text_secondary"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/collectra_today_start"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="14dp"
+        android:backgroundTint="@color/collectra_signal"
+        android:text="@string/collectra_today_start"
+        android:textAllCaps="false"
+        android:textColor="@color/collectra_signal_ink" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/collectra_today_resume"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/collectra_ink"
+            android:text="@string/collectra_today_resume"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/collectra_today_sync"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/collectra_ink"
+            android:text="@string/collectra_today_sync"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
 </LinearLayout>
