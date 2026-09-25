@@ -150,6 +150,40 @@ def refine_staged_morning_choices(root):
         raise ValueError('Expected 12 distinct Morning Checks questions')
 
 
+def add_morning_issue_notes(root):
+    """Add one required, conditional explanation beside each reviewed answer."""
+    model = one(root, '//x:model')
+    data = one(model, './x:instance/*')
+    translation = one(model, './x:itext/x:translation[@lang="en"]')
+    for path, wordings in MORNING_STATUS_LABELS.items():
+        question = one(root, f'//h:body//x:select1[@ref="{path}"]')
+        values = [one(item, './x:value').text for item in question.xpath('./x:item', namespaces=NS)]
+        if values != list(STATUS_VALUES):
+            raise ValueError(f'{path} must contain the reviewed three answers: {values}')
+        parts = path.strip('/').split('/')
+        note_name = parts[-1].removesuffix('_status') + '_issue_note'
+        note_path = '/'.join(path.split('/')[:-1] + [note_name])
+        if root.xpath('//x:bind[@nodeset=$path] | //h:body//x:input[@ref=$path]',
+                      namespaces=NS, path=note_path):
+            raise ValueError(f'{note_path} already exists')
+        group = one(data, f'./*[local-name()="{parts[-2]}"]')
+        if group.xpath(f'./*[local-name()="{note_name}"]'):
+            raise ValueError(f'{note_path} already exists in the form instance')
+        etree.SubElement(group, f'{{{etree.QName(data).namespace}}}{note_name}')
+        status_bind = one(model, f'./x:bind[@nodeset="{path}"]')
+        model.insert(list(model).index(status_bind) + 1,
+                     etree.Element(f'{{{X}}}bind', nodeset=note_path, type='xsd:string',
+                                   relevant=f"{path} = 'needs_attention'", required='true()'))
+        identifier = f'{path.strip("/").replace("/", "-")}-issue-note-label'
+        if translation.xpath('./x:text[@id=$id]', namespaces=NS, id=identifier):
+            raise ValueError(f'{identifier} already exists')
+        equipment = wordings[1].removesuffix(' needs attention')
+        add_text(translation, identifier, f'What issue did you find with {equipment.lower()}?')
+        note = etree.Element(f'{{{X}}}input', ref=note_path)
+        etree.SubElement(note, f'{{{X}}}label', ref=f"jr:itext('{identifier}')")
+        question.addnext(note)
+
+
 def upgrade_metering_round_type(root):
     """Use one choice for week/month, retaining both original export fields."""
     model = one(root, '//x:model')
