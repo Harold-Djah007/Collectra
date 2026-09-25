@@ -16,6 +16,47 @@ X = 'http://www.w3.org/2002/xforms'
 H = 'http://www.w3.org/1999/xhtml'
 NS = {'x': X, 'h': H}
 ISSUE_STATUSES = ('needs_attention', 'not_completed')
+STATUS_VALUES = ('completed', 'needs_attention', 'not_completed')
+# Match each answer to the equipment being inspected. Value tokens stay fixed
+# because the existing export fields and dashboard alerts depend on them.
+MORNING_STATUS_LABELS = {
+    '/data/airblower/airblower_status': (
+        'Airblower valve checked and working', 'Airblower valve needs attention',
+        'Airblower valve not checked'),
+    '/data/ou_pressure/ou_pressure_chk_status': (
+        'Both water tubes at the right level', 'Water tube level needs attention',
+        'Water tube level not checked'),
+    '/data/gas_piping_dig/main_gas_valve_chk_status': (
+        'Main gas valve position confirmed', 'Main gas valve needs attention',
+        'Main gas valve not checked'),
+    '/data/gas_piping_dig/parallel_digester_valve_chk_status': (
+        'Digester parallel valve position confirmed', 'Digester parallel valve needs attention',
+        'Digester parallel valve not checked'),
+    '/data/gas_piping_dig/digester_condense_chk_status': (
+        'Digester condensate pit checked', 'Digester condensate pit needs attention',
+        'Digester condensate pit not checked'),
+    '/data/air_release/air_release_chk_status': (
+        'Air release valve checked and working', 'Air release valve needs attention',
+        'Air release valve not checked'),
+    '/data/gas_piping_chp/parallel_valve_chp_chk_status': (
+        'CHP parallel valves checked', 'CHP parallel valves need attention',
+        'CHP parallel valves not checked'),
+    '/data/gas_piping_chp/chp_condense_chk_status': (
+        'CHP condensate pit checked', 'CHP condensate pit needs attention',
+        'CHP condensate pit not checked'),
+    '/data/flare/flare_main_chk_status': (
+        'Flare main valve position confirmed', 'Flare main valve needs attention',
+        'Flare main valve not checked'),
+    '/data/flare/flare_sample_valve_status': (
+        'Flare sample valve position confirmed', 'Flare sample valve needs attention',
+        'Flare sample valve not checked'),
+    '/data/cntrl_panel/cntrl_panel_switch_chk_status': (
+        'Control panel switches checked', 'Control panel switch needs attention',
+        'Control panel switches not checked'),
+    '/data/cntrl_panel/desul_panel_valve_chk_status': (
+        'Desulphurization valve checked', 'Desulphurization valve needs attention',
+        'Desulphurization valve not checked'),
+}
 
 
 def one(element, expression):
@@ -44,10 +85,6 @@ def upgrade_morning_checkboxes(root):
     model = one(root, '//x:model')
     data = one(model, './x:instance/*')
     translation = one(model, './x:itext/x:translation[@lang="en"]')
-    add_text(translation, 'status-completed-label', 'Completed and okay')
-    add_text(translation, 'status-needs_attention-label', 'Needs attention')
-    add_text(translation, 'status-not_completed-label', 'Not completed')
-    add_text(translation, 'status-not_applicable-label', 'Not applicable today')
     status_paths = []
     checks = root.xpath('//h:body//x:select', namespaces=NS)
     if len(checks) != 12:
@@ -59,6 +96,8 @@ def upgrade_morning_checkboxes(root):
         value = one(choice, './x:value').text
         old_label = one(choice, './x:label').get('ref')
         status_path = '/'.join(parts[:-1] + [parts[-1] + '_status'])
+        if status_path not in MORNING_STATUS_LABELS:
+            raise ValueError(f'Unreviewed Morning Checks question {status_path}')
         group_data = one(data, f'./*[local-name()="{parts[-2]}"]')
         etree.SubElement(group_data, f'{{{etree.QName(data).namespace}}}{parts[-1]}_status')
         original_bind = one(model, f'./x:bind[@nodeset="{path}"]')
@@ -76,13 +115,39 @@ def upgrade_morning_checkboxes(root):
         parent.remove(check)
         replacement = etree.Element(f'{{{X}}}select1', ref=status_path)
         etree.SubElement(replacement, f'{{{X}}}label', ref=old_label)
-        for status in ('completed', 'needs_attention', 'not_completed', 'not_applicable'):
+        for status, wording in zip(STATUS_VALUES, MORNING_STATUS_LABELS[status_path]):
+            identifier = f'{status_path.strip("/").replace("/", "-")}-{status}-label'
+            add_text(translation, identifier, wording)
             item = etree.SubElement(replacement, f'{{{X}}}item')
-            etree.SubElement(item, f'{{{X}}}label', ref=f"jr:itext('status-{status}-label')")
+            etree.SubElement(item, f'{{{X}}}label', ref=f"jr:itext('{identifier}')")
             etree.SubElement(item, f'{{{X}}}value').text = status
         parent.insert(at, replacement)
         status_paths.append(status_path)
+    if set(status_paths) != set(MORNING_STATUS_LABELS):
+        raise ValueError('Morning Checks question list differs from reviewed equipment')
     return status_paths
+
+
+def refine_staged_morning_choices(root):
+    """Edit only the answer labels/options of a previously staged four-choice form."""
+    translation = one(root, '//x:model/x:itext/x:translation[@lang="en"]')
+    seen = set()
+    for path, wordings in MORNING_STATUS_LABELS.items():
+        question = one(root, f'//h:body//x:select1[@ref="{path}"]')
+        items = question.xpath('./x:item', namespaces=NS)
+        values = [one(item, './x:value').text for item in items]
+        if values != [*STATUS_VALUES, 'not_applicable']:
+            raise ValueError(f'{path} is not the reviewed four-choice version: {values}')
+        for item, status, wording in zip(items, STATUS_VALUES, wordings):
+            identifier = f'{path.strip("/").replace("/", "-")}-{status}-label'
+            if translation.xpath('./x:text[@id=$id]', namespaces=NS, id=identifier):
+                raise ValueError(f'{identifier} already exists')
+            add_text(translation, identifier, wording)
+            one(item, './x:label').set('ref', f"jr:itext('{identifier}')")
+        question.remove(items[-1])
+        seen.add(path)
+    if len(seen) != 12:
+        raise ValueError('Expected 12 distinct Morning Checks questions')
 
 
 def upgrade_metering_round_type(root):
