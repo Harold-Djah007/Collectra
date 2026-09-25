@@ -13,12 +13,22 @@ if [[ ! -d "$blob_root/blobdb" ]]; then
     echo "Existing form blobs not found at $blob_root/blobdb" >&2
     exit 1
 fi
-for test_port in 8011 8012; do
-    if ss -ltn | awk '{print $4}' | grep -Eq "(^|:)$test_port$"; then
-        echo "Port $test_port is occupied. Stop the earlier test server or proxy first." >&2
-        exit 1
+if ss -ltn | awk '{print $4}' | grep -Eq '(^|:)8011$'; then
+    echo 'Port 8011 is occupied. Stop the earlier test runserver first.' >&2
+    exit 1
+fi
+proxy_port=''
+for candidate in 8012 8013 8014 8015 8016 8017 8018 8019; do
+    if ! ss -ltn | awk '{print $4}' | grep -Eq "(^|:)$candidate$"; then
+        proxy_port="$candidate"
+        break
     fi
 done
+if [[ -z $proxy_port ]]; then
+    echo 'No free test port was found between 8012 and 8019.' >&2
+    exit 1
+fi
+echo "Using http://localhost:$proxy_port for Collectra HQ and Formplayer preview."
 if docker container inspect "$proxy_name" >/dev/null 2>&1; then
     echo "The earlier $proxy_name container still exists. Stop it first." >&2
     exit 1
@@ -48,7 +58,7 @@ if ! curl -fsS --max-time 3 http://127.0.0.1:18080/serverup >/dev/null 2>&1; the
         --publish 18080:8080 \
         --add-host=host.docker.internal:host-gateway \
         --env COMMCARE_HOST=http://host.docker.internal:8011 \
-        --env COMMCARE_ALTERNATE_ORIGINS=http://localhost:8012,http://127.0.0.1:8012 \
+        --env COMMCARE_ALTERNATE_ORIGINS="http://localhost:$proxy_port,http://127.0.0.1:$proxy_port" \
         --env AUTH_KEY=secretkey \
         --env EXTERNAL_REQUEST_MODE=replace-host \
         docker.io/dimagi/formplayer \
@@ -72,7 +82,7 @@ fi
 
 export COLLECTRA_SHARED_DRIVE_ROOT="$blob_root"
 export COLLECTRA_FORMPLAYER_URL="http://127.0.0.1:18080"
-export COLLECTRA_FORMPLAYER_URL_WEBAPPS="http://localhost:8012/formplayer"
+export COLLECTRA_FORMPLAYER_URL_WEBAPPS="http://localhost:$proxy_port/formplayer"
 
 cd "$hq_root"
 if [[ ${1:-} != --skip-build ]]; then
@@ -83,16 +93,16 @@ fi
 server_pid=$!
 
 docker run --rm --detach --name "$proxy_name" \
-    --publish 127.0.0.1:8012:80 \
+    --publish "127.0.0.1:$proxy_port:80" \
     --add-host=host.docker.internal:host-gateway \
     --volume "$repo_root/deploy/local-testing/Caddyfile.alert-test:/etc/caddy/Caddyfile:ro" \
     caddy:2 >/dev/null
 
 for attempt in $(seq 1 30); do
-    if curl -fsS --max-time 3 http://127.0.0.1:8012/formplayer/serverup >/dev/null \
-            && curl -fsS --max-time 3 -o /dev/null http://127.0.0.1:8012/a/safisana/; then
-        echo "Collectra test is ready: http://localhost:8012/a/safisana/"
-        echo "Open the form editor on port 8012. Press Ctrl+C here to stop both test services."
+    if curl -fsS --max-time 3 "http://127.0.0.1:$proxy_port/formplayer/serverup" >/dev/null \
+            && curl -fsS --max-time 3 -o /dev/null "http://127.0.0.1:$proxy_port/a/safisana/"; then
+        echo "Collectra test is ready: http://localhost:$proxy_port/a/safisana/"
+        echo "Open the form editor through the same URL. Press Ctrl+C here to stop the test services."
         wait "$server_pid"
         exit $?
     fi
