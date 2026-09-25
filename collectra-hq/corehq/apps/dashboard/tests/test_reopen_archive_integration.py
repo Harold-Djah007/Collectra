@@ -1,6 +1,7 @@
 """Exercise HQ's archive behavior against an isolated SQL test database."""
 
 from uuid import uuid4
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -38,7 +39,12 @@ class ReopenArchiveIntegrationTest(TestCase):
             case_blocks=[case_block],
             form_properties=properties,
         ).as_xml_string()
-        form = submit_form_locally(xml, DOMAIN).xform
+        # This test exercises SQL form/case processing. Restore cache sizing
+        # queries the unrelated CouchDB Domain view, which is not installed in
+        # this isolated SQL test database.
+        with patch('casexml.apps.phone.restore_caching.get_loadtest_factor_for_restore_cache_key',
+                   return_value=1):
+            form = submit_form_locally(xml, DOMAIN).xform
         self.assertTrue(form.is_normal, form.problem)
         return form
 
