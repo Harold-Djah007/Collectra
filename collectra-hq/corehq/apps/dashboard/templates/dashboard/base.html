@@ -138,8 +138,9 @@
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow">DRYING BED / SUPERVISOR REVIEW</p>
-            <h2>Reopening requests <span data-bind="text: requests().length"></span></h2>
-            <p>Workers can send a request offline. Review the original case and closing submission before taking action.</p>
+            <h2>Recent reopening requests <span data-bind="text: requests().length"></span></h2>
+            <p>Find the original closed case, open its Case History, then review the form that closed it. If approved, use HQ's Archive Form action on that closing form to reopen the same case ID.</p>
+            <p><strong>Check the closing form first:</strong> archiving removes its answers from active reports, including any monitoring readings in that submission. The request remains in this recent list after reopening.</p>
             <a class="collectra-reopen-cases-link" href="{% url 'project_report_dispatcher' domain 'case_list' %}">
               Find the closed case in Case List <span aria-hidden="true">→</span>
             </a>
