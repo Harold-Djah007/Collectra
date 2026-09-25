@@ -223,7 +223,7 @@ def _get_default_tiles(request):
 
     def apps_link(urlname, req):
         return (
-            '' if domain_has_apps(req.domain)
+            reverse('default_new_app', args=[req.domain]) if domain_has_apps(req.domain)
             else reverse(urlname, args=[req.domain])
         )
 
