@@ -137,6 +137,14 @@
                 <span class="collectra-card-title" data-bind="text:title, visible:!url"></span>
                 <p class="collectra-card-help" data-bind="text:helpText"></p>
               </div>
+              <span class="collectra-card-art" aria-hidden="true">
+                <!-- ko if: icon === 'collectra-mark' -->
+                <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
+                <!-- /ko -->
+                <!-- ko if: icon !== 'collectra-mark' -->
+                <i data-bind="css: icon"></i>
+                <!-- /ko -->
+              </span>
               <span class="collectra-card-header-arrow" aria-hidden="true">↗</span>
             </div>
 
