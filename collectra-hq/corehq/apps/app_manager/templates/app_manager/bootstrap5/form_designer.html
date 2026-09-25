@@ -11,6 +11,19 @@
       padding-bottom: 0;
       margin-bottom: 0;
     }
+    /* Vellum's bundled tree loader resolves its GIF relative to the wrong
+       entry point in local worktrees. Use a CSS loader instead. */
+    #formdesigner .jstree-default > .jstree-container-ul .jstree-loading > .jstree-ocl {
+      background: none !important;
+      border: 2px solid #d5ece8;
+      border-top-color: #058f87;
+      border-radius: 50%;
+      animation: collectra-tree-loading .85s linear infinite;
+    }
+    @keyframes collectra-tree-loading { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #formdesigner .jstree-loading > .jstree-ocl { animation: none; }
+    }
   </style>
 {% endblock %}
 
