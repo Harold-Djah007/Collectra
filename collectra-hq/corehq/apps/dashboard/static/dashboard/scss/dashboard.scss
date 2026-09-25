@@ -120,6 +120,13 @@
 .collectra-reopen-requests { border-color: #d6e5e2; }
 .collectra-reopen-meta { margin: 9px 0 0; color: #5a7181; font-size: .82rem; }
 .collectra-reopen-cases-link { display: inline-block; margin-top: 9px; color: #087e79; font-weight: 700; }
+.collectra-reopen-action, .collectra-reopen-confirm { display: block; margin-top: 12px; padding: 9px 14px; border: 0; border-radius: 8px; background: #087e79; color: #fff; font-weight: 700; }
+.collectra-reopen-action:hover, .collectra-reopen-confirm:hover { background: #075d5a; }
+.collectra-reopen-review { margin-top: 13px; padding: 16px; border: 1px solid #d6e5e2; border-radius: 10px; background: #f5faf9; }
+.collectra-reopen-review label { display: block; margin-bottom: 10px; font-weight: 600; }
+.collectra-reopen-review input[type="text"] { display: block; width: min(100%, 420px); margin-top: 5px; padding: 8px; border: 1px solid #bacfd1; border-radius: 7px; }
+.collectra-reopen-review input[type="checkbox"] { margin-right: 6px; }
+.collectra-reopen-review [role="alert"] { color: #a33731; }
 .collectra-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 15px; margin: 0 2px 10px; }
 .collectra-section-eyebrow { margin-bottom: 4px; color: #087e79; }
 .collectra-section-heading h2 { margin: 0; color: #142e44; font-size: 1.48rem; font-weight: 800; }
