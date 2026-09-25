@@ -1,9 +1,21 @@
 .collectra-dashboard-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: calc(100vh - 72px);
   padding: 32px 28px 72px;
-  background: radial-gradient(circle at 95% 6%, #dcf3ef 0, transparent 29%), #f4f8fa;
+  background: linear-gradient(125deg, #f2f8fa, #edf9f5 50%, #f4f7fc 100%);
+  background-size: 220% 220%;
+  animation: collectra-background-flow 22s ease-in-out infinite alternate;
 }
-.collectra-dashboard-inner { max-width: 1360px; margin: 0 auto; }
+.collectra-dashboard-page::before, .collectra-dashboard-page::after {
+  content: ""; position: absolute; z-index: -1; width: 52vw; height: 52vw;
+  min-width: 430px; min-height: 430px; border-radius: 50%; pointer-events: none;
+  filter: blur(45px); opacity: .56;
+}
+.collectra-dashboard-page::before { top: 180px; left: -19vw; background: radial-gradient(circle, #b6e9de, transparent 68%); animation: collectra-background-drift 18s ease-in-out infinite alternate; }
+.collectra-dashboard-page::after { top: 520px; right: -24vw; background: radial-gradient(circle, #c3d4f5, transparent 69%); animation: collectra-background-drift 22s ease-in-out -8s infinite alternate-reverse; }
+.collectra-dashboard-inner { position: relative; z-index: 1; max-width: 1360px; margin: 0 auto; }
 .collectra-hero {
   position: relative; isolation: isolate; overflow: hidden;
   display: flex; justify-content: space-between; align-items: center;
@@ -99,8 +111,8 @@
 .collectra-section-eyebrow { margin-bottom: 4px; color: #087e79; }
 .collectra-section-heading h2 { margin: 0; color: #142e44; font-size: 1.48rem; font-weight: 800; }
 .collectra-section-heading > span { color: #607989; font-size: .8rem; }
-.collectra-dashboard-grid { margin-inline: -10px; }
-.collectra-dashboard-col { padding: 10px; }
+.collectra-dashboard-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 17px; margin: 0; }
+.collectra-dashboard-col { width: auto; max-width: none; min-width: 0; padding: 0; }
 .collectra-dashboard-card { display: flex; flex-direction: column; min-height: 270px; overflow: hidden; border: 1px solid #dce8ec; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgba(18,54,70,.045); transition: transform .22s, box-shadow .22s, border-color .22s; }
 .collectra-dashboard-card::before { content: ""; display: block; height: 4px; background: var(--card-accent, #038d88); }
 .collectra-dashboard-card:hover { transform: translateY(-4px); border-color: #a8d4cd; box-shadow: 0 16px 30px rgba(18,54,70,.11); }
@@ -108,9 +120,9 @@
 .collectra-card-reports { --card-accent: #4363c4; --card-surface: #eef2ff; --card-shade: #dce4fa; }
 .collectra-card-data { --card-accent: #9c6823; --card-surface: #fff7e8; --card-shade: #f8e8c5; }
 .collectra-card-users { --card-accent: #8053b1; --card-surface: #f7f0fb; --card-shade: #eaddf4; }
-.collectra-card-header { position: relative; display: flex; align-items: flex-start; gap: 15px; min-height: 154px; padding: 25px 20px 20px; overflow: hidden; border-bottom: 1px solid #e9eff1; background: linear-gradient(135deg, var(--card-surface, #f2faf9), #fff 92%); }
-.collectra-card-header::after { content: ""; position: absolute; right: -42px; bottom: -88px; width: 176px; height: 176px; border: 1px solid var(--card-shade, #daf0ea); border-radius: 50%; box-shadow: 0 0 0 20px rgba(255,255,255,.45), 0 0 0 42px var(--card-shade, #e2f1ee); opacity: .67; pointer-events: none; transition: transform .5s; }
-.collectra-dashboard-card:hover .collectra-card-header::after { transform: translate(-10px, -10px) scale(1.07); }
+.collectra-card-header { position: relative; display: flex; align-items: flex-start; gap: 14px; min-height: 176px; padding: 23px 19px 18px; overflow: hidden; border-bottom: 1px solid #e9eff1; background: linear-gradient(130deg, var(--card-surface, #f2faf9), #fff 90%); }
+.collectra-card-header::after { content: ""; position: absolute; right: -18px; bottom: -98px; width: 190px; height: 190px; border-radius: 28%; background: var(--card-shade, #e2f1ee); opacity: .55; transform: rotate(-25deg); pointer-events: none; transition: transform .5s; }
+.collectra-dashboard-card:hover .collectra-card-header::after { transform: translate(-8px, -10px) rotate(-17deg); }
 .collectra-tile-icon { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; background: #eaf7f4; color: #078c86; font-size: 1.2rem; }
 .collectra-card-header .collectra-tile-icon { position: relative; z-index: 1; flex-basis: 48px; width: 48px; height: 48px; background: #fff; color: var(--card-accent, #078c86); box-shadow: 0 6px 18px rgba(16,55,73,.08); }
 .collectra-card-heading { position: relative; z-index: 1; min-width: 0; }
@@ -120,7 +132,14 @@
 .collectra-tile-brand { width: 29px; height: 29px; }
 .collectra-card-title { color: #142e44; font-size: 1.09rem; font-weight: 800; text-decoration: none; }
 .collectra-card-title:hover { color: #087e79; }
-.collectra-card-help { max-width: 190px; margin: 6px 0 0; color: #526d7a; font-size: .83rem; line-height: 1.45; }
+.collectra-card-help { max-width: 235px; margin: 6px 0 0; color: #526d7a; font-size: .83rem; line-height: 1.45; }
+.collectra-card-art { position: absolute; right: 16px; bottom: -18px; z-index: 1; display: grid; place-items: center; width: 96px; height: 96px; border: 1px solid rgba(255,255,255,.9); border-radius: 24px; background: rgba(255,255,255,.62); color: var(--card-accent, #078c86); box-shadow: 0 15px 25px rgba(15,52,70,.07); transform: rotate(-10deg); animation: collectra-card-float 8s ease-in-out infinite; pointer-events: none; }
+.collectra-card-art i { font-size: 2.8rem; }
+.collectra-card-art img { width: 58px; height: 58px; }
+.collectra-card-reports .collectra-card-art { animation-delay: -2s; }
+.collectra-card-data .collectra-card-art { animation-delay: -4s; }
+.collectra-card-users .collectra-card-art { animation-delay: -6s; }
+.collectra-dashboard-card:hover .collectra-card-art { animation-play-state: paused; transform: translateY(-6px) rotate(-5deg); }
 .collectra-card-body { display: flex; flex: 1; flex-direction: column; min-height: 146px; padding: 16px 19px 19px; }
 .collectra-card-items { gap: 7px; border: 0; }
 .collectra-card-item { display: flex; justify-content: space-between; gap: 8px; padding: 9px 11px; border: 1px solid #e4eaed; border-radius: 8px; color: #29445d; text-decoration: none; font-size: .82rem; }
@@ -137,10 +156,15 @@
 .collectra-start-list li:first-child { border-top: 0; }
 .collectra-start-number { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #e8f7f5; color: #087e79; font-size: .78rem; font-weight: 800; }
 @keyframes collectra-spin { to { transform: rotate(360deg); } }
+@keyframes collectra-background-flow { to { background-position: 100% 80%; } }
+@keyframes collectra-background-drift { to { transform: translate(11vw, -60px) scale(1.22); } }
+@keyframes collectra-card-float { 50% { transform: translateY(-10px) rotate(-5deg); } }
 @keyframes collectra-breathe { 50% { transform: translate(-50%, -50%) scale(1.08); opacity: .45; } }
 @keyframes collectra-glow { 50% { box-shadow: 0 0 0 9px rgba(169,241,204,.05); opacity: .7; } }
 @keyframes collectra-appear { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 1300px) { .collectra-dashboard-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+@media (max-width: 1050px) { .collectra-dashboard-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 @media (max-width: 991px) { .collectra-dashboard-page { padding: 24px 18px 48px; } .collectra-hero-art { margin-right: 0; } .collectra-dashboard-next { grid-template-columns: 1fr; } }
 @media (max-width: 767px) { .collectra-hero { padding: 29px 26px; } .collectra-hero-art { width: 120px; flex-basis: 120px; opacity: .45; } .collectra-alerts-summary { grid-template-columns: repeat(3, minmax(0,1fr)); } .collectra-summary-item { padding: 12px; gap: 7px; } .collectra-summary-icon { display: none; } }
-@media (max-width: 575px) { .collectra-dashboard-page { padding: 15px 12px 36px; } .collectra-hero { padding: 25px 20px; min-height: 0; } .collectra-hero-art { display: none; } .collectra-dashboard-mark { width: 50px; height: 50px; border-radius: 12px; } .collectra-dashboard-mark img { width: 34px; height: 34px; } .collectra-brand-title { font-size: 1.52rem; } .collectra-quick-actions { margin-left: 0; } .collectra-alerts { padding: 20px 16px; } .collectra-alerts-header { flex-direction: column; } .collectra-alerts-controls { justify-content: flex-start; } .collectra-alerts-summary { gap: 6px; } .collectra-summary-item { min-height: 68px; } .collectra-summary-item strong { font-size: 1.2rem; } .collectra-summary-item small { font-size: .68rem; } .collectra-section-heading > span { display: none; } }
-@media (prefers-reduced-motion: reduce) { .collectra-dashboard-page *, .collectra-dashboard-page *::before, .collectra-dashboard-page *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+@media (max-width: 575px) { .collectra-dashboard-page { padding: 15px 12px 36px; } .collectra-dashboard-grid { grid-template-columns: 1fr; } .collectra-hero { padding: 25px 20px; min-height: 0; } .collectra-hero-art { display: none; } .collectra-dashboard-mark { width: 50px; height: 50px; border-radius: 12px; } .collectra-dashboard-mark img { width: 34px; height: 34px; } .collectra-brand-title { font-size: 1.52rem; } .collectra-quick-actions { margin-left: 0; } .collectra-alerts { padding: 20px 16px; } .collectra-alerts-header { flex-direction: column; } .collectra-alerts-controls { justify-content: flex-start; } .collectra-alerts-summary { gap: 6px; } .collectra-summary-item { min-height: 68px; } .collectra-summary-item strong { font-size: 1.2rem; } .collectra-summary-item small { font-size: .68rem; } .collectra-section-heading > span { display: none; } }
+@media (prefers-reduced-motion: reduce) { .collectra-dashboard-page, .collectra-dashboard-page::before, .collectra-dashboard-page::after, .collectra-dashboard-page *, .collectra-dashboard-page *::before, .collectra-dashboard-page *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
