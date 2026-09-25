@@ -121,8 +121,16 @@ $(function () {
             alerts: ko.observableArray([]),
             loading: ko.observable(true),
             error: ko.observable(false),
+            lastUpdated: ko.observable(""),
         };
+        alertsModel.urgentCount = ko.pureComputed(function () {
+            return _.filter(alertsModel.alerts(), function (alert) { return alert.severity === "urgent"; }).length;
+        });
+        alertsModel.followUpCount = ko.pureComputed(function () {
+            return alertsModel.alerts().length - alertsModel.urgentCount();
+        });
         alertsModel.refresh = function () {
+            if (alertsModel.loading() && alertsModel.lastUpdated()) { return; }
             alertsModel.loading(true);
             alertsModel.error(false);
             $.getJSON(initialPageData.reverse("dashboard_operational_alerts"))
@@ -130,6 +138,9 @@ $(function () {
                     alertsModel.alerts(_.map(data.alerts, function (alert) {
                         alert.when = new Date(alert.received_on).toLocaleString();
                         return alert;
+                    }));
+                    alertsModel.lastUpdated("Updated " + new Date().toLocaleTimeString([], {
+                        hour: "numeric", minute: "2-digit",
                     }));
                 })
                 .fail(function () {
