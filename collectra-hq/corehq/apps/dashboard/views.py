@@ -1,6 +1,8 @@
+import logging
+
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.http.response import Http404, HttpResponseForbidden
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -28,7 +30,11 @@ from corehq.apps.dashboard.models import (
     Tile,
 )
 from corehq.apps.dashboard.operational_alerts import recent_operational_alerts
-from corehq.apps.dashboard.reopen_requests import recent_reopen_requests
+from corehq.apps.dashboard.reopen_requests import (
+    closing_form_for_reopen,
+    recent_reopen_requests,
+    validate_reopen_request,
+)
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     login_and_domain_required,
@@ -46,7 +52,13 @@ from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import DefaultProjectUserSettingsView, require_POST
+from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml, XFormNotFound
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from lxml import etree
 from corehq.util.context_processors import commcare_hq_names
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_tile(request, slug):
@@ -111,6 +123,66 @@ def dashboard_reopen_requests(request, domain):
         dict(item, url=reverse('render_form_data', args=[domain, item['form_id']]))
         for item in requests
     ]})
+
+
+def _can_reopen_from_dashboard(request, domain):
+    return (domain == 'safisana' and request.couch_user.can_edit_data()
+            and user_can_view_reports(request.project, request.couch_user)
+            and has_privilege(request, privileges.PROJECT_ACCESS)
+            and request.can_access_all_locations)
+
+
+def _reopen_candidates(domain, request_id, case_id):
+    if not request_id or not case_id or len(request_id) > 80 or len(case_id) > 80:
+        raise ValueError('Provide the request ID and the original case ID')
+    worker_request = XFormInstance.objects.get_form(request_id, domain)
+    validate_reopen_request(worker_request)
+    case = CommCareCase.objects.get_case(case_id, domain)
+    closing_form = closing_form_for_reopen(case)
+    return case, closing_form
+
+
+@login_and_domain_required
+@location_safe
+@require_GET
+def dashboard_reopen_preview(request, domain):
+    if not _can_reopen_from_dashboard(request, domain):
+        return HttpResponseForbidden()
+    try:
+        case, closing_form = _reopen_candidates(
+            domain, request.GET.get('request_id'), request.GET.get('case_id'))
+    except (CaseNotFound, XFormNotFound, MissingFormXml, ValueError, etree.XMLSyntaxError) as error:
+        return JsonResponse({'error': str(error)}, status=400)
+    return JsonResponse({
+        'case_id': case.case_id,
+        'case_name': case.name,
+        'closing_form_id': closing_form.form_id,
+        'case_url': reverse('case_data', args=[domain, case.case_id]),
+        'form_url': reverse('render_form_data', args=[domain, closing_form.form_id]),
+    })
+
+
+@login_and_domain_required
+@location_safe
+@require_POST
+def dashboard_reopen_approved(request, domain):
+    if not _can_reopen_from_dashboard(request, domain):
+        return HttpResponseForbidden()
+    try:
+        case_id = request.POST.get('case_id')
+        case, closing_form = _reopen_candidates(domain, request.POST.get('request_id'), case_id)
+        if (request.POST.get('closing_form_id') != closing_form.form_id
+                or request.POST.get('acknowledge_archive') != 'yes'):
+            raise ValueError('Review the closing submission and confirm the archive warning')
+        closing_form.archive(user_id=request.couch_user._id)
+        logger.info('Safisana reopening approved: request=%s case=%s closing_form=%s supervisor=%s',
+                    request.POST.get('request_id'), case.case_id, closing_form.form_id,
+                    request.couch_user._id)
+        messages.success(request, f'Archived the closing submission for {case.name}. '
+                         'Sync the worker device to see the reopened case.')
+    except (CaseNotFound, XFormNotFound, MissingFormXml, ValueError, etree.XMLSyntaxError) as error:
+        messages.error(request, f'Case was not reopened: {error}')
+    return HttpResponseRedirect(reverse('dashboard_domain', args=[domain]))
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
