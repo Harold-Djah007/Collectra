@@ -6,14 +6,11 @@ hq_root="$repo_root/collectra-hq"
 localsettings_target="$(readlink -f "$hq_root/localsettings.py")"
 blob_root="$(dirname "$localsettings_target")/sharedfiles"
 proxy_name="collectra-alert-test-proxy"
+formplayer_name="collectra-alert-test-formplayer"
 log_file="$repo_root/alert-test-runserver.log"
 
 if [[ ! -d "$blob_root/blobdb" ]]; then
     echo "Existing form blobs not found at $blob_root/blobdb" >&2
-    exit 1
-fi
-if ! curl -fsS --max-time 8 http://127.0.0.1:18080/serverup >/dev/null; then
-    echo "Formplayer is not responding on port 18080. Start it before the test." >&2
     exit 1
 fi
 for test_port in 8011 8012; do
@@ -25,6 +22,52 @@ done
 if docker container inspect "$proxy_name" >/dev/null 2>&1; then
     echo "The earlier $proxy_name container still exists. Stop it first." >&2
     exit 1
+fi
+owns_formplayer=0
+server_pid=''
+cleanup() {
+    if [[ -n $server_pid ]]; then
+        kill "$server_pid" 2>/dev/null || true
+    fi
+    docker stop "$proxy_name" >/dev/null 2>&1 || true
+    if [[ $owns_formplayer == 1 ]]; then
+        docker stop "$formplayer_name" >/dev/null 2>&1 || true
+    fi
+}
+trap cleanup EXIT
+if ! curl -fsS --max-time 3 http://127.0.0.1:18080/serverup >/dev/null 2>&1; then
+    if ss -ltn | awk '{print $4}' | grep -Eq '(^|:)18080$'; then
+        echo 'Port 18080 is occupied by a service that is not responding as Formplayer.' >&2
+        exit 1
+    fi
+    if docker container inspect "$formplayer_name" >/dev/null 2>&1; then
+        echo "The earlier $formplayer_name container still exists. Stop it first." >&2
+        exit 1
+    fi
+    docker run --rm --detach --name "$formplayer_name" \
+        --publish 18080:8080 \
+        --add-host=host.docker.internal:host-gateway \
+        --env COMMCARE_HOST=http://host.docker.internal:8011 \
+        --env COMMCARE_ALTERNATE_ORIGINS=http://localhost:8012,http://127.0.0.1:8012 \
+        --env AUTH_KEY=secretkey \
+        --env EXTERNAL_REQUEST_MODE=replace-host \
+        docker.io/dimagi/formplayer \
+        java org.springframework.boot.loader.launch.JarLauncher >/dev/null
+    owns_formplayer=1
+    ready=0
+    for attempt in $(seq 1 40); do
+        if curl -fsS --max-time 2 http://127.0.0.1:18080/serverup >/dev/null 2>&1; then
+            ready=1
+            break
+        fi
+        sleep 2
+    done
+    if [[ $ready != 1 ]]; then
+        echo 'Formplayer failed to start. Recent output:' >&2
+        docker logs --tail 35 "$formplayer_name" >&2 || true
+        docker stop "$formplayer_name" >/dev/null 2>&1 || true
+        exit 1
+    fi
 fi
 
 export COLLECTRA_SHARED_DRIVE_ROOT="$blob_root"
@@ -38,11 +81,6 @@ fi
 
 "$hq_root/.venv/bin/python" manage.py runserver 0.0.0.0:8011 >"$log_file" 2>&1 &
 server_pid=$!
-cleanup() {
-    kill "$server_pid" 2>/dev/null || true
-    docker stop "$proxy_name" >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
 
 docker run --rm --detach --name "$proxy_name" \
     --publish 127.0.0.1:8012:80 \
