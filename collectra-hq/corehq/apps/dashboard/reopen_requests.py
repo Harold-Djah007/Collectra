@@ -4,9 +4,13 @@ from datetime import timedelta
 
 from django.db.models import Q
 from django.utils import timezone
+from lxml import etree
 
 from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests import (
     APP_ID, REQUEST_XMLNS,
+)
+from corehq.apps.app_manager.management.commands.inspect_safisana_reopen_case import (
+    CASE_XMLNS, without_single_case_close,
 )
 from corehq.form_processor.models import XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -36,6 +40,30 @@ def request_from_form(form):
         'reason': reason.strip()[:500],
         'received_on': form.received_on.isoformat(),
     }
+
+
+def validate_reopen_request(form):
+    if (form.domain != 'safisana' or form.app_id != APP_ID
+            or form.xmlns != REQUEST_XMLNS or form.state != XFormInstance.NORMAL
+            or request_from_form(form) is None):
+        raise ValueError('This is not an active Safisana reopening request')
+
+
+def closing_form_for_reopen(case):
+    if case.domain != 'safisana' or case.type != 'dryingbed' or not case.closed:
+        raise ValueError('Select an original, closed Safisana drying-bed case')
+    closings = [tx for tx in case.get_closing_transactions() if not tx.revoked]
+    if len(closings) != 1:
+        raise ValueError('The closing history needs manual review in Case List')
+    form = closings[0].form
+    if form is None or form.domain != case.domain or form.state != XFormInstance.NORMAL:
+        raise ValueError('The closing submission is not available for archiving')
+    # A closing submission can affect several cases; never archive one from this
+    # shortcut if it could also reopen an unrelated case.
+    checked = etree.fromstring(without_single_case_close(form.get_xml(), case.case_id))
+    if checked.xpath('//*[local-name()="create" and namespace-uri()=$ns]', ns=CASE_XMLNS):
+        raise ValueError('The closing form also created a case; review it manually in Case List')
+    return form
 
 
 def recent_reopen_requests(domain):
