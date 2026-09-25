@@ -20,30 +20,39 @@
 
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
   <div class="collectra-dashboard-inner">
-    <header class="collectra-dashboard-header">
-      <div class="collectra-dashboard-mark" aria-hidden="true">
-        <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
+    <div class="collectra-hero">
+      <div class="collectra-hero-content">
+        <p class="collectra-hero-eyebrow">{% trans "Your workspace" %} <span aria-hidden="true">/</span> {{ domain }}</p>
+        <header class="collectra-dashboard-header">
+          <div class="collectra-dashboard-mark" aria-hidden="true">
+            <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
+          </div>
+          <div>
+            <p class="collectra-welcome">
+              {% blocktrans with name=welcome_name %}Welcome back, {{ name }}{% endblocktrans %}
+            </p>
+            <h1 class="collectra-brand-title">{% trans "Welcome to Collectra" %}</h1>
+            <p class="collectra-tagline">{% trans "Build forms. Collect data. Make an impact." %}</p>
+          </div>
+        </header>
+        {% if show_create_form %}
+          <div class="collectra-quick-actions">
+            <a class="collectra-quick-action collectra-quick-action-primary" href="{% url 'form_builder_choice' domain %}">
+              <i class="fa fa-plus" aria-hidden="true"></i> {% trans "Create form" %}
+            </a>
+            <a class="collectra-quick-action" href="{% url 'excel_form_builder' domain %}">
+              <i class="fa fa-upload" aria-hidden="true"></i> {% trans "Import XLSForm" %}
+            </a>
+          </div>
+        {% endif %}
       </div>
-      <div>
-        <p class="collectra-welcome">
-          {% blocktrans with name=welcome_name %}Welcome back, {{ name }}{% endblocktrans %}
-        </p>
-        <h1 class="collectra-brand-title">{% trans "Welcome to Collectra" %}</h1>
-        <p class="collectra-tagline">{% trans "Build forms. Collect data. Make an impact." %}</p>
+      <div class="collectra-hero-art" aria-hidden="true">
+        <span class="collectra-orbit collectra-orbit-outer"></span>
+        <span class="collectra-orbit collectra-orbit-inner"></span>
+        <span class="collectra-orbit-core"><img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" /></span>
+        <span class="collectra-orbit-dot"></span>
       </div>
-    </header>
-
-    {% if show_create_form %}
-      <div class="collectra-quick-actions">
-        <a class="collectra-quick-action collectra-quick-action-primary" href="{% url 'form_builder_choice' domain %}">
-          {% trans "Create form" %}
-        </a>
-        <a class="collectra-quick-action" href="{% url 'excel_form_builder' domain %}">
-          <i class="fa fa-upload" aria-hidden="true"></i>
-          {% trans "Import XLSForm" %}
-        </a>
-      </div>
-    {% endif %}
+    </div>
 
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
@@ -55,20 +64,40 @@
       <section id="operational-alerts" class="collectra-alerts" aria-label="Operations needing attention">
         <div class="collectra-alerts-header">
           <div>
-            <p class="collectra-alerts-eyebrow">Safisana operations</p>
-            <h2>Operational alerts <span class="collectra-alerts-count" data-bind="visible: alerts().length, text: alerts().length"></span></h2>
+            <p class="collectra-alerts-eyebrow"><span class="collectra-live-dot" aria-hidden="true"></span> Safisana operations</p>
+            <h2>Operational overview</h2>
             <p>Issues reported in Morning Checks and Metering Round submissions over the last 14 days.</p>
           </div>
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: refresh, disable: loading">Refresh</button>
+          <div class="collectra-alerts-controls">
+            <span class="collectra-last-updated" data-bind="visible: lastUpdated, text: lastUpdated"></span>
+            <button type="button" class="collectra-refresh" data-bind="click: refresh, disable: loading">
+              <i class="fa fa-refresh" data-bind="css: {'collectra-refresh-spinning': loading}" aria-hidden="true"></i> Refresh
+            </button>
+          </div>
         </div>
-        <div class="collectra-alerts-message" data-bind="visible: loading">Loading recent submissions…</div>
-        <div class="collectra-alerts-message" data-bind="visible: error">
-          Could not load alerts. Select Refresh to try again.
+        <div class="collectra-alerts-summary" data-bind="visible: !loading() &amp;&amp; !error()">
+          <div class="collectra-summary-item collectra-summary-reported">
+            <span class="collectra-summary-icon"><i class="fa fa-list-alt" aria-hidden="true"></i></span>
+            <span><strong data-bind="text: alerts().length"></strong><small>Reported issues</small></span>
+          </div>
+          <div class="collectra-summary-item collectra-summary-urgent">
+            <span class="collectra-summary-icon"><i class="fa fa-exclamation-circle" aria-hidden="true"></i></span>
+            <span><strong data-bind="text: urgentCount"></strong><small>Urgent</small></span>
+          </div>
+          <div class="collectra-summary-item collectra-summary-followup">
+            <span class="collectra-summary-icon"><i class="fa fa-clipboard" aria-hidden="true"></i></span>
+            <span><strong data-bind="text: followUpCount"></strong><small>Follow up</small></span>
+          </div>
         </div>
-        <div class="collectra-alerts-message" data-bind="visible: !loading() &amp;&amp; !error() &amp;&amp; !alerts().length">
-          No issues have been reported in these forms in the last 14 days.
+        <div class="collectra-alerts-message" data-bind="visible: loading &amp;&amp; !lastUpdated()">Loading recent submissions…</div>
+        <div class="collectra-alerts-message collectra-alerts-error" data-bind="visible: error">
+          Could not load alerts. Select Refresh to try again. The counts below may be out of date.
         </div>
-        <div class="collectra-alerts-list" data-bind="foreach: alerts, visible: !loading() &amp;&amp; !error()">
+        <div class="collectra-alerts-empty" data-bind="visible: !loading() &amp;&amp; !error() &amp;&amp; !alerts().length">
+          <span class="collectra-empty-icon" aria-hidden="true"><i class="fa fa-check"></i></span>
+          <span><strong>No reported issues</strong><small>No issues have been reported in these forms in the last 14 days.</small></span>
+        </div>
+        <div class="collectra-alerts-list" data-bind="foreach: alerts, visible: !error() &amp;&amp; alerts().length">
           <article class="collectra-alert" data-bind="css: {'collectra-alert-urgent': severity === 'urgent'}">
             <div class="collectra-alert-summary">
               <span class="collectra-alert-severity" data-bind="text: severity === 'urgent' ? 'Urgent' : 'Follow up'"></span>
@@ -86,12 +115,18 @@
     {% endif %}
 
     <section id="dashboard-tiles" aria-label="Collectra dashboard">
+      <div class="collectra-section-heading"><div><p class="collectra-section-eyebrow">EXPLORE COLLECTRA</p><h2>Everything in one place</h2></div><span>Choose where to work next <span aria-hidden="true">↘</span></span></div>
       <div class="row collectra-dashboard-grid" data-bind="foreach: tiles">
         <div class="col-xl-3 col-lg-4 col-md-6 collectra-dashboard-col">
           <article class="card-dashboard collectra-dashboard-card" data-bind="css: {'is-loading': showSpinner(), 'has-error': hasError(), 'has-items': hasItemList()}">
             <div class="collectra-card-header">
               <div class="collectra-tile-icon" aria-hidden="true">
+                <!-- ko if: icon === 'collectra-mark' -->
+                <img class="collectra-tile-brand" src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
+                <!-- /ko -->
+                <!-- ko if: icon !== 'collectra-mark' -->
                 <i class="dashboard-icon" data-bind="css: icon"></i>
+                <!-- /ko -->
               </div>
               <div class="collectra-card-heading">
                 <a class="collectra-card-title" data-bind="visible:url, text:title, attr:{href:url}"></a>
