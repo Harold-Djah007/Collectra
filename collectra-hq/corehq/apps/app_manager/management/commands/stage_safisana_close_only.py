@@ -85,7 +85,7 @@ def preview_and_optionally_stage(output_dir, apply=False):
             or condition.question != '/data/close_batch' or condition.answer != 'yes'
             or condition.operator != '='):
         raise ValueError('The monitoring closure mapping differs from the reviewed configuration')
-    if any(form.default_name() == FORM_NAME or XMLNS in form.source
+    if any(form.default_name() == FORM_NAME or form.xmlns == XMLNS
            for form in module.get_forms()):
         raise ValueError('A dedicated closing form already exists in this module')
 
