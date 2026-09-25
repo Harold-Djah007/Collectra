@@ -17,7 +17,10 @@
 {% registerurl 'dashboard_tile' domain '---' %}
 {% registerurl 'dashboard_tile_total' domain '---' %}
 {% if show_operational_alerts %}{% registerurl 'dashboard_operational_alerts' domain %}{% endif %}
-{% if show_reopen_requests %}{% registerurl 'dashboard_reopen_requests' domain %}{% endif %}
+{% if show_reopen_requests %}
+  {% registerurl 'dashboard_reopen_requests' domain %}
+  {% registerurl 'dashboard_reopen_preview' domain %}
+{% endif %}
 
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
   <div class="collectra-data-flow" aria-hidden="true">
@@ -139,7 +142,7 @@
           <div>
             <p class="collectra-alerts-eyebrow">DRYING BED / SUPERVISOR REVIEW</p>
             <h2>Recent reopening requests <span data-bind="text: requests().length"></span></h2>
-            <p>Find the original closed case, open its Case History, then review the form that closed it. If approved, use HQ's Archive Form action on that closing form to reopen the same case ID.</p>
+            <p>Read the worker's reason, then choose Review and reopen to identify the original closed case. HQ will show the closing submission before you confirm.</p>
             <p><strong>Check the closing form first:</strong> archiving removes its answers from active reports, including any monitoring readings in that submission. The request remains in this recent list after reopening.</p>
             <a class="collectra-reopen-cases-link" href="{% url 'project_report_dispatcher' domain 'case_list' %}">
               Find the closed case in Case List <span aria-hidden="true">→</span>
@@ -168,6 +171,32 @@
             </p>
             <p class="collectra-alert-note" data-bind="text: reason"></p>
             <a data-bind="attr: {href: url}">Review request submission <span aria-hidden="true">→</span></a>
+            <button type="button" class="collectra-reopen-action" data-bind="click: toggleReview, attr: {'aria-expanded': reviewOpen}">
+              Review and reopen case
+            </button>
+            <div class="collectra-reopen-review" data-bind="visible: reviewOpen">
+              <label>Original closed case ID
+                <input type="text" maxlength="80" autocomplete="off" data-bind="textInput: caseId" placeholder="Copy from Case List" />
+              </label>
+              <button type="button" class="collectra-refresh" data-bind="click: verify, disable: checking">Check case</button>
+              <p role="alert" data-bind="visible: reviewError, text: reviewError"></p>
+              <div data-bind="with: candidate">
+                <p><strong>Original case:</strong> <span data-bind="text: case_name"></span>
+                  (<span data-bind="text: case_id"></span>)</p>
+                <p><a data-bind="attr: {href: case_url}" target="_blank" rel="noopener">Check case history</a>
+                   · <a data-bind="attr: {href: form_url}" target="_blank" rel="noopener">Inspect closing submission and readings</a></p>
+                <form method="post" action="{% url 'dashboard_reopen_approved' domain %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="request_id" data-bind="value: $parent.form_id" />
+                  <input type="hidden" name="case_id" data-bind="value: case_id" />
+                  <input type="hidden" name="closing_form_id" data-bind="value: closing_form_id" />
+                  <label><input type="checkbox" name="acknowledge_archive" value="yes" required />
+                    I checked this is the original case and reviewed the closing form. Archiving that whole form removes its readings from active reports.
+                  </label>
+                  <button type="submit" class="collectra-reopen-confirm">Archive closing form and reopen this case</button>
+                </form>
+              </div>
+            </div>
           </article>
         </div>
       </section>
