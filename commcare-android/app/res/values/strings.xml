@@ -28,6 +28,16 @@
     <string name="collectra_install_subtitle">Scan a Collectra HQ code or enter your workspace link.</string>
     <string name="collectra_home_greeting">Ready when you are</string>
     <string name="collectra_home_tagline">Capture. Sync. Deliver.</string>
+    <string name="collectra_today_title">My work today</string>
+    <string name="collectra_today_start">Start work</string>
+    <string name="collectra_today_resume">Resume form</string>
+    <string name="collectra_today_sync">Sync now</string>
+    <string name="collectra_today_checking_sync">Checking saved work…</string>
+    <plurals name="collectra_today_waiting_sync">
+        <item quantity="one">%1$d form waiting to sync · %2$s</item>
+        <item quantity="other">%1$d forms waiting to sync · %2$s</item>
+    </plurals>
+    <string name="collectra_today_sync_unavailable">Sync status unavailable. Try again shortly.</string>
     <string name="uninstall_app">Uninstall</string>
     <string name="archive_app">Archive</string>
     <string name="unarchive_app">Unarchive</string>
