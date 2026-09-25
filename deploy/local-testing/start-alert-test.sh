@@ -54,13 +54,41 @@ if ! curl -fsS --max-time 3 http://127.0.0.1:18080/serverup >/dev/null 2>&1; the
         echo "The earlier $formplayer_name container still exists. Stop it first." >&2
         exit 1
     fi
+    postgres_container="$(docker ps --filter 'name=^/hqservice-postgres-1$' --format '{{.ID}}' | head -n 1)"
+    if [[ -z $postgres_container ]]; then
+        echo 'Collectra PostgreSQL is not running. Start it with ./scripts/docker up -d postgres redis.' >&2
+        exit 1
+    fi
+    if [[ -z $(docker ps --filter 'name=^/hqservice-redis-1$' --format '{{.ID}}' | head -n 1) ]]; then
+        echo 'Collectra Redis is not running. Start it with ./scripts/docker up -d redis.' >&2
+        exit 1
+    fi
+    postgres_network="$(docker inspect -f '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$postgres_container" | head -n 1)"
+    if [[ -z $postgres_network ]]; then
+        echo 'Could not find the Collectra PostgreSQL Docker network.' >&2
+        exit 1
+    fi
+    # Keep Formplayer test sessions separate from other Collectra environments.
+    formplayer_database=collectra_alert_formplayer
+    if ! docker exec "$postgres_container" psql -U commcarehq -d postgres -tAc \
+            "SELECT 1 FROM pg_database WHERE datname='$formplayer_database'" | grep -qx 1; then
+        docker exec "$postgres_container" createdb -U commcarehq "$formplayer_database"
+    fi
     docker run --rm --detach --name "$formplayer_name" \
+        --network "$postgres_network" \
         --publish 18080:8080 \
         --add-host=host.docker.internal:host-gateway \
         --env COMMCARE_HOST=http://host.docker.internal:8011 \
         --env COMMCARE_ALTERNATE_ORIGINS="http://localhost:$proxy_port,http://127.0.0.1:$proxy_port" \
         --env AUTH_KEY=secretkey \
         --env EXTERNAL_REQUEST_MODE=replace-host \
+        --env POSTGRESQL_HOST=postgres \
+        --env POSTGRESQL_PORT=5432 \
+        --env "POSTGRESQL_DATABASE=$formplayer_database" \
+        --env POSTGRESQL_USERNAME=commcarehq \
+        --env POSTGRESQL_PASSWROD=commcarehq \
+        --env POSTGRESQL_PASSWORD=commcarehq \
+        --env REDIS_HOSTNAME=redis \
         docker.io/dimagi/formplayer \
         java org.springframework.boot.loader.launch.JarLauncher >/dev/null
     owns_formplayer=1
