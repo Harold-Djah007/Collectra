@@ -1222,6 +1222,15 @@ _collectra_shared_drive_root = os.environ.get('COLLECTRA_SHARED_DRIVE_ROOT')
 if _collectra_shared_drive_root:
     SHARED_DRIVE_ROOT = _collectra_shared_drive_root
 
+# A test worktree can use the already running formplayer and route browser
+# requests through its own same-origin proxy on a free port.
+_collectra_formplayer_url = os.environ.get('COLLECTRA_FORMPLAYER_URL')
+if _collectra_formplayer_url:
+    FORMPLAYER_URL = _collectra_formplayer_url
+_collectra_browser_formplayer_url = os.environ.get('COLLECTRA_FORMPLAYER_URL_WEBAPPS')
+if _collectra_browser_formplayer_url:
+    FORMPLAYER_URL_WEBAPPS = _collectra_browser_formplayer_url
+
 
 # Allow launchers and hosted environments to publish Collectra at a stable
 # address without rewriting the developer's untracked localsettings.py file.
