@@ -47,7 +47,12 @@ def alert_from_form(form):
             answer = data.get(group) or {}
             status = answer.get(field) if isinstance(answer, dict) else None
             if status in ('needs_attention', 'not_completed'):
-                checks.append(f'{label}: {"Needs attention" if status == "needs_attention" else "Not completed"}')
+                description = f'{label}: {"Needs attention" if status == "needs_attention" else "Not completed"}'
+                if status == 'needs_attention':
+                    issue = str(answer.get(field.removesuffix('_status') + '_issue_note') or '').strip()
+                    if issue:
+                        description += f' — {issue[:240]}'
+                checks.append(description)
     if str(data.get('needs_attention', '')).strip().lower() != 'yes' and not checks:
         return None
     severity = data.get('attention_severity')
