@@ -40,10 +40,10 @@ class ReopenArchiveIntegrationTest(TestCase):
             form_properties=properties,
         ).as_xml_string()
         # This test exercises SQL form/case processing. Restore cache sizing
-        # queries the unrelated CouchDB Domain view, which is not installed in
-        # this isolated SQL test database.
+        # and case usage metrics query unrelated CouchDB design views, which
+        # are not installed in this isolated SQL test database.
         with patch('casexml.apps.phone.restore_caching.get_loadtest_factor_for_restore_cache_key',
-                   return_value=1):
+                   return_value=1), patch('corehq.form_processor.submission_post.report_case_usage'):
             form = submit_form_locally(xml, DOMAIN).xform
         self.assertTrue(form.is_normal, form.problem)
         return form
