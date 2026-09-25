@@ -32,6 +32,7 @@
 .collectra-dashboard-mark img { width: 45px; height: 45px; }
 .collectra-welcome { margin: 0 0 2px; color: #a6eddf; font-weight: 700; }
 .collectra-brand-title { margin: 0 0 5px; color: #fff; font-size: clamp(1.7rem, 2.8vw, 2.5rem); line-height: 1.15; font-weight: 800; }
+#hq-content .collectra-brand-title { color: #fff; }
 .collectra-tagline { margin: 0; color: #d0e8e9; }
 .collectra-quick-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 0 83px; }
 .collectra-quick-action {
