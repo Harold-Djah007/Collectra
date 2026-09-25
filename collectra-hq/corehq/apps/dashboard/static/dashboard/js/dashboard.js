@@ -12,6 +12,9 @@ var tileModel = function (options) {
     self.title = options.title;
     self.slug = options.slug;
     self.icon = options.icon;
+    self.cardClasses = 'collectra-card-' + options.slug;
+    self.kicker = ({applications: '01 / BUILD', reports: '02 / MONITOR', data: '03 / EXPORT',
+        users: '04 / TEAM'})[options.slug] || 'WORKSPACE';
     self.url = options.url;
     self.helpText = options.help_text;
     self.hasError = ko.observable(false);
@@ -122,7 +125,26 @@ $(function () {
             loading: ko.observable(true),
             error: ko.observable(false),
             lastUpdated: ko.observable(""),
+            selectedSeverity: ko.observable("all"),
         };
+        alertsModel.filteredAlerts = ko.pureComputed(function () {
+            var selected = alertsModel.selectedSeverity();
+            if (selected === "all") { return alertsModel.alerts(); }
+            return _.filter(alertsModel.alerts(), function (alert) { return alert.severity === selected; });
+        });
+        alertsModel.showAll = function () { alertsModel.selectedSeverity("all"); };
+        alertsModel.showUrgent = function () { alertsModel.selectedSeverity("urgent"); };
+        alertsModel.showFollowUp = function () { alertsModel.selectedSeverity("follow_up"); };
+        alertsModel.emptyTitle = ko.pureComputed(function () {
+            if (alertsModel.selectedSeverity() === "urgent") { return "No urgent issues reported"; }
+            if (alertsModel.selectedSeverity() === "follow_up") { return "No follow-up issues reported"; }
+            return "No reported issues";
+        });
+        alertsModel.emptyDescription = ko.pureComputed(function () {
+            return alertsModel.selectedSeverity() === "all"
+                ? "No issues have been reported in these forms in the last 14 days."
+                : "Select Reported issues to see all recent submissions needing attention.";
+        });
         alertsModel.urgentCount = ko.pureComputed(function () {
             return _.filter(alertsModel.alerts(), function (alert) { return alert.severity === "urgent"; }).length;
         });
