@@ -14,7 +14,11 @@ var tileModel = function (options) {
     self.icon = options.icon;
     self.cardClasses = 'collectra-card-' + options.slug;
     self.kicker = ({applications: '01 / BUILD', reports: '02 / MONITOR', data: '03 / EXPORT',
-        users: '04 / TEAM'})[options.slug] || 'WORKSPACE';
+        users: '04 / TEAM', messaging: '05 / CONNECT', settings: '06 / CONFIGURE',
+        help: '07 / SUPPORT'})[options.slug] || 'COLLECTRA';
+    self.actionText = ({applications: 'Manage applications', reports: 'View reports',
+        data: 'Explore data', users: 'Manage users', messaging: 'Open messaging',
+        settings: 'Open settings', help: 'Find answers'})[options.slug] || 'Open tool';
     self.url = options.url;
     self.helpText = options.help_text;
     self.hasError = ko.observable(false);
