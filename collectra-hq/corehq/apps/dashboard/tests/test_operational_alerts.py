@@ -30,6 +30,17 @@ class OperationalAlertTests(TestCase):
         })
         self.assertEqual(alert_from_form(form)['checks'], ['Flare main valve: Not completed'])
 
+    def test_equipment_issue_note_appears_on_dashboard(self):
+        form = self.form(MORNING_XMLNS, {
+            'airblower': {
+                'airblower_status': 'needs_attention',
+                'airblower_issue_note': 'The valve leaks when running.',
+            },
+        })
+        self.assertEqual(alert_from_form(form)['checks'], [
+            'Airblower valve: Needs attention — The valve leaks when running.',
+        ])
+
     def test_metering_worker_report_creates_alert(self):
         metering_xmlns = next(xmlns for xmlns in FORMS if xmlns != MORNING_XMLNS)
         form = self.form(metering_xmlns, {
