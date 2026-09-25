@@ -114,6 +114,18 @@ var tileModel = function (options) {
 var dashboardModel = function (options) {
     var self = {};
     self.tiles = _.map(options.tiles, function (t) { return tileModel(t); });
+    self.query = ko.observable("");
+    self.clearSearch = function () { self.query(""); };
+    self.filteredTiles = ko.pureComputed(function () {
+        var needle = self.query().trim().toLocaleLowerCase();
+        if (!needle) { return self.tiles; }
+        return _.filter(self.tiles, function (tile) {
+            return [tile.title, tile.helpText].concat(_.pluck(tile.items(), "name"))
+                .some(function (text) {
+                    return String(text || "").toLocaleLowerCase().includes(needle);
+                });
+        });
+    });
     return self;
 };
 
