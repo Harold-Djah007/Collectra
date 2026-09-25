@@ -121,6 +121,12 @@
 .collectra-section-eyebrow { margin-bottom: 4px; color: #087e79; }
 .collectra-section-heading h2 { margin: 0; color: #142e44; font-size: 1.48rem; font-weight: 800; }
 .collectra-section-heading > span { color: #607989; font-size: .8rem; }
+.collectra-tool-filter { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 14px 0 18px; }
+.collectra-tool-filter label { color: #253d4e; font-size: .87rem; font-weight: 700; }
+.collectra-tool-filter input { flex: 1 1 240px; max-width: 440px; min-height: 40px; padding: 8px 13px; border: 1px solid #b8d1d7; border-radius: 10px; background: #fff; color: #17344a; }
+.collectra-tool-filter input:focus-visible, .collectra-tool-filter button:focus-visible { outline: 3px solid #087e79; outline-offset: 2px; }
+.collectra-tool-filter button { min-height: 40px; padding: 7px 12px; border: 1px solid #b8d1d7; border-radius: 10px; background: #fff; color: #14655f; font-weight: 700; }
+.collectra-tool-empty { padding: 16px; border: 1px solid #c7ddd9; border-radius: 10px; background: #f5fcf9; color: #275962; }
 .collectra-dashboard-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 17px; margin: 0; }
 .collectra-dashboard-col { width: auto; max-width: none; min-width: 0; padding: 0; }
 .collectra-dashboard-card { display: flex; flex-direction: column; min-height: 270px; overflow: hidden; border: 1px solid #dce8ec; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgba(18,54,70,.045); transition: transform .22s, box-shadow .22s, border-color .22s; }
