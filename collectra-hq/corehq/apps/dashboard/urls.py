@@ -6,6 +6,8 @@ from corehq.apps.dashboard.views import (
     dashboard_tile_total,
     dashboard_operational_alerts,
     dashboard_reopen_requests,
+    dashboard_reopen_preview,
+    dashboard_reopen_approved,
     dismiss_self_signup,
 )
 
@@ -16,5 +18,7 @@ urlpatterns = [
     url(r'^project/tile/(?P<slug>[\w-]+)/total/$', dashboard_tile_total, name='dashboard_tile_total'),
     url(r'^project/operational-alerts/$', dashboard_operational_alerts, name='dashboard_operational_alerts'),
     url(r'^project/reopen-requests/$', dashboard_reopen_requests, name='dashboard_reopen_requests'),
+    url(r'^project/reopen-preview/$', dashboard_reopen_preview, name='dashboard_reopen_preview'),
+    url(r'^project/reopen-approved/$', dashboard_reopen_approved, name='dashboard_reopen_approved'),
     url(r'^dismiss_self_signup/$', dismiss_self_signup, name='dismiss_self_signup'),
 ]
