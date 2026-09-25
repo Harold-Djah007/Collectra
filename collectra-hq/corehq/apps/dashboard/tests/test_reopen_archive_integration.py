@@ -21,6 +21,13 @@ DOMAIN = 'safisana'
 class ReopenArchiveIntegrationTest(TestCase):
     """Test only synthetic cases in Django's test database, never live Safisana data."""
 
+    def setUp(self):
+        super().setUp()
+        # Archiving emits case signals; forwarding is outside the reopening
+        # workflow and requires CouchDB domain views in this SQL-only test.
+        self.enterContext(patch('corehq.motech.repeaters.signals.domain_can_forward',
+                                return_value=False))
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
