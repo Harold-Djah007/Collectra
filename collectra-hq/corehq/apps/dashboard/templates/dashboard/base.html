@@ -78,13 +78,16 @@
       {% include 'hqwebapp/partials/pending_plan_notice.html' %}
     {% endif %}
 
+    {% if show_operational_alerts or show_reopen_requests %}
+    <div class="collectra-status-grid" aria-label="Safisana activity">
+    {% endif %}
     {% if show_operational_alerts %}
       <section id="operational-alerts" class="collectra-alerts" aria-label="Operations needing attention">
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow"><span class="collectra-live-dot" aria-hidden="true"></span> Safisana operations</p>
             <h2>Operational overview</h2>
-            <p>Issues reported in Morning Checks and Metering Round submissions over the last 14 days.</p>
+            <p>Morning Checks and Metering Round · last 14 days</p>
           </div>
           <div class="collectra-alerts-controls">
             <span class="collectra-last-updated" data-bind="visible: lastUpdated, text: lastUpdated"></span>
@@ -141,15 +144,20 @@
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow">DRYING BED / SUPERVISOR REVIEW</p>
-            <h2>Recent reopening requests <span data-bind="text: requests().length"></span></h2>
-            <p>Read the worker's reason, then choose Review and reopen to identify the original closed case. HQ will show the closing submission before you confirm.</p>
-            <p><strong>Check the closing form first:</strong> archiving removes its answers from active reports, including any monitoring readings in that submission. The request remains in this recent list after reopening.</p>
-            <a class="collectra-reopen-cases-link" href="{% url 'project_report_dispatcher' domain 'case_list' %}">
-              Find the closed case in Case List <span aria-hidden="true">→</span>
-            </a>
+            <h2>Reopening requests <span class="collectra-request-count" data-bind="text: requests().length"></span></h2>
+            <p>Drying-bed cases · last 30 days</p>
           </div>
-          <button type="button" class="collectra-refresh" data-bind="click: refresh, disable: loading">Refresh</button>
+          <div class="collectra-alerts-controls">
+            <a class="collectra-reopen-cases-link" href="{% url 'project_report_dispatcher' domain 'case_list' %}">
+              Case List <span aria-hidden="true">↗</span>
+            </a>
+            <button type="button" class="collectra-refresh" data-bind="click: refresh, disable: loading">Refresh</button>
+          </div>
         </div>
+        <details class="collectra-reopen-help">
+          <summary>How reopening works</summary>
+          <p>Read the worker's reason, select Review and reopen, then check the original case and its closing form. Archiving the form removes its answers, including any readings, from active reports. Requests remain here for 30 days after reopening.</p>
+        </details>
         <p class="collectra-alerts-message" data-bind="visible: loading &amp;&amp; !loaded()">Loading requests…</p>
         <p class="collectra-alerts-message collectra-alerts-error" data-bind="visible: error">
           Requests could not be loaded. Select Refresh to retry.
@@ -200,6 +208,9 @@
           </article>
         </div>
       </section>
+    {% endif %}
+    {% if show_operational_alerts or show_reopen_requests %}
+    </div>
     {% endif %}
 
     <section id="dashboard-tiles" aria-label="Collectra dashboard">
