@@ -76,28 +76,31 @@
           </div>
         </div>
         <div class="collectra-alerts-summary" data-bind="visible: !loading() &amp;&amp; !error()">
-          <div class="collectra-summary-item collectra-summary-reported">
+          <button type="button" class="collectra-summary-item collectra-summary-reported" data-bind="click: showAll, css: {'is-selected': selectedSeverity() === 'all'}, attr: {'aria-pressed': selectedSeverity() === 'all'}">
             <span class="collectra-summary-icon"><i class="fa fa-list-alt" aria-hidden="true"></i></span>
             <span><strong data-bind="text: alerts().length"></strong><small>Reported issues</small></span>
-          </div>
-          <div class="collectra-summary-item collectra-summary-urgent">
+            <span class="collectra-summary-arrow" aria-hidden="true">↗</span>
+          </button>
+          <button type="button" class="collectra-summary-item collectra-summary-urgent" data-bind="click: showUrgent, css: {'is-selected': selectedSeverity() === 'urgent'}, attr: {'aria-pressed': selectedSeverity() === 'urgent'}">
             <span class="collectra-summary-icon"><i class="fa fa-exclamation-circle" aria-hidden="true"></i></span>
             <span><strong data-bind="text: urgentCount"></strong><small>Urgent</small></span>
-          </div>
-          <div class="collectra-summary-item collectra-summary-followup">
+            <span class="collectra-summary-arrow" aria-hidden="true">↗</span>
+          </button>
+          <button type="button" class="collectra-summary-item collectra-summary-followup" data-bind="click: showFollowUp, css: {'is-selected': selectedSeverity() === 'follow_up'}, attr: {'aria-pressed': selectedSeverity() === 'follow_up'}">
             <span class="collectra-summary-icon"><i class="fa fa-clipboard" aria-hidden="true"></i></span>
             <span><strong data-bind="text: followUpCount"></strong><small>Follow up</small></span>
-          </div>
+            <span class="collectra-summary-arrow" aria-hidden="true">↗</span>
+          </button>
         </div>
         <div class="collectra-alerts-message" data-bind="visible: loading &amp;&amp; !lastUpdated()">Loading recent submissions…</div>
         <div class="collectra-alerts-message collectra-alerts-error" data-bind="visible: error">
           Could not load alerts. Select Refresh to try again. The counts below may be out of date.
         </div>
-        <div class="collectra-alerts-empty" data-bind="visible: !loading() &amp;&amp; !error() &amp;&amp; !alerts().length">
+        <div class="collectra-alerts-empty" data-bind="visible: !loading() &amp;&amp; !error() &amp;&amp; !filteredAlerts().length">
           <span class="collectra-empty-icon" aria-hidden="true"><i class="fa fa-check"></i></span>
-          <span><strong>No reported issues</strong><small>No issues have been reported in these forms in the last 14 days.</small></span>
+          <span><strong data-bind="text: emptyTitle"></strong><small data-bind="text: emptyDescription"></small></span>
         </div>
-        <div class="collectra-alerts-list" data-bind="foreach: alerts, visible: !error() &amp;&amp; alerts().length">
+        <div class="collectra-alerts-list" data-bind="foreach: filteredAlerts, visible: !error() &amp;&amp; filteredAlerts().length">
           <article class="collectra-alert" data-bind="css: {'collectra-alert-urgent': severity === 'urgent'}">
             <div class="collectra-alert-summary">
               <span class="collectra-alert-severity" data-bind="text: severity === 'urgent' ? 'Urgent' : 'Follow up'"></span>
@@ -118,7 +121,7 @@
       <div class="collectra-section-heading"><div><p class="collectra-section-eyebrow">EXPLORE COLLECTRA</p><h2>Everything in one place</h2></div><span>Choose where to work next <span aria-hidden="true">↘</span></span></div>
       <div class="row collectra-dashboard-grid" data-bind="foreach: tiles">
         <div class="col-xl-3 col-lg-4 col-md-6 collectra-dashboard-col">
-          <article class="card-dashboard collectra-dashboard-card" data-bind="css: {'is-loading': showSpinner(), 'has-error': hasError(), 'has-items': hasItemList()}">
+          <article class="card-dashboard collectra-dashboard-card" data-bind="css: cardClasses">
             <div class="collectra-card-header">
               <div class="collectra-tile-icon" aria-hidden="true">
                 <!-- ko if: icon === 'collectra-mark' -->
@@ -129,10 +132,12 @@
                 <!-- /ko -->
               </div>
               <div class="collectra-card-heading">
+                <span class="collectra-card-kicker" data-bind="text: kicker"></span>
                 <a class="collectra-card-title" data-bind="visible:url, text:title, attr:{href:url}"></a>
                 <span class="collectra-card-title" data-bind="text:title, visible:!url"></span>
                 <p class="collectra-card-help" data-bind="text:helpText"></p>
               </div>
+              <span class="collectra-card-header-arrow" aria-hidden="true">↗</span>
             </div>
 
             <div class="collectra-card-body">
