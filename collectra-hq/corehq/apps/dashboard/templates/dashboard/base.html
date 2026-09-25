@@ -17,6 +17,7 @@
 {% registerurl 'dashboard_tile' domain '---' %}
 {% registerurl 'dashboard_tile_total' domain '---' %}
 {% if show_operational_alerts %}{% registerurl 'dashboard_operational_alerts' domain %}{% endif %}
+{% if show_reopen_requests %}{% registerurl 'dashboard_reopen_requests' domain %}{% endif %}
 
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
   <div class="collectra-data-flow" aria-hidden="true">
@@ -126,6 +127,46 @@
             </ul>
             <p class="collectra-alert-note" data-bind="text: note"></p>
             <a data-bind="attr: {href: url}">View submission <span aria-hidden="true">→</span></a>
+          </article>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if show_reopen_requests %}
+      <section id="reopen-requests" class="collectra-alerts collectra-reopen-requests"
+               aria-label="Drying-bed reopening requests">
+        <div class="collectra-alerts-header">
+          <div>
+            <p class="collectra-alerts-eyebrow">DRYING BED / SUPERVISOR REVIEW</p>
+            <h2>Reopening requests <span data-bind="text: requests().length"></span></h2>
+            <p>Workers can send a request offline. Review the original case and closing submission before taking action.</p>
+            <a class="collectra-reopen-cases-link" href="{% url 'project_report_dispatcher' domain 'case_list' %}">
+              Find the closed case in Case List <span aria-hidden="true">→</span>
+            </a>
+          </div>
+          <button type="button" class="collectra-refresh" data-bind="click: refresh, disable: loading">Refresh</button>
+        </div>
+        <p class="collectra-alerts-message" data-bind="visible: loading &amp;&amp; !loaded()">Loading requests…</p>
+        <p class="collectra-alerts-message collectra-alerts-error" data-bind="visible: error">
+          Requests could not be loaded. Select Refresh to retry.
+        </p>
+        <p class="collectra-alerts-empty" data-bind="visible: loaded &amp;&amp; !error() &amp;&amp; !requests().length">
+          No reopening requests received in the last 30 days.
+        </p>
+        <div class="collectra-alerts-list" data-bind="foreach: requests, visible: !error()">
+          <article class="collectra-alert">
+            <div class="collectra-alert-summary">
+              <strong data-bind="text: bedLabel"></strong>
+              <time data-bind="text: when, attr: {datetime: received_on}"></time>
+            </div>
+            <p class="collectra-reopen-meta" data-bind="visible: date">
+              Batch start date: <span data-bind="text: date"></span>
+            </p>
+            <p class="collectra-reopen-meta" data-bind="visible: name">
+              Worker-provided batch name: <span data-bind="text: name"></span>
+            </p>
+            <p class="collectra-alert-note" data-bind="text: reason"></p>
+            <a data-bind="attr: {href: url}">Review request submission <span aria-hidden="true">→</span></a>
           </article>
         </div>
       </section>
