@@ -194,4 +194,32 @@ $(function () {
             if (!document.hidden) { alertsModel.refresh(); }
         }, 60000);
     }
+
+    var reopenPanel = $("#reopen-requests");
+    if (reopenPanel.length) {
+        var reopenModel = {
+            requests: ko.observableArray([]),
+            loading: ko.observable(true),
+            loaded: ko.observable(false),
+            error: ko.observable(false),
+        };
+        reopenModel.refresh = function () {
+            reopenModel.loading(true);
+            reopenModel.error(false);
+            $.getJSON(initialPageData.reverse("dashboard_reopen_requests"))
+                .done(function (data) {
+                    reopenModel.requests(_.map(data.requests, function (request) {
+                        request.when = new Date(request.received_on).toLocaleString();
+                        request.bedLabel = request.bed === "other" ? "Other drying bed"
+                            : "Drying bed " + request.bed.replace("dry_bed_", "");
+                        return request;
+                    }));
+                    reopenModel.loaded(true);
+                })
+                .fail(function () { reopenModel.error(true); })
+                .always(function () { reopenModel.loading(false); });
+        };
+        reopenPanel.koApplyBindings(reopenModel);
+        reopenModel.refresh();
+    }
 });
