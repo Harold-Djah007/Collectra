@@ -19,10 +19,24 @@
 {% if show_operational_alerts %}{% registerurl 'dashboard_operational_alerts' domain %}{% endif %}
 
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
+  <div class="collectra-data-flow" aria-hidden="true">
+    <svg viewBox="0 0 1440 1050" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <path class="collectra-flow-line" d="M-100 145 C270 60 280 530 690 400 S1110 110 1540 210" />
+      <path class="collectra-flow-line collectra-flow-line-secondary" d="M-100 730 C350 940 470 430 820 620 S1210 1000 1540 750" />
+      <path class="collectra-flow-line collectra-flow-line-third" d="M50 1070 C220 740 500 780 620 300 S1100 160 1480 -40" />
+      <circle class="collectra-flow-node" cx="270" cy="290" r="7" />
+      <circle class="collectra-flow-node collectra-flow-node-late" cx="820" cy="620" r="9" />
+      <circle class="collectra-flow-node" cx="1190" cy="300" r="6" />
+      <rect class="collectra-flow-form" x="120" y="450" width="62" height="76" rx="8" />
+      <path class="collectra-flow-detail" d="M134 470h34m-34 13h34m-34 13h22" />
+      <rect class="collectra-flow-form collectra-flow-form-late" x="1260" y="520" width="76" height="64" rx="8" />
+      <path class="collectra-flow-detail" d="M1277 566v-16m16 16v-29m16 29v-39" />
+    </svg>
+  </div>
   <div class="collectra-dashboard-inner">
     <div class="collectra-hero">
       <div class="collectra-hero-content">
-        <p class="collectra-hero-eyebrow">{% trans "Your workspace" %} <span aria-hidden="true">/</span> {{ domain }}</p>
+        <p class="collectra-hero-eyebrow">{{ domain }} <span aria-hidden="true">/</span> {% trans "Collectra HQ" %}</p>
         <header class="collectra-dashboard-header">
           <div class="collectra-dashboard-mark" aria-hidden="true">
             <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
@@ -118,7 +132,7 @@
     {% endif %}
 
     <section id="dashboard-tiles" aria-label="Collectra dashboard">
-      <div class="collectra-section-heading"><div><p class="collectra-section-eyebrow">EXPLORE COLLECTRA</p><h2>Everything in one place</h2></div><span>Choose where to work next <span aria-hidden="true">↘</span></span></div>
+      <div class="collectra-section-heading"><div><p class="collectra-section-eyebrow">EXPLORE COLLECTRA</p><h2>Choose your next step</h2></div></div>
       <div class="row collectra-dashboard-grid" data-bind="foreach: tiles">
         <div class="col-xl-3 col-lg-4 col-md-6 collectra-dashboard-col">
           <article class="card-dashboard collectra-dashboard-card" data-bind="css: cardClasses">
@@ -135,13 +149,17 @@
                 <span class="collectra-card-kicker" data-bind="text: kicker"></span>
                 <a class="collectra-card-title" data-bind="visible:url, text:title, attr:{href:url}"></a>
                 <span class="collectra-card-title" data-bind="text:title, visible:!url"></span>
-                <p class="collectra-card-help" data-bind="text:helpText"></p>
+                <p class="collectra-card-description" data-bind="text:helpText"></p>
               </div>
               <span class="collectra-card-art" aria-hidden="true">
-                <!-- ko if: icon === 'collectra-mark' -->
-                <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
-                <!-- /ko -->
-                <!-- ko if: icon !== 'collectra-mark' -->
+                <!-- ko if: slug === 'applications' --><span class="collectra-art-form"><i></i><i></i><i></i></span><!-- /ko -->
+                <!-- ko if: slug === 'reports' --><span class="collectra-art-chart"><i></i><i></i><i></i><i></i></span><!-- /ko -->
+                <!-- ko if: slug === 'data' --><span class="collectra-art-data"><i></i><i></i><i></i></span><!-- /ko -->
+                <!-- ko if: slug === 'users' --><span class="collectra-art-people"><i></i><i></i><i></i></span><!-- /ko -->
+                <!-- ko if: slug === 'messaging' --><span class="collectra-art-messages"><i></i><i></i></span><!-- /ko -->
+                <!-- ko if: slug === 'settings' --><i class="fa fa-cog collectra-art-gear"></i><!-- /ko -->
+                <!-- ko if: slug === 'help' --><span class="collectra-art-help">?</span><!-- /ko -->
+                <!-- ko if: ['applications', 'reports', 'data', 'users', 'messaging', 'settings', 'help'].indexOf(slug) === -1 -->
                 <i data-bind="css: icon"></i>
                 <!-- /ko -->
               </span>
@@ -166,7 +184,7 @@
               </div>
 
               <a class="collectra-card-open" data-bind="visible:showIconLink, attr:{href:url}">
-                <span>{% trans "Open" %}</span>
+                <span data-bind="text: actionText"></span>
                 <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -175,23 +193,6 @@
       </div>
     </section>
 
-    <section class="collectra-dashboard-next" aria-label="Getting started with Collectra">
-      <div class="collectra-next-card">
-        <h2>{% trans "Your workspace" %}</h2>
-        <p class="text-muted mb-0">
-          {% trans "Your applications, reports, data tools and team are available in the cards above. Recent applications remain visible inside Applications so you can continue working quickly." %}
-        </p>
-      </div>
-      <div class="collectra-next-card">
-        <h2>{% trans "Getting started" %}</h2>
-        <ol class="collectra-start-list">
-          <li><span class="collectra-start-number">1</span>{% trans "Create or import an application" %}</li>
-          <li><span class="collectra-start-number">2</span>{% trans "Add and test a form" %}</li>
-          <li><span class="collectra-start-number">3</span>{% trans "Add mobile workers" %}</li>
-          <li><span class="collectra-start-number">4</span>{% trans "Publish when you are ready" %}</li>
-        </ol>
-      </div>
-    </section>
   </div>
 </div>
 {% endblock content %}
