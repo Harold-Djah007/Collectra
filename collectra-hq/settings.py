@@ -1216,6 +1216,12 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+# Detached test worktrees can share the original checkout's filesystem blobs.
+# Apply after localsettings so no local file needs to be edited or copied.
+_collectra_shared_drive_root = os.environ.get('COLLECTRA_SHARED_DRIVE_ROOT')
+if _collectra_shared_drive_root:
+    SHARED_DRIVE_ROOT = _collectra_shared_drive_root
+
 
 # Allow launchers and hosted environments to publish Collectra at a stable
 # address without rewriting the developer's untracked localsettings.py file.
