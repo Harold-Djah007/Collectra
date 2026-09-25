@@ -133,7 +133,17 @@
 
     <section id="dashboard-tiles" aria-label="Collectra dashboard">
       <div class="collectra-section-heading"><div><p class="collectra-section-eyebrow">EXPLORE COLLECTRA</p><h2>Choose your next step</h2></div></div>
-      <div class="row collectra-dashboard-grid" data-bind="foreach: tiles">
+      <div class="collectra-tool-filter">
+        <label for="collectra-tool-search">Find a tool or recent application</label>
+        <input id="collectra-tool-search" type="search" autocomplete="off"
+               placeholder="Try forms, reports, data or a recent application"
+               data-bind="textInput: query" />
+        <button type="button" data-bind="visible: query, click: clearSearch">Clear</button>
+      </div>
+      <p class="collectra-tool-empty" role="status" data-bind="visible: query() &amp;&amp; !filteredTiles().length">
+        No visible tools or recent applications match. Open Applications to browse all applications.
+      </p>
+      <div class="row collectra-dashboard-grid" data-bind="foreach: filteredTiles">
         <div class="col-xl-3 col-lg-4 col-md-6 collectra-dashboard-col">
           <article class="card-dashboard collectra-dashboard-card" data-bind="css: cardClasses">
             <div class="collectra-card-header">
