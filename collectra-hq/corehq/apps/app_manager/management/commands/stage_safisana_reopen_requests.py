@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from lxml import etree
 
@@ -59,7 +60,28 @@ def build_request_form():
     ):
         question = etree.SubElement(body, f'{{{X}}}input', ref=f'/data/{name}')
         etree.SubElement(question, f'{{{X}}}label').text = prompt
+    itext = etree.SubElement(model, f'{{{X}}}itext')
+    translation = etree.SubElement(itext, f'{{{X}}}translation', lang='en')
+    translation.set('default', 'true()')
+    for index, field_label in enumerate(body.xpath('.//x:label', namespaces=NS), 1):
+        text_id = f'reopen-label-{index}'
+        item = etree.SubElement(translation, f'{{{X}}}text', id=text_id)
+        etree.SubElement(item, f'{{{X}}}value').text = field_label.text
+        field_label.text = None
+        field_label.set('ref', f"jr:itext('{text_id}')")
     return etree.tostring(root, encoding='UTF-8', xml_declaration=True, pretty_print=True)
+
+
+def check_shared_blob_root():
+    """Refuse worktree writes when HQ and management commands use different stores."""
+    localsettings = Path.cwd() / 'localsettings.py'
+    if localsettings.is_symlink():
+        expected = (localsettings.resolve().parent / 'sharedfiles' / 'blobdb').resolve()
+        actual = Path(settings.SHARED_DRIVE_CONF.blob_dir).resolve()
+        if actual != expected:
+            raise ValueError(
+                f'Wrong blob root: {actual}. Export COLLECTRA_SHARED_DRIVE_ROOT='
+                f'{expected.parent} and rerun before applying.')
 
 
 class Command(BaseCommand):
@@ -92,6 +114,7 @@ class Command(BaseCommand):
             if not apply:
                 self.stdout.write('No application document was changed.')
                 return
+            check_shared_blob_root()
             backup = directory / f'{APP_ID}-before-reopen-request.json'
             with backup.open('x', encoding='utf-8') as handle:
                 json.dump(app.to_json(), handle, ensure_ascii=False, indent=2, default=str)
