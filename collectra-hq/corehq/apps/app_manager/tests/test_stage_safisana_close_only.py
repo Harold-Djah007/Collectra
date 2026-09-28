@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.management.commands.stage_safisana_close_only import (
     XMLNS, build_close_form, change_monitoring_source,
 )
+from corehq.apps.app_manager.management.commands.repair_safisana_close_locale import repair_source
 
 
 X = {'x': 'http://www.w3.org/2002/xforms', 'h': 'http://www.w3.org/1999/xhtml'}
@@ -22,6 +23,23 @@ def test_dedicated_close_form_has_no_monitoring_readings_or_case_id_field():
         ". = 'yes'")
     assert root.xpath('//x:bind[@nodeset="/data/reason"]', namespaces=X)[0].get('required') == 'true()'
     assert not root.xpath('//*[local-name()="case"]')
+    assert root.xpath('//x:model/x:itext/x:translation[@lang="en"]', namespaces=X)[0].get('default') == 'true()'
+    assert len(root.xpath('//h:body//x:label[@ref]', namespaces=X)) == 5
+
+
+def test_staged_close_form_can_be_localized_without_changing_its_fields():
+    root = etree.fromstring(build_close_form())
+    for label, value in zip(root.xpath('//h:body//x:label', namespaces=X),
+                            root.xpath('//x:translation/x:text/x:value/text()', namespaces=X)):
+        label.attrib.pop('ref')
+        label.text = value
+    root.xpath('//x:itext', namespaces=X)[0].getparent().remove(root.xpath('//x:itext', namespaces=X)[0])
+    source = etree.tostring(root)
+    repaired = etree.fromstring(repair_source(source))
+    assert len(repaired.xpath('//x:translation[@lang="en"]/x:text', namespaces=X)) == 5
+    assert repaired.xpath('//x:bind/@nodeset', namespaces=X) == root.xpath('//x:bind/@nodeset', namespaces=X)
+    with pytest.raises(ValueError, match='already has translations'):
+        repair_source(etree.tostring(repaired))
 
 
 MONITORING = '''<h:html xmlns:h="http://www.w3.org/1999/xhtml"
