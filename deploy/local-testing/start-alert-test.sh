@@ -136,6 +136,10 @@ fi
 export COLLECTRA_SHARED_DRIVE_ROOT="$blob_root"
 export COLLECTRA_FORMPLAYER_URL="http://127.0.0.1:18080"
 export COLLECTRA_FORMPLAYER_URL_WEBAPPS="http://localhost:$proxy_port/formplayer"
+# Report pagination uses absolute URLs built from BASE_ADDRESS. Keep them on
+# the same local proxy as the HQ page and embedded Formplayer preview.
+export COLLECTRA_BASE_ADDRESS="localhost:$proxy_port"
+export COLLECTRA_DEFAULT_PROTOCOL="http"
 
 cd "$hq_root"
 if [[ ${1:-} != --skip-build ]]; then
