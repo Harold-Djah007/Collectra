@@ -14,13 +14,14 @@ from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests 
 from corehq.apps.app_manager.management.commands.inspect_safisana_reopen_case import (
     CASE_XMLNS, without_single_case_close,
 )
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
 LOOKBACK_DAYS = 30
 MAX_FORMS_PER_DATABASE = 100
 MAX_REQUESTS = 30
+MAX_CANDIDATES = 10
 BED_VALUES = {f'dry_bed_{number}' for number in range(1, 7)} | {'other'}
 
 
@@ -36,6 +37,7 @@ def request_from_form(form):
     name = data.get('existing_batch_name')
     return {
         'form_id': form.form_id,
+        'status': 'handled' if getattr(form, 'state', None) == XFormInstance.ARCHIVED else 'pending',
         'bed': bed,
         'date': date[:10] if isinstance(date, str) else '',
         'name': name[:80] if isinstance(name, str) else '',
@@ -75,13 +77,36 @@ def archive_closing_form_and_refresh(case, closing_form, supervisor_id):
     invalidate_restore_cache(case.domain)
 
 
+def closed_case_suggestions(domain, worker_request):
+    """Suggest exact-name matches; the supervisor must still verify a case."""
+    validate_reopen_request(worker_request)
+    name = request_from_form(worker_request)['name'].strip()
+    if not name:
+        return []
+    cases = []
+    for database in get_db_aliases_for_partitioned_query():
+        cases.extend(CommCareCase.objects.using(database).filter(
+            domain=domain, type='dryingbed', closed=True, deleted=False,
+            closed_on__isnull=False,
+            name__iexact=name,
+        ).order_by('-closed_on')[:MAX_CANDIDATES])
+    cases.sort(key=lambda case: case.closed_on, reverse=True)
+    return [{
+        'case_id': case.case_id,
+        'name': case.name,
+        'opened_on': case.opened_on.isoformat() if case.opened_on else None,
+        'closed_on': case.closed_on.isoformat() if case.closed_on else None,
+    } for case in cases[:MAX_CANDIDATES]]
+
+
 def recent_reopen_requests(domain):
     if domain != 'safisana':
         return []
     cutoff = timezone.now() - timedelta(days=LOOKBACK_DAYS)
     forms = []
     filters = Q(domain=domain, app_id=APP_ID, xmlns=REQUEST_XMLNS,
-                state=XFormInstance.NORMAL, received_on__gte=cutoff)
+                state__in=(XFormInstance.NORMAL, XFormInstance.ARCHIVED),
+                received_on__gte=cutoff)
     for database in get_db_aliases_for_partitioned_query():
         forms.extend(XFormInstance.objects.using(database)
                      .filter(filters).order_by('-received_on')[:MAX_FORMS_PER_DATABASE])
