@@ -10,7 +10,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.management.commands.preview_safisana_drying_bed import (
     FORM_IDS, NS, X, one,
 )
-from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests import APP_ID, H
+from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests import APP_ID, H, JR
 
 
 XMLNS = 'http://openrosa.org/formdesigner/97A64BD5-760A-4A0C-A62B-8BF887F689E1'
@@ -19,6 +19,7 @@ FORM_NAME = 'Close drying-bed batch'
 
 def build_close_form():
     root = etree.Element(f'{{{H}}}html', nsmap={'h': H, None: X,
+                                               'jr': JR,
                                                'xsd': 'http://www.w3.org/2001/XMLSchema'})
     head = etree.SubElement(root, f'{{{H}}}head')
     etree.SubElement(head, f'{{{H}}}title').text = FORM_NAME
@@ -46,7 +47,27 @@ def build_close_form():
         etree.SubElement(item, f'{{{X}}}value').text = value
     reason = etree.SubElement(body, f'{{{X}}}input', ref='/data/reason')
     etree.SubElement(reason, f'{{{X}}}label').text = 'Reason for closing this batch'
+    add_english_localizer(root)
     return etree.tostring(root, encoding='UTF-8', xml_declaration=True, pretty_print=True)
+
+
+def add_english_localizer(root):
+    """Localize the existing labels so Formplayer can open this form."""
+    model = one(root, '//x:model')
+    if model.xpath('./x:itext', namespaces=NS):
+        raise ValueError('The closing form already has translations')
+    itext = etree.SubElement(model, f'{{{X}}}itext')
+    translation = etree.SubElement(itext, f'{{{X}}}translation', lang='en')
+    translation.set('default', 'true()')
+    for index, label in enumerate(root.xpath('//h:body//x:label', namespaces=NS), 1):
+        if len(label) or not label.text:
+            raise ValueError('The closing form has an unexpected label')
+        text_id = f'close-label-{index}'
+        text = etree.SubElement(translation, f'{{{X}}}text', id=text_id)
+        etree.SubElement(text, f'{{{X}}}value').text = label.text
+        label.text = None
+        label.set('ref', f"jr:itext('{text_id}')")
+    return root
 
 
 def change_monitoring_source(xml):
