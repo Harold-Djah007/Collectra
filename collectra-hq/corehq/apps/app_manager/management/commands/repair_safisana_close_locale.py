@@ -15,6 +15,8 @@ from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests 
 
 def repair_source(source):
     root = etree.fromstring(source.encode('utf-8') if isinstance(source, str) else source)
+    if root.xpath('//x:model/x:itext', namespaces=NS):
+        raise ValueError('The closing form already has translations; no repair is needed')
     data = root.xpath('//x:model/x:instance/*', namespaces=NS)
     if (len(data) != 1 or etree.QName(data[0]).namespace != XMLNS
             or [etree.QName(child).localname for child in data[0]]
