@@ -32,6 +32,7 @@ from corehq.apps.dashboard.models import (
 from corehq.apps.dashboard.operational_alerts import recent_operational_alerts
 from corehq.apps.dashboard.reopen_requests import (
     archive_closing_form_and_refresh,
+    closed_case_suggestions,
     closing_form_for_reopen,
     recent_reopen_requests,
     validate_reopen_request,
@@ -140,7 +141,7 @@ def _reopen_candidates(domain, request_id, case_id):
     validate_reopen_request(worker_request)
     case = CommCareCase.objects.get_case(case_id, domain)
     closing_form = closing_form_for_reopen(case)
-    return case, closing_form
+    return worker_request, case, closing_form
 
 
 @login_and_domain_required
@@ -150,7 +151,7 @@ def dashboard_reopen_preview(request, domain):
     if not _can_reopen_from_dashboard(request, domain):
         return HttpResponseForbidden()
     try:
-        case, closing_form = _reopen_candidates(
+        _, case, closing_form = _reopen_candidates(
             domain, request.GET.get('request_id'), request.GET.get('case_id'))
     except (CaseNotFound, XFormNotFound, MissingFormXml, ValueError, etree.XMLSyntaxError) as error:
         return JsonResponse({'error': str(error)}, status=400)
@@ -165,17 +166,41 @@ def dashboard_reopen_preview(request, domain):
 
 @login_and_domain_required
 @location_safe
+@require_GET
+def dashboard_reopen_candidates(request, domain):
+    if not _can_reopen_from_dashboard(request, domain):
+        return HttpResponseForbidden()
+    try:
+        form = XFormInstance.objects.get_form(request.GET.get('request_id'), domain)
+        candidates = closed_case_suggestions(domain, form)
+    except (XFormNotFound, ValueError) as error:
+        return JsonResponse({'error': str(error)}, status=400)
+    return JsonResponse({'candidates': candidates})
+
+
+@login_and_domain_required
+@location_safe
 @require_POST
 def dashboard_reopen_approved(request, domain):
     if not _can_reopen_from_dashboard(request, domain):
         return HttpResponseForbidden()
     try:
         case_id = request.POST.get('case_id')
-        case, closing_form = _reopen_candidates(domain, request.POST.get('request_id'), case_id)
+        worker_request, case, closing_form = _reopen_candidates(
+            domain, request.POST.get('request_id'), case_id)
         if (request.POST.get('closing_form_id') != closing_form.form_id
                 or request.POST.get('acknowledge_archive') != 'yes'):
             raise ValueError('Review the closing submission and confirm the archive warning')
         archive_closing_form_and_refresh(case, closing_form, request.couch_user._id)
+        try:
+            worker_request.archive(user_id=request.couch_user._id)
+            cache.delete(f'collectra:reopen-requests:{domain}:v1')
+        except Exception:
+            logger.exception('Case %s reopened but request %s could not be marked handled',
+                             case.case_id, worker_request.form_id)
+            messages.warning(request, f'{case.name} reopened, but its request status could not be updated. '
+                             'The case remains open; contact an HQ administrator to review the request.')
+            return HttpResponseRedirect(reverse('dashboard_domain', args=[domain]))
         logger.info('Safisana reopening approved: request=%s case=%s closing_form=%s supervisor=%s',
                     request.POST.get('request_id'), case.case_id, closing_form.form_id,
                     request.couch_user._id)
