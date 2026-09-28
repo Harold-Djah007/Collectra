@@ -89,6 +89,85 @@
   }
 }
 
+// Keep navigation usable when a project has many applications or reports.
+// Only flat menus scroll; overflow on a menu with a flyout would clip its submenu.
+.navbar-hq-main-menu {
+  .mainmenu-tabs > .dropdown > .dropdown-menu,
+  .nav-settings-bar .dropdown-menu {
+    min-width: min(18rem, calc(100vw - 1.5rem));
+    margin-top: .45rem;
+    padding: .5rem;
+    border: 1px solid #d7e6e9;
+    border-radius: .9rem;
+    background: #fff;
+    box-shadow: 0 18px 44px rgb(16 54 75 / 18%), 0 3px 10px rgb(16 54 75 / 7%);
+    transform-origin: top center;
+  }
+
+  .mainmenu-tabs > .dropdown > .dropdown-menu.show,
+  .nav-settings-bar .dropdown-menu.show {
+    animation: collectra-dropdown-enter 190ms cubic-bezier(.2, .8, .2, 1) both;
+  }
+
+  .mainmenu-tabs > .dropdown > .dropdown-menu:not(:has(.dropdown-submenu)),
+  .nav-settings-bar .dropdown-menu {
+    width: min(18rem, calc(100vw - 1.5rem));
+    max-height: calc(100vh - 5.5rem);
+    max-height: min(32rem, calc(100dvh - 5.5rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: #9acdc9 transparent;
+    scrollbar-width: thin;
+  }
+
+  .mainmenu-tabs > .dropdown > .dropdown-menu > li > .dropdown-item,
+  .nav-settings-bar .dropdown-menu .dropdown-item {
+    padding: .65rem .75rem;
+    border-radius: .55rem;
+    color: #183d50;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+  }
+
+  .mainmenu-tabs > .dropdown > .dropdown-menu > li > .dropdown-item:hover,
+  .mainmenu-tabs > .dropdown > .dropdown-menu > li > .dropdown-item:focus-visible,
+  .nav-settings-bar .dropdown-menu .dropdown-item:hover,
+  .nav-settings-bar .dropdown-menu .dropdown-item:focus-visible {
+    background: #e8f7f5;
+    color: #007f7d;
+    transform: translateX(2px);
+  }
+
+  .mainmenu-tabs > .dropdown > .dropdown-menu > .dropdown-header {
+    position: sticky;
+    top: -.5rem;
+    z-index: 1;
+    margin: -.5rem -.5rem .25rem;
+    padding: .85rem 1.25rem .65rem;
+    border-radius: .9rem .9rem 0 0;
+    background: #fff;
+    color: #087f80;
+    letter-spacing: .08em;
+  }
+}
+
+@keyframes collectra-dropdown-enter {
+  from { opacity: 0; translate: 0 -7px; scale: .985; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar-hq-main-menu {
+    .mainmenu-tabs > .dropdown > .dropdown-menu.show,
+    .nav-settings-bar .dropdown-menu.show { animation: none; }
+
+    .mainmenu-tabs > .dropdown > .dropdown-menu > li > .dropdown-item,
+    .nav-settings-bar .dropdown-menu .dropdown-item { transition: none; }
+  }
+}
+
 @media (max-width: map-get($grid-breakpoints, "lg")) {
   .navbar-hq-main-menu {
 
