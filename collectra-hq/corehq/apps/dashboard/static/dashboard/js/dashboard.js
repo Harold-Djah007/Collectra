@@ -203,6 +203,9 @@ $(function () {
             loaded: ko.observable(false),
             error: ko.observable(false),
         };
+        reopenModel.pendingCount = ko.computed(function () {
+            return _.filter(reopenModel.requests(), function (item) { return item.status === "pending"; }).length;
+        });
         reopenModel.refresh = function () {
             reopenModel.loading(true);
             reopenModel.error(false);
@@ -212,7 +215,12 @@ $(function () {
                         request.when = new Date(request.received_on).toLocaleString();
                         request.bedLabel = request.bed === "other" ? "Other drying bed"
                             : "Drying bed " + request.bed.replace("dry_bed_", "");
+                        request.statusLabel = request.status === "handled" ? "Handled" : "Pending";
                         request.reviewOpen = ko.observable(false);
+                        request.suggestions = ko.observableArray([]);
+                        request.suggestionsLoading = ko.observable(false);
+                        request.suggestionsLoaded = ko.observable(false);
+                        request.suggestionsError = ko.observable(false);
                         request.caseId = ko.observable("");
                         request.checking = ko.observable(false);
                         request.reviewError = ko.observable("");
@@ -220,7 +228,23 @@ $(function () {
                         request.caseId.subscribe(function () { request.candidate(null); });
                         request.toggleReview = function () {
                             request.reviewOpen(!request.reviewOpen());
+                            if (request.reviewOpen() && request.name && !request.suggestionsLoaded()) {
+                                request.suggestionsLoading(true);
+                                $.getJSON(initialPageData.reverse("dashboard_reopen_candidates"), {
+                                    request_id: request.form_id,
+                                }).done(function (result) {
+                                    request.suggestions(_.map(result.candidates, function (item) {
+                                        item.openedLabel = item.opened_on
+                                            ? "Opened " + new Date(item.opened_on).toLocaleDateString() : "";
+                                        return item;
+                                    }));
+                                    request.suggestionsLoaded(true);
+                                }).fail(function () {
+                                    request.suggestionsError(true);
+                                }).always(function () { request.suggestionsLoading(false); });
+                            }
                         };
+                        request.chooseCase = function (item) { request.caseId(item.case_id); };
                         request.verify = function () {
                             request.candidate(null);
                             request.reviewError("");
