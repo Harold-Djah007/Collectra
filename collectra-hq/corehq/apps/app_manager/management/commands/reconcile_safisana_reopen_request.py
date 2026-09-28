@@ -8,6 +8,7 @@ from corehq.apps.app_manager.management.commands.inspect_safisana_reopen_case im
     without_single_case_close,
 )
 from corehq.apps.dashboard.reopen_requests import request_from_form, validate_reopen_request
+from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml, XFormNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
@@ -40,6 +41,9 @@ class Command(BaseCommand):
         parser.add_argument('--apply', action='store_true')
 
     def handle(self, request_id, case_id, closing_form_id, supervisor_id, apply, **options):
+        if any(value.startswith('PASTE_') for value in
+               (request_id, case_id, closing_form_id, supervisor_id)):
+            raise CommandError('Replace the PASTE_ placeholders with the IDs printed by the lookup')
         if any(not value or len(value) > 80 for value in
                (request_id, case_id, closing_form_id, supervisor_id)):
             raise CommandError('Provide valid request, case, closing form, and supervisor IDs')
@@ -48,7 +52,8 @@ class Command(BaseCommand):
             case = CommCareCase.objects.get_case(case_id, 'safisana')
             closing_form = XFormInstance.objects.get_form(closing_form_id, 'safisana')
             request = verify_previous_reopening(request_form, case, closing_form)
-        except (ValueError, etree.XMLSyntaxError) as error:
+        except (CaseNotFound, XFormNotFound, MissingFormXml, ValueError,
+                etree.XMLSyntaxError) as error:
             raise CommandError(str(error)) from error
         self.stdout.write(f"Verified request {request_id}: {request['name']} ({request['bed']})")
         self.stdout.write(f'Open case: {case_id}; archived closing form: {closing_form_id}')
