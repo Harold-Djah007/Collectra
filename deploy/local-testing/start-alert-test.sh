@@ -59,6 +59,19 @@ if ! curl -fsS --max-time 3 http://127.0.0.1:18080/serverup >/dev/null 2>&1; the
         echo 'Collectra PostgreSQL is not running. Start it with ./scripts/docker up -d postgres redis.' >&2
         exit 1
     fi
+    postgres_ready=0
+    for attempt in $(seq 1 60); do
+        if docker exec "$postgres_container" pg_isready -U commcarehq -d postgres >/dev/null 2>&1; then
+            postgres_ready=1
+            break
+        fi
+        sleep 1
+    done
+    if [[ $postgres_ready != 1 ]]; then
+        echo 'Collectra PostgreSQL did not become ready within 60 seconds.' >&2
+        docker logs --tail 25 "$postgres_container" >&2 || true
+        exit 1
+    fi
     if [[ -z $(docker ps --filter 'name=^/hqservice-redis-1$' --format '{{.ID}}' | head -n 1) ]]; then
         echo 'Collectra Redis is not running. Start it with ./scripts/docker up -d redis.' >&2
         exit 1
