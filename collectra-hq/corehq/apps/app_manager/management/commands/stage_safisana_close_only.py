@@ -32,8 +32,8 @@ def build_close_form():
         attrs = {'nodeset': f'/data/{field}', 'type': 'xsd:string'}
         if field in ('confirm_close', 'reason'):
             attrs['required'] = 'true()'
-        if field == 'confirm_close':
-            attrs['constraint'] = ". = 'yes'"
+        if field == 'reason':
+            attrs['relevant'] = "/data/confirm_close = 'yes'"
         etree.SubElement(model, f'{{{X}}}bind', **attrs)
     body = etree.SubElement(root, f'{{{H}}}body')
     notice = etree.SubElement(body, f'{{{X}}}trigger', ref='/data/notice')
@@ -41,7 +41,7 @@ def build_close_form():
         'Save all final drying-bed measurements in Drying Bed monitoring before closing this case.')
     confirm = etree.SubElement(body, f'{{{X}}}select1', ref='/data/confirm_close')
     etree.SubElement(confirm, f'{{{X}}}label').text = 'Is this batch ready to close?'
-    for value, label in [('yes', 'Yes, close this batch'), ('no', 'No, return to monitoring')]:
+    for value, label in [('yes', 'Yes, close this batch'), ('no', 'No, keep this batch open')]:
         item = etree.SubElement(confirm, f'{{{X}}}item')
         etree.SubElement(item, f'{{{X}}}label').text = label
         etree.SubElement(item, f'{{{X}}}value').text = value
@@ -125,7 +125,7 @@ def preview_and_optionally_stage(output_dir, apply=False):
         'monitoring_close_action_after': 'never',
         'new_form_name': FORM_NAME,
         'new_form_requires': 'case',
-        'new_form_close_action': 'always',
+        'new_form_close_action': {'if': '/data/confirm_close = yes'},
         'existing_case_ids_and_calculations': 'unchanged',
         'published_mobile_build': False,
     }, indent=2), encoding='utf-8')
@@ -140,7 +140,11 @@ def preview_and_optionally_stage(output_dir, apply=False):
     condition.answer = None
     new_form = app.new_form(module.id, FORM_NAME, 'en', attachment=close_xml.decode('utf-8'))
     new_form.requires = 'case'
-    new_form.actions.close_case.condition.type = 'always'
+    close_condition = new_form.actions.close_case.condition
+    close_condition.type = 'if'
+    close_condition.question = '/data/confirm_close'
+    close_condition.answer = 'yes'
+    close_condition.operator = '='
     for form in (new_form, monitoring):
         rendered = form.render_xform()
         etree.fromstring(rendered.encode('utf-8') if isinstance(rendered, str) else rendered)
