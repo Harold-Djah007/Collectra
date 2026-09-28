@@ -9,6 +9,7 @@ from corehq.apps.app_manager.management.commands.stage_safisana_close_only impor
     XMLNS, build_close_form, change_monitoring_source,
 )
 from corehq.apps.app_manager.management.commands.repair_safisana_close_locale import repair_source
+from corehq.apps.app_manager.management.commands.refine_safisana_close_choice import refine_source
 
 
 X = {'x': 'http://www.w3.org/2002/xforms', 'h': 'http://www.w3.org/1999/xhtml'}
@@ -19,9 +20,10 @@ def test_dedicated_close_form_has_no_monitoring_readings_or_case_id_field():
     data = root.xpath('//x:model/x:instance/*', namespaces=X)[0]
     assert etree.QName(data).namespace == XMLNS
     assert [etree.QName(node).localname for node in data] == ['notice', 'confirm_close', 'reason']
-    assert root.xpath('//x:bind[@nodeset="/data/confirm_close"]', namespaces=X)[0].get('constraint') == (
-        ". = 'yes'")
+    assert root.xpath('//x:bind[@nodeset="/data/confirm_close"]', namespaces=X)[0].get('constraint') is None
     assert root.xpath('//x:bind[@nodeset="/data/reason"]', namespaces=X)[0].get('required') == 'true()'
+    assert root.xpath('//x:bind[@nodeset="/data/reason"]', namespaces=X)[0].get('relevant') == (
+        "/data/confirm_close = 'yes'")
     assert not root.xpath('//*[local-name()="case"]')
     assert root.xpath('//x:model/x:itext/x:translation[@lang="en"]', namespaces=X)[0].get('default') == 'true()'
     assert len(root.xpath('//h:body//x:label[@ref]', namespaces=X)) == 5
@@ -29,6 +31,9 @@ def test_dedicated_close_form_has_no_monitoring_readings_or_case_id_field():
 
 def test_staged_close_form_can_be_localized_without_changing_its_fields():
     root = etree.fromstring(build_close_form())
+    root.xpath('//x:bind[@nodeset="/data/confirm_close"]', namespaces=X)[0].set('constraint', ". = 'yes'")
+    root.xpath('//x:bind[@nodeset="/data/reason"]', namespaces=X)[0].attrib.pop('relevant')
+    root.xpath('//x:text[@id="close-label-4"]/x:value', namespaces=X)[0].text = 'No, return to monitoring'
     for label, value in zip(root.xpath('//h:body//x:label', namespaces=X),
                             root.xpath('//x:translation/x:text/x:value/text()', namespaces=X)):
         label.attrib.pop('ref')
@@ -40,6 +45,21 @@ def test_staged_close_form_can_be_localized_without_changing_its_fields():
     assert repaired.xpath('//x:bind/@nodeset', namespaces=X) == root.xpath('//x:bind/@nodeset', namespaces=X)
     with pytest.raises(ValueError, match='already has translations'):
         repair_source(etree.tostring(repaired))
+
+
+def test_existing_localized_close_form_allows_no_without_closing():
+    root = etree.fromstring(build_close_form())
+    root.xpath('//x:bind[@nodeset="/data/confirm_close"]', namespaces=X)[0].set('constraint', ". = 'yes'")
+    root.xpath('//x:bind[@nodeset="/data/reason"]', namespaces=X)[0].attrib.pop('relevant')
+    root.xpath('//x:text[@id="close-label-4"]/x:value', namespaces=X)[0].text = 'No, return to monitoring'
+    upgraded = etree.fromstring(refine_source(etree.tostring(root)))
+    assert upgraded.xpath('//x:bind[@nodeset="/data/confirm_close"]', namespaces=X)[0].get('constraint') is None
+    assert upgraded.xpath('//x:bind[@nodeset="/data/reason"]', namespaces=X)[0].get('relevant') == (
+        "/data/confirm_close = 'yes'")
+    assert upgraded.xpath('//x:text[@id="close-label-4"]/x:value/text()', namespaces=X) == [
+        'No, keep this batch open']
+    with pytest.raises(ValueError, match='validation has changed'):
+        refine_source(etree.tostring(upgraded))
 
 
 MONITORING = '''<h:html xmlns:h="http://www.w3.org/1999/xhtml"
@@ -88,8 +108,13 @@ class CloseOnlyCaseActionTest(SimpleTestCase):
         form = app.new_form(module.id, 'Close drying-bed batch', 'en',
                             attachment=build_close_form().decode('utf-8'))
         form.requires = 'case'
-        form.actions.close_case.condition.type = 'always'
+        condition = form.actions.close_case.condition
+        condition.type = 'if'
+        condition.question = '/data/confirm_close'
+        condition.answer = 'yes'
+        condition.operator = '='
         rendered = form.render_xform()
         root = etree.fromstring(rendered.encode('utf-8') if isinstance(rendered, str) else rendered)
         assert root.xpath('//*[local-name()="case"]/*[local-name()="close"]')
+        assert "= 'yes'" in root.xpath('//x:bind[contains(@nodeset, "case/close")]/@relevant', namespaces=X)[0]
         assert not root.xpath('//*[local-name()="reading" or local-name()="height"]')
