@@ -13,4 +13,8 @@ def test_worker_request_never_changes_a_case():
     assert root.xpath('//x:bind[@nodeset="/data/reason"]', namespaces=NS)[0].get('required') == 'true()'
     assert root.xpath('//x:bind[@nodeset="/data/batch_start_date"]', namespaces=NS)[0].get('required') is None
     assert len(root.xpath('//x:select1[@ref="/data/bed_number"]/x:item', namespaces=NS)) == 7
+    translations = root.xpath('//x:model/x:itext/x:translation[@lang="en"]', namespaces=NS)
+    assert len(translations) == 1 and translations[0].get('default') == 'true()'
+    assert len(root.xpath('//h:body//x:label[@ref]', namespaces=NS)) == len(
+        translations[0].xpath('./x:text', namespaces=NS))
     assert not root.xpath('//*[local-name()="case"]')
