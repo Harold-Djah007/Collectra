@@ -31,6 +31,7 @@ from corehq.apps.dashboard.models import (
 )
 from corehq.apps.dashboard.operational_alerts import recent_operational_alerts
 from corehq.apps.dashboard.reopen_requests import (
+    archive_closing_form_and_refresh,
     closing_form_for_reopen,
     recent_reopen_requests,
     validate_reopen_request,
@@ -174,7 +175,7 @@ def dashboard_reopen_approved(request, domain):
         if (request.POST.get('closing_form_id') != closing_form.form_id
                 or request.POST.get('acknowledge_archive') != 'yes'):
             raise ValueError('Review the closing submission and confirm the archive warning')
-        closing_form.archive(user_id=request.couch_user._id)
+        archive_closing_form_and_refresh(case, closing_form, request.couch_user._id)
         logger.info('Safisana reopening approved: request=%s case=%s closing_form=%s supervisor=%s',
                     request.POST.get('request_id'), case.case_id, closing_form.form_id,
                     request.couch_user._id)
