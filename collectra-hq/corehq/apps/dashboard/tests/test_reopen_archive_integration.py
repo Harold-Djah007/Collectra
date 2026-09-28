@@ -7,7 +7,9 @@ from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 
-from corehq.apps.dashboard.reopen_requests import closing_form_for_reopen
+from corehq.apps.dashboard.reopen_requests import (
+    archive_closing_form_and_refresh, closing_form_for_reopen,
+)
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -72,7 +74,9 @@ class ReopenArchiveIntegrationTest(TestCase):
         self.assertTrue(case.closed)
         self.assertEqual(closing_form_for_reopen(case).form_id, closing.form_id)
 
-        closing.archive(user_id='test-supervisor')
+        with patch('corehq.apps.dashboard.reopen_requests.invalidate_restore_cache') as invalidate:
+            archive_closing_form_and_refresh(case, closing, 'test-supervisor')
+        invalidate.assert_called_once_with(DOMAIN)
 
         reopened = CommCareCase.objects.get_case(case_id, DOMAIN)
         self.assertFalse(reopened.closed)
