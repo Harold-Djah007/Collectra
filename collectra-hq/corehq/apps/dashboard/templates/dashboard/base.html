@@ -20,6 +20,7 @@
 {% if show_reopen_requests %}
   {% registerurl 'dashboard_reopen_requests' domain %}
   {% registerurl 'dashboard_reopen_preview' domain %}
+  {% registerurl 'dashboard_reopen_candidates' domain %}
 {% endif %}
 
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
@@ -144,7 +145,7 @@
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow">DRYING BED / SUPERVISOR REVIEW</p>
-            <h2>Reopening requests <span class="collectra-request-count" data-bind="text: requests().length"></span></h2>
+            <h2>Reopening requests <span class="collectra-request-count" data-bind="text: pendingCount"></span></h2>
             <p>Drying-bed cases · last 30 days</p>
           </div>
           <div class="collectra-alerts-controls">
@@ -156,7 +157,7 @@
         </div>
         <details class="collectra-reopen-help">
           <summary>How reopening works</summary>
-          <p>Read the worker's reason, select Review and reopen, then check the original case and its closing form. Archiving the form removes its answers, including any readings, from active reports. Requests remain here for 30 days after reopening.</p>
+          <p>Read the worker's reason, select Review and reopen, then check the original case and its closing form. Archiving the closing form removes its answers from active reports. Handled requests remain here for 30 days.</p>
         </details>
         <p class="collectra-alerts-message" data-bind="visible: loading &amp;&amp; !loaded()">Loading requests…</p>
         <p class="collectra-alerts-message collectra-alerts-error" data-bind="visible: error">
@@ -171,6 +172,7 @@
               <strong data-bind="text: bedLabel"></strong>
               <time data-bind="text: when, attr: {datetime: received_on}"></time>
             </div>
+            <strong class="collectra-reopen-status" data-bind="text: statusLabel, css: status"></strong>
             <p class="collectra-reopen-meta" data-bind="visible: date">
               Batch start date: <span data-bind="text: date"></span>
             </p>
@@ -179,10 +181,25 @@
             </p>
             <p class="collectra-alert-note" data-bind="text: reason"></p>
             <a data-bind="attr: {href: url}">Review request submission <span aria-hidden="true">→</span></a>
-            <button type="button" class="collectra-reopen-action" data-bind="click: toggleReview, attr: {'aria-expanded': reviewOpen}">
+            <button type="button" class="collectra-reopen-action" data-bind="visible: status === 'pending', click: toggleReview, attr: {'aria-expanded': reviewOpen}">
               Review and reopen case
             </button>
             <div class="collectra-reopen-review" data-bind="visible: reviewOpen">
+              <div data-bind="visible: name">
+                <p>Closed cases named <strong data-bind="text: name"></strong>. Choose the original case, then check its history.</p>
+                <p data-bind="visible: suggestionsLoading">Looking for closed cases…</p>
+                <p data-bind="visible: suggestionsError" role="alert">Could not load suggestions. Use Case List and enter the ID below.</p>
+                <ul class="collectra-reopen-suggestions" data-bind="foreach: suggestions">
+                  <li><button type="button" data-bind="click: $parent.chooseCase">
+                    <strong data-bind="text: name"></strong>
+                    <span data-bind="text: case_id"></span>
+                    <small data-bind="text: openedLabel"></small>
+                  </button></li>
+                </ul>
+                <p data-bind="visible: suggestionsLoaded() &amp;&amp; !suggestions().length">
+                  No exact-name match. Use Case List to find the original case.
+                </p>
+              </div>
               <label>Original closed case ID
                 <input type="text" maxlength="80" autocomplete="off" data-bind="textInput: caseId" placeholder="Copy from Case List" />
               </label>
