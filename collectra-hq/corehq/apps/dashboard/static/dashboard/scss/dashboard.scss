@@ -29,50 +29,75 @@
 .collectra-hero {
   position: relative; isolation: isolate; overflow: hidden;
   display: flex; justify-content: space-between; align-items: center;
-  min-height: 238px; padding: 32px 48px;
-  border-radius: 26px;
-  background: radial-gradient(circle at 83% 45%, #167e80 0, transparent 40%), linear-gradient(118deg, #102d48, #0b4a59 85%);
-  box-shadow: 0 20px 45px rgba(9, 53, 70, .17);
-  color: #fff;
+  gap: 32px; min-height: 222px; padding: 28px 34px;
+  border: 1px solid #cee6e2; border-radius: 24px;
+  background: radial-gradient(circle at 38% 10%, #f1fcf8, transparent 47%), linear-gradient(115deg, #fff, #eef8f7);
+  box-shadow: 0 16px 38px rgba(9, 53, 70, .09);
+  color: #14384c;
 }
-.collectra-hero::after {
-  content: ""; position: absolute; z-index: -1; inset: 0;
-  background: repeating-linear-gradient(125deg, transparent, transparent 37px, rgba(255,255,255,.018) 38px, transparent 40px);
+.collectra-hero::before {
+  content: ""; position: absolute; left: 0; top: 28px; bottom: 28px;
+  width: 5px; border-radius: 0 6px 6px 0; background: linear-gradient(#28bda9, #5479d5);
 }
-.collectra-hero-content { position: relative; z-index: 2; }
+.collectra-hero-content { position: relative; z-index: 2; min-width: 0; }
 .collectra-hero-eyebrow, .collectra-section-eyebrow {
   margin: 0 0 18px; font-size: .73rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
 }
-.collectra-hero-eyebrow { color: #91e5d7; }
+.collectra-hero-eyebrow { margin-bottom: 16px; color: #087e7c; }
 .collectra-hero-eyebrow span { padding: 0 6px; opacity: .6; }
 .collectra-dashboard-header { display: flex; align-items: center; gap: 17px; }
 .collectra-dashboard-mark {
-  width: 66px; height: 66px; flex: 0 0 auto; display: grid; place-items: center;
-  border: 1px solid rgba(255,255,255,.25); border-radius: 18px; background: #fff;
-  box-shadow: 0 10px 25px rgba(0,0,0,.15);
+  width: 62px; height: 62px; flex: 0 0 auto; display: grid; place-items: center;
+  border: 1px solid #cee9e5; border-radius: 18px; background: #fff;
+  box-shadow: 0 8px 20px rgba(11, 87, 86, .1);
 }
-.collectra-dashboard-mark img { width: 45px; height: 45px; }
-.collectra-welcome { margin: 0 0 2px; color: #a6eddf; font-weight: 700; }
-.collectra-brand-title { margin: 0 0 5px; color: #fff; font-size: clamp(1.7rem, 2.8vw, 2.5rem); line-height: 1.15; font-weight: 800; }
-#hq-content .collectra-brand-title { color: #fff; }
-.collectra-tagline { margin: 0; color: #d0e8e9; }
-.collectra-quick-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 0 83px; }
+.collectra-dashboard-mark img { width: 43px; height: 43px; }
+.collectra-welcome { margin: 0 0 3px; color: #07867f; font-weight: 700; }
+.collectra-brand-title { margin: 0 0 6px; color: #14384c; font-size: clamp(1.7rem, 2.7vw, 2.45rem); line-height: 1.15; font-weight: 800; }
+#hq-content .collectra-brand-title { color: #14384c; }
+.collectra-tagline { margin: 0; color: #597487; }
+.collectra-quick-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 0 79px; }
 .collectra-quick-action {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 8px 16px;
-  border: 1px solid rgba(255,255,255,.45); border-radius: 100px;
-  color: #fff; text-decoration: none; font-weight: 700; font-size: .87rem;
-  transition: background .2s, transform .2s, border-color .2s;
+  display: inline-flex; align-items: center; gap: 8px; min-height: 39px; padding: 8px 16px;
+  border: 1px solid #bad9db; border-radius: 11px; background: #fff;
+  color: #164b5b; text-decoration: none; font-weight: 700; font-size: .87rem;
+  transition: background .2s, transform .2s, border-color .2s, box-shadow .2s;
 }
-.collectra-quick-action:hover, .collectra-quick-action:focus { transform: translateY(-2px); background: rgba(255,255,255,.14); color: #fff; }
-.collectra-quick-action-primary { border-color: #72e2c6; background: #71e1c5; color: #10394a; }
-.collectra-quick-action-primary:hover, .collectra-quick-action-primary:focus { background: #b2f2dc; color: #10394a; }
-.collectra-hero-art { position: relative; width: 232px; height: 194px; flex: 0 0 232px; margin-right: 50px; }
-.collectra-orbit { position: absolute; left: 50%; top: 50%; border: 1px solid rgba(182,245,228,.34); border-radius: 50%; transform: translate(-50%, -50%); }
-.collectra-orbit-outer { width: 216px; height: 216px; animation: collectra-breathe 6s ease-in-out infinite; }
-.collectra-orbit-inner { width: 166px; height: 166px; border-color: rgba(182,245,228,.58); animation: collectra-breathe 6s ease-in-out -2s infinite; }
-.collectra-orbit-core { position: absolute; left: 50%; top: 50%; display: grid; place-items: center; width: 106px; height: 106px; border-radius: 30px; background: #fff; box-shadow: 0 0 0 13px rgba(122,232,207,.12), 0 16px 36px rgba(0,0,0,.17); transform: translate(-50%, -50%); }
-.collectra-orbit-core img { width: 72px; height: 72px; }
-.collectra-orbit-dot { position: absolute; left: 6px; top: 55px; width: 11px; height: 11px; border-radius: 50%; background: #a9f1cc; box-shadow: 0 0 0 7px rgba(169,241,204,.16); animation: collectra-glow 2.8s ease-in-out infinite; }
+.collectra-quick-action:hover, .collectra-quick-action:focus-visible { transform: translateY(-2px); background: #f2fbf9; border-color: #77bfb6; color: #087e7c; box-shadow: 0 6px 16px rgba(9, 94, 91, .1); }
+.collectra-quick-action-primary { border-color: #087e7c; background: #087e7c; color: #fff; }
+.collectra-quick-action-primary:hover, .collectra-quick-action-primary:focus-visible { background: #075f65; color: #fff; }
+.collectra-hero-art {
+  position: relative; width: 350px; flex: 0 0 350px; padding: 22px 22px 28px;
+  overflow: hidden; border: 1px solid rgba(158, 238, 223, .28); border-radius: 20px;
+  background: linear-gradient(135deg, #104a60, #0c777a);
+  box-shadow: 0 15px 28px rgba(9, 82, 92, .16);
+}
+.collectra-hero-art::before {
+  content: ""; position: absolute; width: 210px; height: 210px; right: -85px; top: -110px;
+  border: 1px solid rgba(202, 255, 244, .2); border-radius: 50%; box-shadow: 0 0 0 32px rgba(202, 255, 244, .045), 0 0 0 66px rgba(202, 255, 244, .035);
+}
+.collectra-hero-flow-heading { position: relative; margin: 0 0 20px; color: #b0ece1; font-size: .68rem; font-weight: 800; letter-spacing: .15em; }
+.collectra-hero-flow { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 8px; }
+.collectra-hero-step {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  width: 88px; min-height: 84px; border: 1px solid rgba(214, 255, 245, .25); border-radius: 15px;
+  background: rgba(255, 255, 255, .12); color: #fff; font-size: .76rem;
+  backdrop-filter: blur(6px); animation: collectra-flow-step 5s ease-in-out infinite;
+}
+.collectra-hero-step:nth-child(2) { animation-delay: -3.3s; }
+.collectra-hero-step:nth-child(3) { animation-delay: -1.65s; }
+.collectra-hero-step i { color: #a7f4d8; font-size: 1.3rem; }
+.collectra-hero-flow-track {
+  position: absolute; left: 42px; right: 42px; bottom: 14px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(178, 243, 219, .6), transparent);
+}
+.collectra-hero-flow-track::after {
+  content: ""; position: absolute; top: -3px; left: 0; width: 8px; height: 8px;
+  border-radius: 50%; background: #adf4d5; box-shadow: 0 0 14px #adf4d5;
+  animation: collectra-flow-progress 5s linear infinite;
+}
+@keyframes collectra-flow-step { 50% { background: rgba(255, 255, 255, .22); border-color: rgba(214, 255, 245, .55); } }
+@keyframes collectra-flow-progress { from { left: 0; } to { left: calc(100% - 8px); } }
 .collectra-alerts {
   margin: 24px 0 32px; padding: 24px 28px 26px; border: 1px solid #dce9ec;
   border-radius: 20px; background: #fff; box-shadow: 0 10px 30px rgba(18,54,70,.055);
@@ -228,7 +253,6 @@
 @keyframes collectra-background-flow { to { background-position: 100% 80%; } }
 @keyframes collectra-background-drift { to { transform: translate(11vw, -60px) scale(1.22); } }
 @keyframes collectra-card-float { 50% { transform: translateY(-10px) rotate(-5deg); } }
-@keyframes collectra-breathe { 50% { transform: translate(-50%, -50%) scale(1.08); opacity: .45; } }
 @keyframes collectra-glow { 50% { box-shadow: 0 0 0 9px rgba(169,241,204,.05); opacity: .7; } }
 @keyframes collectra-appear { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes collectra-flow-travel { to { stroke-dashoffset: -280; } }
@@ -242,7 +266,7 @@
 @media (max-width: 1000px) { .collectra-status-grid { grid-template-columns: 1fr; } }
 @media (max-width: 991px) { .collectra-dashboard-page { padding: 24px 18px 48px; } .collectra-hero-art { margin-right: 0; } }
 @media (max-width: 767px) { .collectra-status-grid .collectra-summary-icon { display: none; } }
-@media (max-width: 767px) { .collectra-hero { padding: 29px 26px; } .collectra-hero-art { width: 120px; flex-basis: 120px; opacity: .45; } .collectra-alerts-summary { grid-template-columns: repeat(3, minmax(0,1fr)); } .collectra-summary-item { padding: 12px; gap: 7px; } .collectra-summary-icon { display: none; } }
+@media (max-width: 767px) { .collectra-hero { padding: 29px 26px; } .collectra-hero-art { display: none; } .collectra-alerts-summary { grid-template-columns: repeat(3, minmax(0,1fr)); } .collectra-summary-item { padding: 12px; gap: 7px; } .collectra-summary-icon { display: none; } }
 @media (max-width: 575px) { .collectra-dashboard-page { padding: 15px 12px 36px; } .collectra-dashboard-grid { grid-template-columns: 1fr; } .collectra-hero { padding: 25px 20px; min-height: 0; } .collectra-hero-art { display: none; } .collectra-dashboard-mark { width: 50px; height: 50px; border-radius: 12px; } .collectra-dashboard-mark img { width: 34px; height: 34px; } .collectra-brand-title { font-size: 1.52rem; } .collectra-quick-actions { margin-left: 0; } .collectra-alerts { padding: 20px 16px; } .collectra-alerts-header { flex-direction: column; } .collectra-alerts-controls { justify-content: flex-start; } .collectra-alerts-summary { gap: 6px; } .collectra-summary-item { min-height: 68px; } .collectra-summary-item strong { font-size: 1.2rem; } .collectra-summary-item small { font-size: .68rem; } .collectra-section-heading > span { display: none; } }
 @media (max-width: 575px) { .collectra-status-grid .collectra-alerts { padding: 16px; } .collectra-status-grid .collectra-alerts-summary { gap: 5px; } .collectra-status-grid .collectra-summary-item { padding: 8px 5px; } .collectra-status-grid .collectra-alerts-header { gap: 6px; } }
 .collectra-dashboard-page { background-size: 300% 300%; animation-duration: 11s; }
