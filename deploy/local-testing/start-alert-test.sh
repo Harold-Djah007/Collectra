@@ -19,6 +19,12 @@ if ! curl -fsS --max-time 3 http://127.0.0.1:9200/ >/dev/null 2>&1; then
     echo 'Wait for curl -fsS http://127.0.0.1:9200/ to succeed, then retry.' >&2
     exit 1
 fi
+if ! (exec 6<>/dev/tcp/127.0.0.1/9092) 2>/dev/null; then
+    echo 'Collectra Kafka is not responding on port 9092.' >&2
+    echo 'From the main collectra-hq checkout run: ./scripts/docker up -d zookeeper kafka' >&2
+    echo 'Wait for the Kafka container to become healthy, then retry.' >&2
+    exit 1
+fi
 if ss -ltn | awk '{print $4}' | grep -Eq '(^|:)8011$'; then
     echo 'Port 8011 is occupied. Stop the earlier test runserver first.' >&2
     exit 1
