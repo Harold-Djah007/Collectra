@@ -6,7 +6,7 @@ import pytest
 
 from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests import APP_ID, REQUEST_XMLNS
 from corehq.apps.dashboard.reopen_requests import (
-    archive_closing_form_and_refresh, closing_form_for_reopen,
+    archive_closing_form_and_refresh, closed_case_suggestions, closing_form_for_reopen,
     request_from_form, validate_reopen_request,
 )
 from corehq.form_processor.models import XFormInstance
@@ -31,6 +31,12 @@ def test_worker_request_prepares_safe_supervisor_review():
 def test_invalid_or_empty_request_cannot_enter_supervisor_queue():
     assert request_from_form(form({'bed_number': '99', 'reason': 'Closed accidentally'})) is None
     assert request_from_form(form({'bed_number': 'dry_bed_1', 'reason': ''})) is None
+
+
+def test_archived_worker_request_remains_visible_as_handled():
+    request = form({'bed_number': 'dry_bed_1', 'reason': 'Closed early'})
+    request.state = XFormInstance.ARCHIVED
+    assert request_from_form(request)['status'] == 'handled'
 
 
 def test_only_active_app_requests_are_eligible_for_approval():
@@ -76,3 +82,32 @@ def test_failed_archive_does_not_clear_restore_cache():
             archive_closing_form_and_refresh(case, closing_form, 'supervisor')
     closing_form.archive.assert_called_once_with(user_id='supervisor')
     invalidate.assert_not_called()
+
+
+def test_closed_case_lookup_requires_valid_request_and_exact_name():
+    request = form({'bed_number': 'dry_bed_1', 'reason': 'Closed by mistake',
+                    'existing_batch_name': '2026'})
+    request.domain = 'safisana'
+    request.app_id = APP_ID
+    request.xmlns = REQUEST_XMLNS
+    request.state = XFormInstance.NORMAL
+    with patch('corehq.apps.dashboard.reopen_requests.get_db_aliases_for_partitioned_query',
+               return_value=['shard']), patch(
+                   'corehq.apps.dashboard.reopen_requests.CommCareCase.objects.using'
+               ) as using:
+        using.return_value.filter.return_value.order_by.return_value.__getitem__.return_value = [
+            SimpleNamespace(case_id='original', name='2026', opened_on=None,
+                            closed_on=datetime(2026, 9, 28, tzinfo=UTC)),
+        ]
+        assert closed_case_suggestions('safisana', request)[0]['case_id'] == 'original'
+        using.return_value.filter.assert_called_once_with(
+            domain='safisana', type='dryingbed', closed=True, deleted=False,
+            closed_on__isnull=False, name__iexact='2026',
+        )
+    request.form_data['existing_batch_name'] = ''
+    with patch('corehq.apps.dashboard.reopen_requests.get_db_aliases_for_partitioned_query') as shards:
+        assert closed_case_suggestions('safisana', request) == []
+        shards.assert_not_called()
+    request.state = XFormInstance.ARCHIVED
+    with pytest.raises(ValueError, match='active Safisana'):
+        closed_case_suggestions('safisana', request)
