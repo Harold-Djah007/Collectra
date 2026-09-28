@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
+from django.core.management.base import CommandError
 
 from corehq.apps.app_manager.management.commands.reconcile_safisana_reopen_request import (
     Command, verify_previous_reopening,
@@ -64,3 +65,13 @@ def test_reconciliation_previews_before_archiving_request():
         Command().handle(**options, apply=True)
         request.archive.assert_called_once_with(user_id='supervisor')
         clear.assert_called_once_with('collectra:reopen-requests:safisana:v1')
+
+
+def test_placeholder_ids_fail_before_any_database_lookup():
+    with patch('corehq.apps.app_manager.management.commands.reconcile_safisana_reopen_request.'
+               'XFormInstance.objects.get_form') as get_form:
+        with pytest.raises(CommandError, match='Replace the PASTE_ placeholders'):
+            Command().handle(request_id='PASTE_REQUEST_ID', case_id='original',
+                             closing_form_id='close', supervisor_id='PASTE_SUPERVISOR_ID',
+                             apply=False)
+        get_form.assert_not_called()
