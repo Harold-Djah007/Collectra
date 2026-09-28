@@ -119,6 +119,8 @@
 .collectra-alert a { color: #087e79; font-weight: 700; }
 .collectra-reopen-requests { border-color: #d6e5e2; }
 .collectra-reopen-meta { margin: 9px 0 0; color: #5a7181; font-size: .82rem; }
+.collectra-reopen-status { display: inline-block; margin-top: 7px; padding: 3px 8px; border-radius: 12px; background: #fff0d6; color: #785007; font-size: .7rem; }
+.collectra-reopen-status.handled { background: #dff4e8; color: #176145; }
 .collectra-reopen-cases-link { display: inline-block; margin-top: 9px; color: #087e79; font-weight: 700; }
 .collectra-reopen-action, .collectra-reopen-confirm { display: block; margin-top: 12px; padding: 9px 14px; border: 0; border-radius: 8px; background: #087e79; color: #fff; font-weight: 700; }
 .collectra-reopen-action:hover, .collectra-reopen-confirm:hover { background: #075d5a; }
@@ -126,6 +128,10 @@
 .collectra-reopen-review label { display: block; margin-bottom: 10px; font-weight: 600; }
 .collectra-reopen-review input[type="text"] { display: block; width: min(100%, 420px); margin-top: 5px; padding: 8px; border: 1px solid #bacfd1; border-radius: 7px; }
 .collectra-reopen-review input[type="checkbox"] { margin-right: 6px; }
+.collectra-reopen-suggestions { list-style: none; padding: 0; margin: 8px 0 12px; display: grid; gap: 6px; }
+.collectra-reopen-suggestions button { width: 100%; text-align: left; border: 1px solid #c3d9d7; border-radius: 8px; padding: 8px 10px; background: #fff; color: #183d50; }
+.collectra-reopen-suggestions button:hover, .collectra-reopen-suggestions button:focus-visible { border-color: #087e79; background: #eaf6f4; }
+.collectra-reopen-suggestions span, .collectra-reopen-suggestions small { display: block; overflow-wrap: anywhere; }
 .collectra-reopen-review [role="alert"] { color: #a33731; }
 .collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; gap: 16px; margin: 20px 0 26px; }
 .collectra-status-grid .collectra-alerts { min-width: 0; margin: 0; padding: 18px 20px; border-radius: 16px; }
