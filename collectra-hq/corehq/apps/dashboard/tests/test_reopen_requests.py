@@ -1,11 +1,13 @@
 from datetime import UTC, datetime
 from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import pytest
 
 from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests import APP_ID, REQUEST_XMLNS
 from corehq.apps.dashboard.reopen_requests import (
-    closing_form_for_reopen, request_from_form, validate_reopen_request,
+    archive_closing_form_and_refresh, closing_form_for_reopen,
+    request_from_form, validate_reopen_request,
 )
 from corehq.form_processor.models import XFormInstance
 
@@ -63,3 +65,14 @@ def test_reopen_shortcut_only_accepts_one_case_in_closing_submission():
     case.closed = False
     with pytest.raises(ValueError):
         closing_form_for_reopen(case)
+
+
+def test_failed_archive_does_not_clear_restore_cache():
+    case = SimpleNamespace(domain='safisana')
+    closing_form = Mock()
+    closing_form.archive.side_effect = RuntimeError('archive failed')
+    with patch('corehq.apps.dashboard.reopen_requests.invalidate_restore_cache') as invalidate:
+        with pytest.raises(RuntimeError, match='archive failed'):
+            archive_closing_form_and_refresh(case, closing_form, 'supervisor')
+    closing_form.archive.assert_called_once_with(user_id='supervisor')
+    invalidate.assert_not_called()
