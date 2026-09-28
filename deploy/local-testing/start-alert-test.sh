@@ -13,6 +13,12 @@ if [[ ! -d "$blob_root/blobdb" ]]; then
     echo "Existing form blobs not found at $blob_root/blobdb" >&2
     exit 1
 fi
+if ! curl -fsS --max-time 3 http://127.0.0.1:9200/ >/dev/null 2>&1; then
+    echo 'Collectra Elasticsearch is not responding on port 9200.' >&2
+    echo 'From the main collectra-hq checkout run: ./scripts/docker up -d elasticsearch6' >&2
+    echo 'Wait for curl -fsS http://127.0.0.1:9200/ to succeed, then retry.' >&2
+    exit 1
+fi
 if ss -ltn | awk '{print $4}' | grep -Eq '(^|:)8011$'; then
     echo 'Port 8011 is occupied. Stop the earlier test runserver first.' >&2
     exit 1
