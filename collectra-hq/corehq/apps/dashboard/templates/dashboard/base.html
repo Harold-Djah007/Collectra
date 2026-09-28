@@ -66,10 +66,22 @@
         {% endif %}
       </div>
       <div class="collectra-hero-art" aria-hidden="true">
-        <span class="collectra-orbit collectra-orbit-outer"></span>
-        <span class="collectra-orbit collectra-orbit-inner"></span>
-        <span class="collectra-orbit-core"><img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" /></span>
-        <span class="collectra-orbit-dot"></span>
+        <p class="collectra-hero-flow-heading">{% trans "ONE CONNECTED WORKFLOW" %}</p>
+        <div class="collectra-hero-flow">
+          <span class="collectra-hero-step">
+            <i class="fa fa-pencil" aria-hidden="true"></i>
+            <strong>{% trans "Build" %}</strong>
+          </span>
+          <span class="collectra-hero-step">
+            <i class="fa fa-mobile" aria-hidden="true"></i>
+            <strong>{% trans "Collect" %}</strong>
+          </span>
+          <span class="collectra-hero-step">
+            <i class="fa fa-line-chart" aria-hidden="true"></i>
+            <strong>{% trans "Act" %}</strong>
+          </span>
+        </div>
+        <span class="collectra-hero-flow-track"></span>
       </div>
     </div>
 
