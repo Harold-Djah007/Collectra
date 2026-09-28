@@ -94,7 +94,7 @@
 .navbar-hq-main-menu {
   .mainmenu-tabs > .dropdown > .dropdown-menu,
   .nav-settings-bar .dropdown-menu {
-    min-width: min(18rem, calc(100vw - 1.5rem));
+    max-width: calc(100vw - 1.5rem);
     margin-top: .45rem;
     padding: .5rem;
     border: 1px solid #d7e6e9;
@@ -111,9 +111,8 @@
 
   .mainmenu-tabs > .dropdown > .dropdown-menu:not(:has(.dropdown-submenu)),
   .nav-settings-bar .dropdown-menu {
-    width: min(18rem, calc(100vw - 1.5rem));
-    max-height: calc(100vh - 5.5rem);
-    max-height: min(32rem, calc(100dvh - 5.5rem));
+    width: 18rem;
+    max-height: 32rem;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-color: #9acdc9 transparent;
@@ -150,6 +149,15 @@
     background: #fff;
     color: #087f80;
     letter-spacing: .08em;
+  }
+}
+
+@media (max-height: 40rem) {
+  .navbar-hq-main-menu {
+    .mainmenu-tabs > .dropdown > .dropdown-menu:not(:has(.dropdown-submenu)),
+    .nav-settings-bar .dropdown-menu {
+      max-height: calc(100vh - 5.5rem);
+    }
   }
 }
 
