@@ -6,6 +6,8 @@ from django.db.models import Q
 from django.utils import timezone
 from lxml import etree
 
+from casexml.apps.phone.restore_caching import invalidate_restore_cache
+
 from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests import (
     APP_ID, REQUEST_XMLNS,
 )
@@ -64,6 +66,13 @@ def closing_form_for_reopen(case):
     if checked.xpath('//*[local-name()="create" and namespace-uri()=$ns]', ns=CASE_XMLNS):
         raise ValueError('The closing form also created a case; review it manually in Case List')
     return form
+
+
+def archive_closing_form_and_refresh(case, closing_form, supervisor_id):
+    closing_form.archive(user_id=supervisor_id)
+    # A worker's next sync must receive the reopened case, even if their
+    # previous restore was cached while the case was closed.
+    invalidate_restore_cache(case.domain)
 
 
 def recent_reopen_requests(domain):
