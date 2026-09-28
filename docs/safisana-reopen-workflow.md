@@ -10,7 +10,7 @@ Run the staging command without `--apply` to inspect the XML first. `--apply` ad
 
 Optional local inspection: `inspect_safisana_reopen_case CASE_ID --output-dir PRIVATE_DIRECTORY` writes the closing submission and a review-only copy with its close action removed. Its XML outputs can contain submitted data; keep them private. It does not edit the form or reopen the case, and it needs only the Collectra HQ environment, not access to Azure.
 
-The button uses the established HQ archive operation and checks that the chosen form closes exactly one case and does not also create a case. It refuses an ambiguous closing history or a case that is no longer closed. It deliberately does not promise to keep readings on an archived closing form in active exports. Cases with ambiguous names require the supervisor to verify the original case ID before approval.
+The button uses the established HQ archive operation and checks that the chosen form closes exactly one case and does not also create a case. It refuses an ambiguous closing history or a case that is no longer closed. It deliberately does not promise to keep readings on an archived closing form in active exports. HQ suggests closed cases only when their names exactly match the worker's optional batch name; the supervisor must still check the original case and closing submission. After successful approval, HQ archives the request-only form as its handled marker. If that second archive fails, HQ warns that the case reopened but the request remains pending. Earlier pilot requests are not automatically backfilled.
 
 ## Pilot a separate close action
 
