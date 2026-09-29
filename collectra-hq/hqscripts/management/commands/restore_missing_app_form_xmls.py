@@ -62,7 +62,10 @@ class Command(BaseCommand):
             filename = f"{form_id}.xml"
 
             try:
-                app.lazy_fetch_attachment(filename)
+                # Bypass LazyBlobDoc's cached ResourceNotFound (and cached content).
+                # A stale negative could otherwise replace a newly restored blob
+                # with older XML from the recovery export on --apply.
+                app.fetch_attachment(filename)
             except ResourceNotFound:
                 missing.append((form_id, form.default_name()))
             else:
@@ -115,7 +118,7 @@ class Command(BaseCommand):
         verify_app = get_app(domain, app_id)
         for form_id, name, expected_len in restored:
             filename = f"{form_id}.xml"
-            data = verify_app.lazy_fetch_attachment(filename)
+            data = verify_app.fetch_attachment(filename)
             if isinstance(data, str):
                 data = data.encode("utf-8")
             if len(data) != expected_len:
