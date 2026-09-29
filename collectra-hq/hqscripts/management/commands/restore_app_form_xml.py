@@ -50,7 +50,9 @@ class Command(BaseCommand):
             raise CommandError(f"Recovery XML is not well-formed: {exc}") from exc
 
         try:
-            current = app.lazy_fetch_attachment(filename)
+            # Inspect the actual blob; the lazy cache can retain a missing-file
+            # result even after the original file has been restored.
+            current = app.fetch_attachment(filename)
         except ResourceNotFound:
             current = None
 
@@ -72,7 +74,7 @@ class Command(BaseCommand):
         )
         app.save(increment_version=False)
 
-        verify = get_app(domain, app_id).lazy_fetch_attachment(filename)
+        verify = get_app(domain, app_id).fetch_attachment(filename)
         if isinstance(verify, str):
             verify = verify.encode("utf-8")
 
