@@ -2,7 +2,7 @@ import logging
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.http.response import Http404, HttpResponseForbidden
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -34,7 +34,7 @@ from corehq.apps.dashboard.reopen_requests import (
     archive_closing_form_and_refresh,
     closed_case_suggestions,
     closing_form_for_reopen,
-    recent_reopen_requests,
+    reopen_requests_page,
     validate_reopen_request,
 )
 from corehq.apps.domain.decorators import (
@@ -116,15 +116,16 @@ def dashboard_reopen_requests(request, domain):
             or not has_privilege(request, privileges.PROJECT_ACCESS)
             or not request.can_access_all_locations):
         return HttpResponseForbidden()
-    cache_key = f'collectra:reopen-requests:{domain}:v1'
-    requests = cache.get(cache_key)
-    if requests is None:
-        requests = recent_reopen_requests(domain)
-        cache.set(cache_key, requests, 60)
+    try:
+        requests, next_cursor = reopen_requests_page(
+            domain, request.GET.get('view', 'pending'), request.GET.get('cursor') or None,
+        )
+    except ValueError:
+        return HttpResponseBadRequest('Invalid reopening request history page')
     return json_response({'requests': [
         dict(item, url=reverse('render_form_data', args=[domain, item['form_id']]))
         for item in requests
-    ]})
+    ], 'next_cursor': next_cursor})
 
 
 def _can_reopen_from_dashboard(request, domain):
