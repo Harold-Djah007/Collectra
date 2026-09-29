@@ -51,15 +51,15 @@ class Command(BaseCommand):
         restored = []
         unavailable = []
 
-        for item in forms:
-            form_id = item.get("form_id")
-            xml = item.get("xml")
-            if not form_id or form_id not in current_forms:
-                continue
-
+        recovery_by_id = {
+            item.get("form_id"): item for item in forms if item.get("form_id")
+        }
+        # Audit every form in the current app, including forms added after
+        # the recovery export was made.
+        for form_id, form in current_forms.items():
+            xml = recovery_by_id.get(form_id, {}).get("xml")
             checked += 1
             filename = f"{form_id}.xml"
-            form = current_forms[form_id]
 
             try:
                 app.lazy_fetch_attachment(filename)
