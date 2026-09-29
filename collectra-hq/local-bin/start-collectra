@@ -86,7 +86,7 @@ echo "Published mobile address: ${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE
 echo "Formplayer callback: ${COMMCARE_HOST}"
 echo "Starting Collectra services..."
 
-./scripts/docker up -d \
+bash ./scripts/docker up -d \
     postgres couch redis elasticsearch6 \
     zookeeper kafka minio
 
@@ -98,7 +98,7 @@ else
         echo "Stop the process/container using port 8080, then start Collectra again." >&2
         exit 1
     fi
-    ./scripts/docker up -d --force-recreate formplayer
+    bash ./scripts/docker up -d --force-recreate formplayer
 fi
 
 echo "Waiting for PostgreSQL..."
