@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-project_root="${COLLECTRA_PROJECT_ROOT:-$HOME/projects/Collectra-Cursor/collectra-hq}"
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+default_project_root=$(cd -- "$script_dir/.." && pwd)
+project_root="${COLLECTRA_PROJECT_ROOT:-$default_project_root}"
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}/collectra"
 bind_host="${COLLECTRA_BIND_HOST:-0.0.0.0}"
 bind_port="${COLLECTRA_BIND_PORT:-8000}"
