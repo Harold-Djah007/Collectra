@@ -11,7 +11,7 @@
 
 1. **Show the problem (1 minute).** A field worker may close a drying-bed batch prematurely. The original history matters, so recreating a case is not the preferred correction.
 2. **Show mobile (2 minutes).** In the test app, open Drying Bed monitoring and search `2026`. Point out that the original case returned after Sync, keeping its identity.
-3. **Show HQ (3 minutes).** Open the dashboard reopening requests. A worker submits a reason; HQ displays pending and handled items. For a new request with an exact batch name, HQ suggests closed cases. The supervisor must inspect the original case and closing submission before approving. Do not archive a real case during the presentation.
+3. **Show HQ (3 minutes).** Open the dashboard reopening requests. The Needs review view shows active requests; History holds handled requests, including older pages. A worker submits a reason, and HQ suggests closed cases when the batch name matches exactly. The supervisor must inspect the original case and closing submission before approving. Do not archive a real case during the presentation.
 4. **Show data safety (2 minutes).** Explain that only the dedicated close form is archived for this pilot. Monitoring submissions stay active. Display the compatibility report, especially existing paths, formulas and XML namespaces; investigate every difference before any wide release.
 5. **Show delivery gates (2 minutes).** A physical Android APK and stable HTTPS HQ address are still needed for offline and real-device acceptance. Show the mobile validation workflow, the signed release workflow, and `deploy/production/FIELD_ACCEPTANCE.md`.
 
