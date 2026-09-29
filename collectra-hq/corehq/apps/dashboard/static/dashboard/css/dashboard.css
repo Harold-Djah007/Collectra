@@ -141,6 +141,13 @@
 .collectra-reopen-status { display: inline-block; margin-top: 7px; padding: 3px 8px; border-radius: 12px; background: #fff0d6; color: #785007; font-size: .7rem; }
 .collectra-reopen-status.handled { background: #dff4e8; color: #176145; }
 .collectra-reopen-cases-link { display: inline-block; margin-top: 9px; color: #087e79; font-weight: 700; }
+.collectra-reopen-tabs { display: flex; gap: 5px; margin: 14px 0 4px; padding: 4px; border: 1px solid #dce9e6; border-radius: 10px; background: #f4f9f8; }
+.collectra-reopen-tabs button { flex: 1; min-height: 34px; padding: 6px 10px; border: 0; border-radius: 7px; background: transparent; color: #4c6a74; font-size: .79rem; font-weight: 700; }
+.collectra-reopen-tabs button.is-active { background: #fff; color: #087e79; box-shadow: 0 2px 8px rgba(18,54,70,.09); }
+.collectra-reopen-tabs button:hover { color: #075d5a; }
+.collectra-reopen-tabs button:focus-visible, .collectra-reopen-more:focus-visible { outline: 2px solid #087e79; outline-offset: 2px; }
+.collectra-reopen-more { margin-top: 14px; padding: 8px 12px; border: 1px solid #a9d2ca; border-radius: 8px; background: #f4faf8; color: #087e79; font-size: .8rem; font-weight: 700; }
+.collectra-reopen-more:disabled { opacity: .6; cursor: wait; }
 .collectra-reopen-action, .collectra-reopen-confirm { display: block; margin-top: 12px; padding: 9px 14px; border: 0; border-radius: 8px; background: #087e79; color: #fff; font-weight: 700; }
 .collectra-reopen-action:hover, .collectra-reopen-confirm:hover { background: #075d5a; }
 .collectra-reopen-review { margin-top: 13px; padding: 16px; border: 1px solid #d6e5e2; border-radius: 10px; background: #f5faf9; }
