@@ -157,8 +157,8 @@
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow">DRYING BED / SUPERVISOR REVIEW</p>
-            <h2>Reopening requests <span class="collectra-request-count" data-bind="text: pendingCount"></span></h2>
-            <p>Drying-bed cases · last 30 days</p>
+            <h2>Reopening requests <span class="collectra-request-count" data-bind="text: pendingCountLabel"></span></h2>
+            <p>Drying-bed cases awaiting review, with handled requests in History</p>
           </div>
           <div class="collectra-alerts-controls">
             <a class="collectra-reopen-cases-link" href="{% url 'project_report_dispatcher' domain 'case_list' %}">
@@ -167,18 +167,29 @@
             <button type="button" class="collectra-refresh" data-bind="click: refresh, disable: loading">Refresh</button>
           </div>
         </div>
+        <div class="collectra-reopen-tabs" aria-label="Reopening request views">
+          <button type="button" data-bind="click: showPending, css: {'is-active': activeView() === 'pending'}, attr: {'aria-pressed': activeView() === 'pending'}">
+            Needs review <span data-bind="text: pendingCountLabel"></span>
+          </button>
+          <button type="button" data-bind="click: showHistory, css: {'is-active': activeView() === 'history'}, attr: {'aria-pressed': activeView() === 'history'}">
+            History
+          </button>
+        </div>
         <details class="collectra-reopen-help">
           <summary>How reopening works</summary>
-          <p>Read the worker's reason, select Review and reopen, then check the original case and its closing form. Archiving the closing form removes its answers from active reports. Handled requests remain here for 30 days.</p>
+          <p>Read the worker's reason, select Review and reopen, then check the original case and its closing form. Archiving the closing form removes its answers from active reports. Handled requests move to History, where you can load older records.</p>
         </details>
         <p class="collectra-alerts-message" data-bind="visible: loading &amp;&amp; !loaded()">Loading requests…</p>
         <p class="collectra-alerts-message collectra-alerts-error" data-bind="visible: error">
           Requests could not be loaded. Select Refresh to retry.
         </p>
-        <p class="collectra-alerts-empty" data-bind="visible: loaded &amp;&amp; !error() &amp;&amp; !requests().length">
-          No reopening requests received in the last 30 days.
+        <p class="collectra-alerts-empty" data-bind="visible: loaded &amp;&amp; !loading() &amp;&amp; !error() &amp;&amp; activeView() === 'pending' &amp;&amp; !pendingRequests().length">
+          No requests need review. Handled requests are in History.
         </p>
-        <div class="collectra-alerts-list" data-bind="foreach: requests, visible: !error()">
+        <p class="collectra-alerts-empty" data-bind="visible: historyLoaded &amp;&amp; !loading() &amp;&amp; !error() &amp;&amp; activeView() === 'history' &amp;&amp; !historyRequests().length">
+          No handled reopening requests yet.
+        </p>
+        <div class="collectra-alerts-list" data-bind="foreach: visibleRequests, visible: !error()">
           <article class="collectra-alert">
             <div class="collectra-alert-summary">
               <strong data-bind="text: bedLabel"></strong>
@@ -236,6 +247,12 @@
             </div>
           </article>
         </div>
+        <button type="button" class="collectra-reopen-more" data-bind="visible: activeView() === 'history' &amp;&amp; historyNextCursor(), click: loadOlderHistory, disable: loading">
+          Load older history
+        </button>
+        <button type="button" class="collectra-reopen-more" data-bind="visible: activeView() === 'pending' &amp;&amp; pendingNextCursor(), click: loadOlderPending, disable: loading">
+          Load more requests
+        </button>
       </section>
     {% endif %}
     {% if show_operational_alerts or show_reopen_requests %}
