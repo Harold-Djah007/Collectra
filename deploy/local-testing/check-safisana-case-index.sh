@@ -33,23 +33,27 @@ check_container hqservice-postgres-1
 check_container hqservice-kafka-1
 check_container hqservice-elasticsearch6-1
 
+case_worker_pid=""
+
 if [[ -f "$state_root/pillowtop.pid" ]]; then
-    pillowtop_pid="$(<"$state_root/pillowtop.pid")"
-    if [[ "$pillowtop_pid" =~ ^[0-9]+$ ]] &&
-            kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
-        command_line="$(ps -p "$pillowtop_pid" -o args= 2>/dev/null || true)"
+    candidate_pid="$(<"$state_root/pillowtop.pid")"
+    if [[ "$candidate_pid" =~ ^[0-9]+$ ]] &&
+            kill -0 "$candidate_pid" >/dev/null 2>&1; then
+        command_line="$(ps -p "$candidate_pid" -o args= 2>/dev/null || true)"
         if [[ "$command_line" == *"run_ptop"* && "$command_line" == *"CaseToElasticsearchPillow"* ]]; then
-            echo "OK: managed CaseToElasticsearchPillow is running (PID $pillowtop_pid)"
-        else
-            echo "FAIL: managed PID is alive but it is not CaseToElasticsearchPillow" >&2
-            fail=1
+            case_worker_pid="$candidate_pid"
         fi
-    else
-        echo "FAIL: CaseToElasticsearchPillow PID file exists but the worker is not running" >&2
-        fail=1
     fi
+fi
+
+if [[ -z "$case_worker_pid" ]]; then
+    case_worker_pid="$(pgrep -f 'manage.py run_ptop .*--pillow-name[ =]CaseToElasticsearchPillow' | head -n 1 || true)"
+fi
+
+if [[ -n "$case_worker_pid" ]]; then
+    echo "OK: CaseToElasticsearchPillow is running (PID $case_worker_pid)"
 else
-    echo "FAIL: managed CaseToElasticsearchPillow PID file is missing" >&2
+    echo "FAIL: CaseToElasticsearchPillow is not running" >&2
     fail=1
 fi
 
