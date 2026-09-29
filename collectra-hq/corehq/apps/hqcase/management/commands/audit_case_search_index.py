@@ -3,7 +3,6 @@ from django.core.management import BaseCommand, CommandError
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.es.cases import CaseES, case_adapter
-from corehq.apps.es.client import manager
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, iter_all_ids
 from corehq.form_processor.models import CommCareCase
 
@@ -57,7 +56,7 @@ class Command(BaseCommand):
                 if hit is None:
                     missing.append(case_id)
                     if repair:
-                        case_adapter.index(case)
+                        case_adapter.index(case, refresh=True)
                         repaired += 1
                     continue
 
@@ -65,7 +64,7 @@ class Command(BaseCommand):
                 if indexed_closed is not None and bool(indexed_closed) != bool(case.closed):
                     stale.append(case_id)
                     if repair:
-                        case_adapter.index(case)
+                        case_adapter.index(case, refresh=True)
                         repaired += 1
 
         if repair and repaired:
