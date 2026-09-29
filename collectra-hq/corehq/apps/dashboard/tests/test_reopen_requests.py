@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -7,7 +7,7 @@ import pytest
 from corehq.apps.app_manager.management.commands.stage_safisana_reopen_requests import APP_ID, REQUEST_XMLNS
 from corehq.apps.dashboard.reopen_requests import (
     archive_closing_form_and_refresh, closed_case_suggestions, closing_form_for_reopen,
-    request_from_form, validate_reopen_request,
+    reopen_requests_page, request_from_form, validate_reopen_request,
 )
 from corehq.form_processor.models import XFormInstance
 
@@ -37,6 +37,47 @@ def test_archived_worker_request_remains_visible_as_handled():
     request = form({'bed_number': 'dry_bed_1', 'reason': 'Closed early'})
     request.state = XFormInstance.ARCHIVED
     assert request_from_form(request)['status'] == 'handled'
+
+
+def test_handled_history_pages_include_requests_older_than_thirty_days():
+    forms = [SimpleNamespace(
+        form_id=f'request-{number:03}',
+        form_data={'bed_number': 'dry_bed_1', 'reason': 'Closed too soon'},
+        received_on=datetime(2026, 7, 1, tzinfo=UTC) - timedelta(days=number),
+        state=XFormInstance.ARCHIVED,
+    ) for number in range(32)]
+    with patch('corehq.apps.dashboard.reopen_requests.get_db_aliases_for_partitioned_query',
+               return_value=['shard']), patch(
+                   'corehq.apps.dashboard.reopen_requests.XFormInstance.objects.using'
+               ) as using:
+        query = using.return_value.filter.return_value.order_by.return_value
+        query.__getitem__.side_effect = [forms[:31], forms[30:]]
+        first, cursor = reopen_requests_page('safisana', 'history')
+        second, next_cursor = reopen_requests_page('safisana', 'history', cursor)
+        assert len(first) == 30
+        assert first[0]['status'] == 'handled'
+        assert [item['form_id'] for item in second] == ['request-030', 'request-031']
+        assert next_cursor is None
+        assert cursor.endswith('|request-029')
+        assert ('state', XFormInstance.ARCHIVED) in using.return_value.filter.call_args_list[0].args[0].children
+
+
+def test_pending_queue_is_separate_and_history_cursor_is_validated():
+    pending = form({'bed_number': 'dry_bed_2', 'reason': 'Closed accidentally'})
+    pending.state = XFormInstance.NORMAL
+    with patch('corehq.apps.dashboard.reopen_requests.get_db_aliases_for_partitioned_query',
+               return_value=['shard']), patch(
+                   'corehq.apps.dashboard.reopen_requests.XFormInstance.objects.using'
+               ) as using:
+        using.return_value.filter.return_value.order_by.return_value.__getitem__.return_value = [pending]
+        requests, cursor = reopen_requests_page('safisana', 'pending')
+        assert [item['status'] for item in requests] == ['pending']
+        assert cursor is None
+        assert ('state', XFormInstance.NORMAL) in using.return_value.filter.call_args.args[0].children
+    with pytest.raises(ValueError, match='Invalid request cursor'):
+        reopen_requests_page('safisana', 'history', 'invalid')
+    with pytest.raises(ValueError, match='Invalid reopening request view'):
+        reopen_requests_page('safisana', 'unknown')
 
 
 def test_only_active_app_requests_are_eligible_for_approval():
