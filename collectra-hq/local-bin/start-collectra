@@ -6,6 +6,8 @@ state_root="${XDG_STATE_HOME:-$HOME/.local/state}/collectra"
 bind_host="${COLLECTRA_BIND_HOST:-0.0.0.0}"
 bind_port="${COLLECTRA_BIND_PORT:-8000}"
 web_workers="${COLLECTRA_WEB_WORKERS:-1}"
+case_index_audit_domain="${COLLECTRA_CASE_INDEX_AUDIT_DOMAIN:-safisana}"
+case_index_auto_repair="${COLLECTRA_CASE_INDEX_AUTO_REPAIR:-1}"
 mkdir -p "$state_root"
 cd "$project_root"
 
@@ -18,6 +20,10 @@ if [[ ! "$bind_port" =~ ^[0-9]+$ ]] || (( bind_port < 1 || bind_port > 65535 ));
 fi
 if [[ ! "$web_workers" =~ ^[1-9][0-9]*$ ]]; then
     echo "COLLECTRA_WEB_WORKERS must be a positive integer." >&2
+    exit 2
+fi
+if [[ "$case_index_auto_repair" != 0 && "$case_index_auto_repair" != 1 ]]; then
+    echo "COLLECTRA_CASE_INDEX_AUTO_REPAIR must be 0 or 1." >&2
     exit 2
 fi
 
@@ -151,7 +157,21 @@ if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
     exit 1
 fi
 
+if [[ -n "$case_index_audit_domain" ]]; then
+    echo "Auditing case search index for domain: $case_index_audit_domain"
+    audit_args=("$case_index_audit_domain")
+    if [[ "$case_index_auto_repair" == 1 ]]; then
+        audit_args+=(--repair)
+    fi
+    if ! uv run python manage.py audit_case_search_index "${audit_args[@]}"; then
+        echo "Case search index audit failed." >&2
+        echo "Pillowtop log: $state_root/pillowtop.log" >&2
+        exit 1
+    fi
+fi
+
 echo "Background logs: $state_root"
+echo "Case index audit domain: ${case_index_audit_domain:-disabled}"
 echo "Starting Collectra at http://localhost:${bind_port} with ${web_workers} web worker(s)"
 echo "Press Ctrl+C once to stop Collectra and its background workers."
 uv run gunicorn \
