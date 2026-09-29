@@ -1221,6 +1221,19 @@ except ImportError as error:
 _collectra_shared_drive_root = os.environ.get('COLLECTRA_SHARED_DRIVE_ROOT')
 if _collectra_shared_drive_root:
     SHARED_DRIVE_ROOT = _collectra_shared_drive_root
+else:
+    # A detached test worktree commonly links localsettings.py to the main
+    # checkout. Its form XML blobs must use that checkout's shared drive too,
+    # including when manage.py or gunicorn is started outside the test launcher.
+    _localsettings_path = os.path.join(os.path.dirname(__file__), 'localsettings.py')
+    _worktree_shared_root = os.path.join(os.path.dirname(__file__), 'sharedfiles')
+    if (os.path.islink(_localsettings_path)
+            and (not SHARED_DRIVE_ROOT
+                 or os.path.realpath(SHARED_DRIVE_ROOT) == os.path.realpath(_worktree_shared_root))):
+        _source_shared_root = os.path.join(os.path.dirname(os.path.realpath(_localsettings_path)),
+                                           'sharedfiles')
+        if os.path.isdir(_source_shared_root):
+            SHARED_DRIVE_ROOT = _source_shared_root
 
 # A test worktree can use the already running formplayer and route browser
 # requests through its own same-origin proxy on a free port.
