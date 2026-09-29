@@ -1,6 +1,6 @@
 """Read-only supervisor review of Safisana worker reopening requests."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.db.models import Q
 from django.utils import timezone
@@ -23,6 +23,50 @@ MAX_FORMS_PER_DATABASE = 100
 MAX_REQUESTS = 30
 MAX_CANDIDATES = 10
 BED_VALUES = {f'dry_bed_{number}' for number in range(1, 7)} | {'other'}
+
+
+def _request_cursor(form):
+    return f'{form.received_on.isoformat()}|{form.form_id}'
+
+
+def _parse_request_cursor(cursor):
+    try:
+        received_on, form_id = cursor.rsplit('|', 1)
+        received_on = datetime.fromisoformat(received_on)
+        if not received_on.tzinfo or not form_id or len(form_id) > 80:
+            raise ValueError
+    except (AttributeError, ValueError) as error:
+        raise ValueError('Invalid request cursor') from error
+    return received_on, form_id
+
+
+def reopen_requests_page(domain, view='pending', cursor=None):
+    """Return a bounded queue or one page of handled request history."""
+    if view not in ('pending', 'history'):
+        raise ValueError('Invalid reopening request view')
+    if domain != 'safisana':
+        return [], None
+    filters = Q(domain=domain, app_id=APP_ID, xmlns=REQUEST_XMLNS,
+                state=XFormInstance.NORMAL if view == 'pending' else XFormInstance.ARCHIVED)
+    if cursor:
+        received_on, form_id = _parse_request_cursor(cursor)
+        filters &= (Q(received_on__lt=received_on)
+                    | Q(received_on=received_on, form_id__lt=form_id))
+    forms = []
+    for database in get_db_aliases_for_partitioned_query():
+        forms.extend(XFormInstance.objects.using(database)
+                     .filter(filters).order_by('-received_on', '-form_id')[:MAX_FORMS_PER_DATABASE])
+    forms.sort(key=lambda form: (form.received_on, form.form_id), reverse=True)
+    requests = []
+    last_form = None
+    for form in forms:
+        request = request_from_form(form)
+        if request:
+            if len(requests) == MAX_REQUESTS:
+                return requests, _request_cursor(last_form)
+            requests.append(request)
+            last_form = form
+    return requests, None
 
 
 def request_from_form(form):
