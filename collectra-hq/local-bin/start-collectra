@@ -8,6 +8,7 @@ bind_port="${COLLECTRA_BIND_PORT:-8000}"
 web_workers="${COLLECTRA_WEB_WORKERS:-1}"
 case_index_audit_domain="${COLLECTRA_CASE_INDEX_AUDIT_DOMAIN:-safisana}"
 case_index_auto_repair="${COLLECTRA_CASE_INDEX_AUTO_REPAIR:-1}"
+
 mkdir -p "$state_root"
 cd "$project_root"
 
@@ -50,8 +51,7 @@ stop_managed_process() {
 cleanup() {
     echo
     echo "Stopping Collectra background workers..."
-    for pid in "$pillowtop_pid" "$celery_pid"
-    do
+    for pid in "$pillowtop_pid" "$celery_pid"; do
         if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" >/dev/null 2>&1; then
             kill "$pid" >/dev/null 2>&1 || true
         fi
@@ -61,14 +61,13 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "Waiting for Docker Desktop..."
-until docker info >/dev/null 2>&1
-do
+until docker info >/dev/null 2>&1; do
     sleep 3
 done
 
 wsl_ip="$(hostname -I | awk '{print $1}')"
 if [[ -z "$wsl_ip" ]]; then
-    echo "Unable to determine the WSL IP address."
+    echo "Unable to determine the WSL IP address." >&2
     exit 1
 fi
 
@@ -88,104 +87,11 @@ echo "Starting Collectra services..."
 ./scripts/docker up -d \
     postgres couch redis elasticsearch6 \
     zookeeper kafka minio
+
 if curl --silent --fail --max-time 2 http://localhost:8080/serverup >/dev/null 2>&1; then
     echo "Formplayer is already healthy on port 8080; reusing it."
 else
-    if ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq '(^|:)8080
-until docker exec hqservice-postgres-1 \
-    pg_isready -U commcarehq -d commcarehq >/dev/null 2>&1
-do
-    sleep 2
-done
-
-echo "Waiting for Kafka..."
-until docker inspect hqservice-kafka-1 \
-    --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' 2>/dev/null \
-    | grep -q '^healthy$'
-do
-    sleep 2
-done
-
-echo "Waiting for Formplayer..."
-until curl --silent --fail \
-    http://localhost:8080/serverup >/dev/null 2>&1
-do
-    sleep 2
-done
-
-if fuser "${bind_port}/tcp" >/dev/null 2>&1; then
-    echo "Stopping the previous process on port ${bind_port}..."
-    fuser -k "${bind_port}/tcp" >/dev/null 2>&1 || true
-    sleep 2
-fi
-
-# Stop legacy Docker workers. The managed workers below use the current checkout.
-docker stop hqservice-pillowtop-1 hqservice-celery-1 >/dev/null 2>&1 || true
-stop_managed_process "$state_root/pillowtop.pid" "manage.py run_ptop"
-stop_managed_process "$state_root/celery.pid" "celery -A corehq worker"
-
-echo "Checking Collectra configuration..."
-uv run python manage.py check
-
-celery_queues="celery,analytics_queue,async_restore_queue,case_import_queue,email_queue,export_download_queue,saved_exports_queue,submission_reprocessing_queue"
-
-echo "Starting Celery worker..."
-uv run celery -A corehq worker \
-    --loglevel=INFO \
-    --pool=solo \
-    --queues="$celery_queues" \
-    >"$state_root/celery.log" 2>&1 &
-celery_pid=$!
-echo "$celery_pid" >"$state_root/celery.pid"
-
-echo "Starting CaseToElasticsearchPillow..."
-uv run python manage.py run_ptop \
-    --pillow-name CaseToElasticsearchPillow \
-    >"$state_root/pillowtop.log" 2>&1 &
-pillowtop_pid=$!
-echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
-
-sleep 5
-if ! kill -0 "$celery_pid" >/dev/null 2>&1; then
-    echo "Celery failed to start. Recent log output:"
-    tail -50 "$state_root/celery.log"
-    exit 1
-fi
-if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
-    echo "CaseToElasticsearchPillow failed to start. Recent log output:"
-    tail -50 "$state_root/pillowtop.log"
-    exit 1
-fi
-
-if [[ -n "$case_index_audit_domain" ]]; then
-    echo "Auditing case search index for domain: $case_index_audit_domain"
-    audit_args=("$case_index_audit_domain")
-    if [[ "$case_index_auto_repair" == 1 ]]; then
-        audit_args+=(--repair)
-    fi
-    if ! uv run python manage.py audit_case_search_index "${audit_args[@]}"; then
-        echo "Case search index audit failed." >&2
-        echo "Pillowtop log: $state_root/pillowtop.log" >&2
-        exit 1
-    fi
-fi
-
-echo "Background logs: $state_root"
-echo "Case index audit domain: ${case_index_audit_domain:-disabled}"
-echo "Starting Collectra at http://localhost:${bind_port} with ${web_workers} web worker(s)"
-echo "Press Ctrl+C once to stop Collectra and its background workers."
-uv run gunicorn \
-    --bind "${bind_host}:${bind_port}" \
-    --workers "$web_workers" \
-    --worker-class gevent \
-    --timeout 900 \
-    --keep-alive 65 \
-    --max-requests 1000 \
-    --max-requests-jitter 100 \
-    --access-logfile - \
-    --error-logfile - \
-    deployment.gunicorn.collectra_wsgi:application
-; then
+    if ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq '(^|:)8080$'; then
         echo "Port 8080 is already in use, but the service there is not a healthy Formplayer." >&2
         echo "Stop the process/container using port 8080, then start Collectra again." >&2
         exit 1
@@ -195,23 +101,20 @@ fi
 
 echo "Waiting for PostgreSQL..."
 until docker exec hqservice-postgres-1 \
-    pg_isready -U commcarehq -d commcarehq >/dev/null 2>&1
-do
+    pg_isready -U commcarehq -d commcarehq >/dev/null 2>&1; do
     sleep 2
 done
 
 echo "Waiting for Kafka..."
 until docker inspect hqservice-kafka-1 \
     --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' 2>/dev/null \
-    | grep -q '^healthy$'
-do
+    | grep -q '^healthy$'; do
     sleep 2
 done
 
 echo "Waiting for Formplayer..."
-until curl --silent --fail \
-    http://localhost:8080/serverup >/dev/null 2>&1
-do
+until curl --silent --fail --max-time 2 \
+    http://localhost:8080/serverup >/dev/null 2>&1; do
     sleep 2
 done
 
@@ -249,13 +152,13 @@ echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
 
 sleep 5
 if ! kill -0 "$celery_pid" >/dev/null 2>&1; then
-    echo "Celery failed to start. Recent log output:"
-    tail -50 "$state_root/celery.log"
+    echo "Celery failed to start. Recent log output:" >&2
+    tail -50 "$state_root/celery.log" >&2 || true
     exit 1
 fi
 if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
-    echo "CaseToElasticsearchPillow failed to start. Recent log output:"
-    tail -50 "$state_root/pillowtop.log"
+    echo "CaseToElasticsearchPillow failed to start. Recent log output:" >&2
+    tail -50 "$state_root/pillowtop.log" >&2 || true
     exit 1
 fi
 
@@ -276,6 +179,7 @@ echo "Background logs: $state_root"
 echo "Case index audit domain: ${case_index_audit_domain:-disabled}"
 echo "Starting Collectra at http://localhost:${bind_port} with ${web_workers} web worker(s)"
 echo "Press Ctrl+C once to stop Collectra and its background workers."
+
 uv run gunicorn \
     --bind "${bind_host}:${bind_port}" \
     --workers "$web_workers" \
