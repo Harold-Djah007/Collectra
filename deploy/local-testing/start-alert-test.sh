@@ -8,6 +8,7 @@ blob_root="$(dirname "$localsettings_target")/sharedfiles"
 proxy_name="collectra-alert-test-proxy"
 formplayer_name="collectra-alert-test-formplayer"
 log_file="$repo_root/alert-test-runserver.log"
+pillow_log="$repo_root/alert-test-case-indexer.log"
 
 if [[ ! -d "$blob_root/blobdb" ]]; then
     echo "Existing form blobs not found at $blob_root/blobdb" >&2
@@ -47,7 +48,12 @@ if docker container inspect "$proxy_name" >/dev/null 2>&1; then
 fi
 owns_formplayer=0
 server_pid=''
+pillow_pid=''
 cleanup() {
+    if [[ -n $pillow_pid ]]; then
+        kill "$pillow_pid" 2>/dev/null || true
+        wait "$pillow_pid" 2>/dev/null || true
+    fi
     if [[ -n $server_pid ]]; then
         kill "$server_pid" 2>/dev/null || true
     fi
@@ -149,6 +155,18 @@ fi
 "$hq_root/.venv/bin/python" manage.py runserver 0.0.0.0:8011 >"$log_file" 2>&1 &
 server_pid=$!
 
+# Case List reads Elasticsearch. Keep its Kafka consumer running alongside HQ,
+# unless the user already started one in another terminal or Docker.
+if pgrep -f 'manage.py run_ptop --pillow-name (CaseToElasticsearchPillow|case-pillow)' >/dev/null \
+        || [[ -n $(docker ps --filter 'name=^/hqservice-pillowtop-1$' --format '{{.ID}}') ]]; then
+    echo 'A case indexing worker is already running; using it.'
+else
+    "$hq_root/.venv/bin/python" manage.py run_ptop \
+        --pillow-name CaseToElasticsearchPillow >"$pillow_log" 2>&1 &
+    pillow_pid=$!
+    echo "Case indexing worker started; log: $pillow_log"
+fi
+
 docker run --rm --detach --name "$proxy_name" \
     --publish "127.0.0.1:$proxy_port:80" \
     --add-host=host.docker.internal:host-gateway \
@@ -160,6 +178,14 @@ for attempt in $(seq 1 30); do
             && curl -fsS --max-time 3 -o /dev/null "http://127.0.0.1:$proxy_port/a/safisana/"; then
         echo "Collectra test is ready: http://localhost:$proxy_port/a/safisana/"
         echo "Open the form editor through the same URL. Press Ctrl+C here to stop the test services."
+        while kill -0 "$server_pid" 2>/dev/null; do
+            if [[ -n $pillow_pid ]] && ! kill -0 "$pillow_pid" 2>/dev/null; then
+                echo 'Case indexing worker stopped. Recent output:' >&2
+                tail -n 25 "$pillow_log" >&2
+                exit 1
+            fi
+            sleep 5
+        done
         wait "$server_pid"
         exit $?
     fi
