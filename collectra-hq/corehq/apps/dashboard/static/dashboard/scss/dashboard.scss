@@ -29,12 +29,12 @@
 .collectra-hero {
   position: relative; isolation: isolate;
   display: flex; justify-content: space-between; align-items: center;
-  gap: 36px; min-height: 0; padding: 10px 4px 28px; margin-bottom: 4px;
+  gap: 36px; min-height: 0; padding: 10px 4px 30px; margin-bottom: 0;
   color: #14384c;
 }
 .collectra-hero::before {
-  content: ""; position: absolute; left: 4px; right: 4px; bottom: 0; height: 1px;
-  background: linear-gradient(90deg, #84ccc2, #cfdee8 60%, transparent);
+  content: ""; position: absolute; left: 4px; right: 4px; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, #0aa598, #a6d5d3 55%, transparent);
 }
 .collectra-hero-content { position: relative; z-index: 2; min-width: 0; }
 .collectra-hero-eyebrow, .collectra-section-eyebrow {
@@ -146,8 +146,9 @@
 .collectra-reopen-review input[type="text"] { display: block; width: min(100%, 420px); margin-top: 5px; padding: 8px; border: 1px solid #bacfd1; border-radius: 7px; }
 .collectra-reopen-review input[type="checkbox"] { margin-right: 6px; }
 .collectra-reopen-review [role="alert"] { color: #a33731; }
-.collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; gap: 16px; margin: 20px 0 26px; }
-.collectra-status-grid .collectra-alerts { min-width: 0; margin: 0; padding: 18px 20px; border-radius: 16px; }
+.collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; gap: 24px; margin: 36px 0 38px; }
+.collectra-status-grid .collectra-alerts { min-width: 0; margin: 0; padding: 18px 20px; border-top: 4px solid #0c9e94; border-radius: 16px; box-shadow: 0 12px 30px rgba(18,54,70,.09); }
+.collectra-status-grid .collectra-reopen-requests { border-top-color: #d39128; }
 .collectra-status-grid .collectra-alerts-header { gap: 12px; }
 .collectra-status-grid .collectra-alerts-header > div:first-child { min-width: 0; }
 .collectra-status-grid .collectra-alerts-header h2 { margin: 2px 0 3px; font-size: 1.15rem; }
@@ -260,7 +261,7 @@
 @media (max-width: 1000px) { .collectra-status-grid { grid-template-columns: 1fr; } }
 @media (max-width: 991px) { .collectra-dashboard-page { padding: 24px 18px 48px; } .collectra-hero-art { margin-right: 0; } }
 @media (max-width: 767px) { .collectra-status-grid .collectra-summary-icon { display: none; } }
-@media (max-width: 767px) { .collectra-hero { padding: 18px 4px 22px; } .collectra-hero-art { display: none; } .collectra-alerts-summary { grid-template-columns: repeat(3, minmax(0,1fr)); } .collectra-summary-item { padding: 12px; gap: 7px; } .collectra-summary-icon { display: none; } }
+@media (max-width: 767px) { .collectra-hero { padding: 18px 4px 22px; } .collectra-hero-art { display: none; } .collectra-status-grid { gap: 18px; margin: 28px 0 30px; } .collectra-alerts-summary { grid-template-columns: repeat(3, minmax(0,1fr)); } .collectra-summary-item { padding: 12px; gap: 7px; } .collectra-summary-icon { display: none; } }
 @media (max-width: 575px) { .collectra-dashboard-page { padding: 15px 12px 36px; } .collectra-dashboard-grid { grid-template-columns: 1fr; } .collectra-hero { padding: 12px 2px 20px; min-height: 0; } .collectra-hero-art { display: none; } .collectra-dashboard-mark { width: 50px; height: 50px; border-radius: 12px; } .collectra-dashboard-mark img { width: 34px; height: 34px; } .collectra-brand-title { font-size: 1.52rem; } .collectra-quick-actions { margin-left: 0; } .collectra-alerts { padding: 20px 16px; } .collectra-alerts-header { flex-direction: column; } .collectra-alerts-controls { justify-content: flex-start; } .collectra-alerts-summary { gap: 6px; } .collectra-summary-item { min-height: 68px; } .collectra-summary-item strong { font-size: 1.2rem; } .collectra-summary-item small { font-size: .68rem; } .collectra-section-heading > span { display: none; } }
 @media (max-width: 575px) { .collectra-status-grid .collectra-alerts { padding: 16px; } .collectra-status-grid .collectra-alerts-summary { gap: 5px; } .collectra-status-grid .collectra-summary-item { padding: 8px 5px; } .collectra-status-grid .collectra-alerts-header { gap: 6px; } }
 .collectra-dashboard-page { background-size: 300% 300%; animation-duration: 11s; }
