@@ -198,20 +198,50 @@ $(function () {
     var reopenPanel = $("#reopen-requests");
     if (reopenPanel.length) {
         var reopenModel = {
-            requests: ko.observableArray([]),
+            pendingRequests: ko.observableArray([]),
+            pendingNextCursor: ko.observable(null),
+            historyRequests: ko.observableArray([]),
+            historyNextCursor: ko.observable(null),
+            historyLoaded: ko.observable(false),
+            activeView: ko.observable("pending"),
             loading: ko.observable(true),
             loaded: ko.observable(false),
             error: ko.observable(false),
+            requestGeneration: 0,
         };
         reopenModel.pendingCount = ko.computed(function () {
-            return _.filter(reopenModel.requests(), function (item) { return item.status === "pending"; }).length;
+            return reopenModel.pendingRequests().length;
         });
-        reopenModel.refresh = function () {
+        reopenModel.pendingCountLabel = ko.computed(function () {
+            return reopenModel.pendingCount() + (reopenModel.pendingNextCursor() ? "+" : "");
+        });
+        reopenModel.visibleRequests = ko.computed(function () {
+            return reopenModel.activeView() === "pending"
+                ? reopenModel.pendingRequests() : reopenModel.historyRequests();
+        });
+        reopenModel.showPending = function () {
+            reopenModel.activeView("pending");
+            reopenModel.refresh();
+        };
+        reopenModel.showHistory = function () {
+            reopenModel.activeView("history");
+            if (!reopenModel.historyLoaded()) { reopenModel.refresh(); }
+        };
+        reopenModel.refresh = function (append) {
+            append = append === true;
+            var view = reopenModel.activeView();
+            var cursor = append ? (view === "history"
+                ? reopenModel.historyNextCursor() : reopenModel.pendingNextCursor()) : null;
+            var generation = ++reopenModel.requestGeneration;
             reopenModel.loading(true);
             reopenModel.error(false);
-            $.getJSON(initialPageData.reverse("dashboard_reopen_requests"))
+            $.getJSON(initialPageData.reverse("dashboard_reopen_requests"), {
+                view: view,
+                cursor: cursor || "",
+            })
                 .done(function (data) {
-                    reopenModel.requests(_.map(data.requests, function (request) {
+                    if (generation !== reopenModel.requestGeneration) { return; }
+                    var requests = _.map(data.requests, function (request) {
                         request.when = new Date(request.received_on).toLocaleString();
                         request.bedLabel = request.bed === "other" ? "Other drying bed"
                             : "Drying bed " + request.bed.replace("dry_bed_", "");
@@ -266,11 +296,35 @@ $(function () {
                             }).always(function () { request.checking(false); });
                         };
                         return request;
-                    }));
+                    });
+                    if (view === "history") {
+                        reopenModel.historyRequests(append
+                            ? reopenModel.historyRequests().concat(requests) : requests);
+                        reopenModel.historyNextCursor(data.next_cursor || null);
+                        reopenModel.historyLoaded(true);
+                    } else {
+                        reopenModel.pendingRequests(append
+                            ? reopenModel.pendingRequests().concat(requests) : requests);
+                        reopenModel.pendingNextCursor(data.next_cursor || null);
+                    }
                     reopenModel.loaded(true);
                 })
-                .fail(function () { reopenModel.error(true); })
-                .always(function () { reopenModel.loading(false); });
+                .fail(function () {
+                    if (generation === reopenModel.requestGeneration) { reopenModel.error(true); }
+                })
+                .always(function () {
+                    if (generation === reopenModel.requestGeneration) { reopenModel.loading(false); }
+                });
+        };
+        reopenModel.loadOlderHistory = function () {
+            if (!reopenModel.loading() && reopenModel.historyNextCursor()) {
+                reopenModel.refresh(true);
+            }
+        };
+        reopenModel.loadOlderPending = function () {
+            if (!reopenModel.loading() && reopenModel.pendingNextCursor()) {
+                reopenModel.refresh(true);
+            }
         };
         reopenPanel.koApplyBindings(reopenModel);
         reopenModel.refresh();
