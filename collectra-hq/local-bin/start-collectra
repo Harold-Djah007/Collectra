@@ -137,10 +137,9 @@ uv run celery -A corehq worker \
 celery_pid=$!
 echo "$celery_pid" >"$state_root/celery.pid"
 
-echo "Starting Pillowtop indexer..."
+echo "Starting CaseToElasticsearchPillow..."
 uv run python manage.py run_ptop \
-    --pillow-key=core \
-    --processor-chunk-size=1 \
+    --pillow-name CaseToElasticsearchPillow \
     >"$state_root/pillowtop.log" 2>&1 &
 pillowtop_pid=$!
 echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
@@ -152,7 +151,7 @@ if ! kill -0 "$celery_pid" >/dev/null 2>&1; then
     exit 1
 fi
 if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
-    echo "Pillowtop failed to start. Recent log output:"
+    echo "CaseToElasticsearchPillow failed to start. Recent log output:"
     tail -50 "$state_root/pillowtop.log"
     exit 1
 fi
