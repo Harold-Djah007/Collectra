@@ -67,9 +67,6 @@ class Command(BaseCommand):
                         case_adapter.index(case, refresh=True)
                         repaired += 1
 
-        if repair and repaired:
-            manager.index_refresh(case_adapter.index_name)
-
         self.stdout.write("DOMAIN: {}".format(domain))
         self.stdout.write("DATABASE CASES: {}".format(len(database_ids)))
         self.stdout.write("CHECKED: {}".format(checked))
