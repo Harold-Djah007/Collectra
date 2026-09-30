@@ -9,6 +9,7 @@ from lxml import etree
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.management.commands.preview_safisana_alert_forms import NS, X, one
+from corehq.apps.app_manager.models.form_actions import ConditionalCaseUpdate
 from corehq.apps.app_manager.util import save_xform
 
 
@@ -30,6 +31,18 @@ def specification():
 
 def question_path(question):
     return question.get('path', PREFIX + question['id'])
+
+
+def merged_case_updates(existing):
+    updates = dict(existing)
+    for key in CASE_PROPERTIES:
+        path = PREFIX + key
+        if key in updates:
+            if updates[key].question_path != path:
+                raise ValueError(f'Existing case property mapping differs: {key}')
+        else:
+            updates[key] = ConditionalCaseUpdate(question_path=path)
+    return updates
 
 
 def validate_source(root, spec):
@@ -195,11 +208,7 @@ class Command(BaseCommand):
                 raise ValueError('The incident case registration mapping changed; review manually')
             original = app.fetch_attachment(FORM_ID + '.xml')
             revised = upgrade_source(original)
-            updates = dict(form.actions.update_case.update)
-            for key in CASE_PROPERTIES:
-                if key in updates and updates[key] != PREFIX + key:
-                    raise ValueError(f'Existing case property mapping differs: {key}')
-                updates[key] = PREFIX + key
+            updates = merged_case_updates(form.actions.update_case.update)
             directory = Path(output_dir).expanduser()
             directory.mkdir(parents=True, exist_ok=True)
             preview = directory / 'incident-google-form-preview.xml'
@@ -217,8 +226,8 @@ class Command(BaseCommand):
                 else:
                     with backup.open('xb') as file:
                         file.write(original)
-                save_xform(app, form, revised)
                 form.actions.update_case.update = updates
+                save_xform(app, form, revised)
                 app.save()
                 if get_app('safisana', APP_ID).fetch_attachment(FORM_ID + '.xml') != revised:
                     raise ValueError('Saved incident XML did not match the preview')
