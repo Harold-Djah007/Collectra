@@ -18,6 +18,11 @@ FORM_ID = '0f99883b2c4e4aa287121086ef88fec3'
 INCIDENT_XMLNS = 'http://openrosa.org/formdesigner/572431EB-BF57-4028-BEA3-21BECEABA4B9'
 SPEC_PATH = Path(__file__).resolve().parents[2] / 'data/safisana_incident_google_form.json'
 PREFIX = '/data/google_incident/'
+LEGACY_DATETIME_CALCULATION = f"concat({PREFIX}incident_date, 'T', {PREFIX}incident_time)"
+DATETIME_CALCULATION = (
+    f"if({PREFIX}incident_date != '' and {PREFIX}incident_time != '', "
+    f"{LEGACY_DATETIME_CALCULATION}, '')"
+)
 CASE_PROPERTIES = (
     'plant', 'department', 'department_other', 'reported_by', 'reported_by_other',
     'sio_eio', 'incident_kind', 'was_injured', 'injured_person', 'location',
@@ -74,6 +79,12 @@ def upgrade_source(source):
         raise ValueError('This is not the reviewed Safisana incident registration form')
     if data.xpath('./*[local-name()="google_incident"]'):
         validate_source(root, spec)
+        date_time = one(model, './x:bind[@nodeset="/data/time_type/date_time"]')
+        if date_time.get('calculate') == LEGACY_DATETIME_CALCULATION:
+            date_time.set('calculate', DATETIME_CALCULATION)
+            return etree.tostring(root, encoding='UTF-8', xml_declaration=True, pretty_print=True)
+        if date_time.get('calculate') != DATETIME_CALCULATION:
+            raise ValueError('The incident timestamp calculation changed; review manually')
         return source
     old_paths = set(model.xpath('./x:bind/@nodeset', namespaces=NS))
     formulas = {b.get('nodeset'): b.get('calculate')
@@ -170,7 +181,7 @@ def upgrade_source(source):
 
     # Existing case/export properties retain their paths, types and value codes.
     one(model, './x:bind[@nodeset="/data/time_type/date_time"]').set(
-        'calculate', f"concat({PREFIX}incident_date, 'T', {PREFIX}incident_time)")
+        'calculate', DATETIME_CALCULATION)
     one(model, './x:bind[@nodeset="/data/description/type_incident"]').set(
         'calculate', f"if({PREFIX}was_injured = 'yes', 'injury', {PREFIX}incident_kind)")
     bind('/data/needs_attention', calculate="'yes'")
