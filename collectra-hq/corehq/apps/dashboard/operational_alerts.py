@@ -18,6 +18,7 @@ MORNING_XMLNS = 'http://openrosa.org/formdesigner/7292611C-E519-4CA4-A084-97C2D3
 FORMS = {
     MORNING_XMLNS: 'Morning Checks Daily',
     'http://openrosa.org/formdesigner/1C3FE6EF-6263-4DE9-9CA6-444EB945F0EA': 'Metering Round',
+    'http://openrosa.org/formdesigner/572431EB-BF57-4028-BEA3-21BECEABA4B9': 'Incident report (SIO/EIO)',
 }
 MORNING_CHECKS = {
     ('airblower', 'airblower_status'): 'Airblower valve',
