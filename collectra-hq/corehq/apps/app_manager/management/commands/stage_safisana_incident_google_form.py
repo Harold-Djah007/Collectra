@@ -39,28 +39,46 @@ def question_path(question):
 
 
 def ensure_control_groups(root):
-    """Give visible questions valid group parents in the form designer."""
+    """Keep display and data group paths aligned for designer references."""
     body = one(root, '//h:body')
-    if body.xpath('./x:group[@ref="/data/google_incident"]', namespaces=NS):
-        return False
-    controls = [node for node in list(body)
-                if node.get('ref', '').startswith(PREFIX)
-                or node.get('ref') in ('/data/description/description', '/data/actions/immediate_action')]
-    group = etree.Element(f'{{{X}}}group', ref='/data/google_incident')
-    etree.SubElement(group, f'{{{X}}}label').text = 'Incident report'
-    body.insert(0, group)
-    for control in controls:
-        path = control.get('ref')
-        if path.startswith(PREFIX):
-            group.append(control)
+    matches = body.xpath('./x:group[@ref="/data/google_incident"]', namespaces=NS)
+    changed = False
+    if matches:
+        group = matches[0]
+    else:
+        group = etree.Element(f'{{{X}}}group', ref='/data/google_incident')
+        etree.SubElement(group, f'{{{X}}}label').text = 'Incident report'
+        body.insert(0, group)
+        changed = True
+    for node in list(body):
+        if node.get('ref', '').startswith(PREFIX):
+            group.append(node)
+            changed = True
+    for parent_path, path in (('/data/description', '/data/description/description'),
+                              ('/data/actions', '/data/actions/immediate_action')):
+        wrappers = body.xpath('.//x:group[@ref=$path]', namespaces=NS, path=parent_path)
+        if wrappers:
+            wrapper = wrappers[0]
+            if wrapper.getparent() is not body:
+                body.append(wrapper)
+                changed = True
         else:
-            parent_path = path.rsplit('/', 1)[0]
-            matches = body.xpath('./x:group[@ref=$path]', namespaces=NS, path=parent_path)
-            wrapper = matches[0] if matches else etree.Element(f'{{{X}}}group', ref=parent_path)
-            # Retain extra legacy questions, including conditional first aid.
+            wrapper = etree.SubElement(body, f'{{{X}}}group', ref=parent_path)
+            changed = True
+        control = one(body, f'.//*[@ref="{path}"]')
+        if control.getparent() is not wrapper:
             wrapper.insert(0, control)
-            group.append(wrapper)
-    return True
+            changed = True
+    # Calculated hidden values have no Required/Validation Condition controls.
+    model = one(root, '//x:model')
+    for path in ('/data/time_type/date_time', '/data/description/type_incident'):
+        bind = one(model, f'./x:bind[@nodeset="{path}"]')
+        for attr in ('required', 'constraint'):
+            for key in (attr, '{http://commcarehq.org/xforms/vellum}' + attr):
+                if key in bind.attrib:
+                    del bind.attrib[key]
+                    changed = True
+    return changed
 
 
 def merged_case_updates(existing):
