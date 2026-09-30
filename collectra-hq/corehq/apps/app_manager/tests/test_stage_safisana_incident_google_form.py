@@ -13,7 +13,8 @@ from lxml import etree
 
 from corehq.apps.app_manager.management.commands.preview_safisana_alert_forms import NS
 from corehq.apps.app_manager.management.commands.stage_safisana_incident_google_form import (
-    CASE_PROPERTIES, FORM_ID, INCIDENT_XMLNS, PREFIX, Command, merged_case_updates, question_path,
+    CASE_PROPERTIES, DATETIME_CALCULATION, FORM_ID, INCIDENT_XMLNS,
+    LEGACY_DATETIME_CALCULATION, PREFIX, Command, merged_case_updates, question_path,
     specification, upgrade_source,
 )
 from corehq.apps.app_manager.models.form_actions import ConditionalCaseUpdate, UpdateCaseAction
@@ -159,3 +160,29 @@ def test_apply_saves_real_case_update_schema_and_can_be_rerun():
         Command().handle(output_dir=directory, apply=True)
         assert save.call_count == 1
         assert app.save.call_count == 1
+
+
+def test_timestamp_stays_blank_until_both_date_and_time_are_answered():
+    root = etree.fromstring(upgrade_source(original_source()))
+    expression = root.xpath('//x:bind[@nodeset="/data/time_type/date_time"]/@calculate', namespaces=NS)[0]
+    assert expression == DATETIME_CALCULATION
+    expression = expression.replace('if(', 'test:if(')
+    extensions = {('urn:datetime-test', 'if'): lambda ctx, condition, yes, no: yes if condition else no}
+    for date, time, expected in (
+            ('', '', ''), ('2026-09-30', '', ''), ('', '10:30:00', ''),
+            ('2026-09-30', '10:30:00', '2026-09-30T10:30:00')):
+        instance = etree.fromstring(
+            f'<data><google_incident><incident_date>{date}</incident_date>'
+            f'<incident_time>{time}</incident_time></google_incident></data>')
+        assert instance.xpath(expression, namespaces={'test': 'urn:datetime-test'},
+                              extensions=extensions) == expected
+
+
+def test_already_staged_draft_timestamp_is_repaired_without_changing_other_fields():
+    correct = upgrade_source(original_source())
+    broken = etree.fromstring(correct)
+    broken.xpath('//x:bind[@nodeset="/data/time_type/date_time"]', namespaces=NS)[0].set(
+        'calculate', LEGACY_DATETIME_CALCULATION)
+    repaired = upgrade_source(etree.tostring(broken))
+    assert etree.tostring(etree.fromstring(repaired)) == etree.tostring(etree.fromstring(correct))
+    assert upgrade_source(repaired) == repaired
