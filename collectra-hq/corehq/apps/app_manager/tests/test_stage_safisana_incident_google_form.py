@@ -13,9 +13,10 @@ from lxml import etree
 
 from corehq.apps.app_manager.management.commands.preview_safisana_alert_forms import NS
 from corehq.apps.app_manager.management.commands.stage_safisana_incident_google_form import (
-    FORM_ID, INCIDENT_XMLNS, PREFIX, Command, question_path,
+    CASE_PROPERTIES, FORM_ID, INCIDENT_XMLNS, PREFIX, Command, merged_case_updates, question_path,
     specification, upgrade_source,
 )
+from corehq.apps.app_manager.models.form_actions import ConditionalCaseUpdate, UpdateCaseAction
 from corehq.apps.dashboard.operational_alerts import alert_from_form
 
 
@@ -100,8 +101,8 @@ def test_dry_run_keeps_case_actions_and_conflicting_property_stops_apply():
     form = Mock()
     form.actions.open_case.condition.type = 'always'
     form.actions.open_case.name_update.question_path = '/data/time_type/name'
-    legacy = {'type_incident': '/data/description/type_incident'}
-    form.actions.update_case.update = dict(legacy)
+    legacy = {'type_incident': ConditionalCaseUpdate(question_path='/data/description/type_incident')}
+    form.actions.update_case = UpdateCaseAction(update=legacy)
     app.get_form.return_value = form
     app.fetch_attachment.return_value = original_source()
     module = 'corehq.apps.app_manager.management.commands.stage_safisana_incident_google_form'
@@ -111,8 +112,50 @@ def test_dry_run_keeps_case_actions_and_conflicting_property_stops_apply():
         save.assert_not_called()
         app.save.assert_not_called()
         assert form.actions.update_case.update == legacy
-        form.actions.update_case.update['plant'] = '/data/custom_existing_plant'
+        form.actions.update_case.update['plant'] = ConditionalCaseUpdate(
+            question_path='/data/custom_existing_plant')
         with pytest.raises(CommandError, match='mapping differs'):
             Command().handle(output_dir=directory, apply=True)
         save.assert_not_called()
         app.save.assert_not_called()
+
+
+def test_case_updates_use_real_schema_and_preserve_existing_update_modes():
+    legacy = ConditionalCaseUpdate(question_path='/data/description/type_incident', update_mode='edit')
+    plant = ConditionalCaseUpdate(question_path=PREFIX + 'plant', update_mode='edit')
+    action = UpdateCaseAction(update={'type_incident': legacy, 'plant': plant})
+    action.update = merged_case_updates(action.update)
+    assert all(isinstance(value, ConditionalCaseUpdate) for value in action.update.values())
+    assert action.update['type_incident'].update_mode == 'edit'
+    assert action.update['plant'].update_mode == 'edit'
+    encoded = action.to_json()
+    restored = UpdateCaseAction.wrap(encoded)
+    for key in CASE_PROPERTIES:
+        assert restored.update[key].question_path == PREFIX + key
+    before = restored.to_json()
+    restored.update = merged_case_updates(restored.update)
+    assert restored.to_json() == before
+
+
+def test_apply_saves_real_case_update_schema_and_can_be_rerun():
+    app = Mock()
+    form = Mock()
+    form.actions.open_case.condition.type = 'always'
+    form.actions.open_case.name_update.question_path = '/data/time_type/name'
+    form.actions.update_case = UpdateCaseAction(update={
+        'type_incident': ConditionalCaseUpdate(question_path='/data/description/type_incident'),
+    })
+    original = original_source()
+    revised = upgrade_source(original)
+    app.get_form.return_value = form
+    app.fetch_attachment.side_effect = [original, revised, revised]
+    module = 'corehq.apps.app_manager.management.commands.stage_safisana_incident_google_form'
+    with TemporaryDirectory() as directory, patch(module + '.get_app', return_value=app), patch(
+            module + '.save_xform') as save:
+        Command().handle(output_dir=directory, apply=True)
+        save.assert_called_once_with(app, form, revised)
+        app.save.assert_called_once()
+        assert form.actions.update_case.update['plant'].question_path == PREFIX + 'plant'
+        Command().handle(output_dir=directory, apply=True)
+        assert save.call_count == 1
+        assert app.save.call_count == 1
