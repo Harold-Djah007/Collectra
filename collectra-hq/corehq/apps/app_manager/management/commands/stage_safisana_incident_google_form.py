@@ -38,6 +38,31 @@ def question_path(question):
     return question.get('path', PREFIX + question['id'])
 
 
+def ensure_control_groups(root):
+    """Give visible questions valid group parents in the form designer."""
+    body = one(root, '//h:body')
+    if body.xpath('./x:group[@ref="/data/google_incident"]', namespaces=NS):
+        return False
+    controls = [node for node in list(body)
+                if node.get('ref', '').startswith(PREFIX)
+                or node.get('ref') in ('/data/description/description', '/data/actions/immediate_action')]
+    group = etree.Element(f'{{{X}}}group', ref='/data/google_incident')
+    etree.SubElement(group, f'{{{X}}}label').text = 'Incident report'
+    body.insert(0, group)
+    for control in controls:
+        path = control.get('ref')
+        if path.startswith(PREFIX):
+            group.append(control)
+        else:
+            parent_path = path.rsplit('/', 1)[0]
+            matches = body.xpath('./x:group[@ref=$path]', namespaces=NS, path=parent_path)
+            wrapper = matches[0] if matches else etree.Element(f'{{{X}}}group', ref=parent_path)
+            # Retain extra legacy questions, including conditional first aid.
+            wrapper.insert(0, control)
+            group.append(wrapper)
+    return True
+
+
 def merged_case_updates(existing):
     updates = dict(existing)
     for key in CASE_PROPERTIES:
@@ -80,11 +105,15 @@ def upgrade_source(source):
     if data.xpath('./*[local-name()="google_incident"]'):
         validate_source(root, spec)
         date_time = one(model, './x:bind[@nodeset="/data/time_type/date_time"]')
+        changed = False
         if date_time.get('calculate') == LEGACY_DATETIME_CALCULATION:
             date_time.set('calculate', DATETIME_CALCULATION)
-            return etree.tostring(root, encoding='UTF-8', xml_declaration=True, pretty_print=True)
-        if date_time.get('calculate') != DATETIME_CALCULATION:
+            changed = True
+        elif date_time.get('calculate') != DATETIME_CALCULATION:
             raise ValueError('The incident timestamp calculation changed; review manually')
+        changed = ensure_control_groups(root) or changed
+        if changed:
+            return etree.tostring(root, encoding='UTF-8', xml_declaration=True, pretty_print=True)
         return source
     old_paths = set(model.xpath('./x:bind/@nodeset', namespaces=NS))
     formulas = {b.get('nodeset'): b.get('calculate')
@@ -194,6 +223,7 @@ def upgrade_source(source):
         if etree.QName(node).localname == 'group' and not node.xpath(
                 './/x:input | .//x:select | .//x:select1 | .//x:upload | .//x:trigger', namespaces=NS):
             body.remove(node)
+    ensure_control_groups(root)
     for path, formula in formulas.items():
         if one(model, f'./x:bind[@nodeset="{path}"]').get('calculate') != formula:
             raise ValueError(f'Existing calculation changed: {path}')
