@@ -186,3 +186,21 @@ def test_already_staged_draft_timestamp_is_repaired_without_changing_other_field
     repaired = upgrade_source(etree.tostring(broken))
     assert etree.tostring(etree.fromstring(repaired)) == etree.tostring(etree.fromstring(correct))
     assert upgrade_source(repaired) == repaired
+
+
+def test_visible_questions_have_valid_editor_group_parents():
+    root = etree.fromstring(upgrade_source(original_source()))
+    group = root.xpath('//h:body/x:group[@ref="/data/google_incident"]', namespaces=NS)[0]
+    for question in specification()['questions']:
+        path = question_path(question)
+        control = root.xpath('//h:body//*[@ref=$path]', namespaces=NS, path=path)[0]
+        assert control.getparent().get('ref') == path.rsplit('/', 1)[0]
+    assert group.xpath('./x:group[@ref="/data/actions"]//x:select[@ref="/data/actions/first_aid_applied"]', namespaces=NS)
+    # Simulate a previously staged flat layout, then repair it in place.
+    body = group.getparent()
+    for child in list(group):
+        if child.get('ref'):
+            body.append(child)
+    body.remove(group)
+    fixed = etree.fromstring(upgrade_source(etree.tostring(root)))
+    assert fixed.xpath('//h:body/x:group[@ref="/data/google_incident"]', namespaces=NS)
