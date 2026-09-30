@@ -195,7 +195,7 @@ def test_visible_questions_have_valid_editor_group_parents():
         path = question_path(question)
         control = root.xpath('//h:body//*[@ref=$path]', namespaces=NS, path=path)[0]
         assert control.getparent().get('ref') == path.rsplit('/', 1)[0]
-    assert group.xpath('./x:group[@ref="/data/actions"]//x:select[@ref="/data/actions/first_aid_applied"]', namespaces=NS)
+    assert root.xpath('//h:body/x:group[@ref="/data/actions"]//x:select[@ref="/data/actions/first_aid_applied"]', namespaces=NS)
     # Simulate a previously staged flat layout, then repair it in place.
     body = group.getparent()
     for child in list(group):
@@ -204,3 +204,23 @@ def test_visible_questions_have_valid_editor_group_parents():
     body.remove(group)
     fixed = etree.fromstring(upgrade_source(etree.tostring(root)))
     assert fixed.xpath('//h:body/x:group[@ref="/data/google_incident"]', namespaces=NS)
+
+
+def test_legacy_groups_keep_root_paths_and_hidden_calculations_are_not_required():
+    root = etree.fromstring(upgrade_source(original_source()))
+    body = root.xpath('//h:body', namespaces=NS)[0]
+    for path in ('/data/description', '/data/actions', '/data/time_type'):
+        group = root.xpath('//h:body//x:group[@ref=$path]', namespaces=NS, path=path)[0]
+        assert group.getparent() is body
+    for path in ('/data/time_type/date_time', '/data/description/type_incident'):
+        bind = root.xpath('//x:bind[@nodeset=$path]', namespaces=NS, path=path)[0]
+        assert bind.get('required') is None
+        assert bind.get('constraint') is None
+        assert bind.get('calculate')
+    # Repair the previously staged nested display groups as well.
+    main = body.xpath('./x:group[@ref="/data/google_incident"]', namespaces=NS)[0]
+    for path in ('/data/description', '/data/actions'):
+        main.append(body.xpath('./x:group[@ref=$path]', namespaces=NS, path=path)[0])
+    repaired = etree.fromstring(upgrade_source(etree.tostring(root)))
+    for path in ('/data/description', '/data/actions'):
+        assert repaired.xpath('//h:body/x:group[@ref=$path]', namespaces=NS, path=path)
