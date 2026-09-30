@@ -105,3 +105,24 @@ def test_conflicting_case_mapping_prevents_any_save():
             Command().handle(output_dir=directory, apply=True)
         save.assert_not_called()
         app.save.assert_not_called()
+
+
+def test_automatic_date_has_no_unsupported_hidden_value_settings():
+    root = etree.fromstring(upgrade_source(original_source()))
+    bind = root.xpath('//x:bind[@nodeset=$path]', namespaces=NS, path=DATE)[0]
+    assert bind.get('required') is None
+    assert bind.get('constraint') is None
+    assert not root.xpath('//h:body//*[@ref=$path]', namespaces=NS, path=DATE)
+    assert root.xpath('//x:setvalue[@ref=$path]/@value', namespaces=NS, path=DATE) == ['today()']
+
+
+def test_already_applied_draft_is_repaired_and_keeps_calculations():
+    correct = upgrade_source(original_source())
+    root = etree.fromstring(correct)
+    bind = root.xpath('//x:bind[@nodeset=$path]', namespaces=NS, path=DATE)[0]
+    bind.set('required', 'true()')
+    bind.set('constraint', ". <= today() and . >= date('2000-01-01') and . <= date('2099-12-31')")
+    bind.set('{http://commcarehq.org/xforms/vellum}constraint', '. <= today()')
+    repaired = upgrade_source(etree.tostring(root))
+    assert etree.tostring(etree.fromstring(repaired)) == etree.tostring(etree.fromstring(correct))
+    assert upgrade_source(repaired) == repaired
