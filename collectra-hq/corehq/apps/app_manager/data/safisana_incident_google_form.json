@@ -1,0 +1,23 @@
+{
+  "title": "Safisana Incident Reporting Form (SIOs/EIOs)",
+  "source_url": "https://docs.google.com/forms/d/e/1FAIpQLSdYel8SFMHdpUis_Rh3sra8L0sf-dfTbOAdXv__udWmrsaZgA/viewform?pli=1",
+  "description": "Safety and environment incident & observation or nearly happened (Near Miss). Incident - any undesired act or condition that could result in injury, loss of life or impact the environment.",
+  "version": "safisana_sio_eio_2026_09_30",
+  "questions": [
+    {"id": "plant", "label": "Plant", "type": "dropdown", "required": true, "choices": [["ashaiman", "Ashaiman"], ["kumasi", "Kumasi"], ["gama", "GAMA"], ["other", "Other"]]},
+    {"id": "department", "label": "Department:", "type": "single_choice", "required": true, "other": true, "choices": [["finance_administration", "Finance and Administration"], ["production", "Production"], ["maintenance", "Maintenance"], ["quality_control", "Quality Control"], ["sourcing", "Sourcing"], ["agronomy", "Agronomy"], ["sales", "Sales"], ["monitoring_evaluation", "M&E"], ["visitor", "Visitor"], ["national_service", "National Service Personnel"], ["other", "Other:"]]},
+    {"id": "reported_by", "label": "Reported by:", "type": "single_choice", "required": true, "other": true, "choices": [["francis_owusu", "Francis Owusu"], ["solomon_sifa_tweneboah", "Solomon Sifa-Tweneboah"], ["chimbar_nurokinan", "Chimbar Nurokinan"], ["michael_oppong_manu", "Michael Oppong Manu"], ["daniel_larkai", "Daniel Larkai"], ["samuel_mensah", "Samuel Mensah"], ["abdul_rahim", "Abdul Rahim"], ["elizabeth_karl_adu", "Elizabeth Karl Adu"], ["fiona_ashitey", "Fiona Ashitey"], ["gloria_annor", "Gloria Annor"], ["isaac_haruna", "Isaac Haruna"], ["justice_annor", "Justice Annor"], ["ernest_abankwah", "Ernest Abankwah"], ["henry_adjanor", "Henry Adjanor"], ["john_forson", "John Forson"], ["philemon_osei", "Philemon Osei"], ["selorm_bodzah", "Selorm Bodzah"], ["papa_asubonteng_kumah", "Papa Asubonteng Kumah"], ["albert_oduro", "Albert Oduro"], ["derrick_owusu", "Derrick Owusu"], ["lord_maclean_coffie", "Lord Maclean Coffie"], ["other", "Other:"]]},
+    {"id": "sio_eio", "label": "Type of Incident ( SIO or EIO)", "type": "single_choice", "required": true, "choices": [["sio", "SIO"], ["eio", "EIO"]]},
+    {"id": "proof", "label": "proof", "type": "file_upload", "required": false, "hint": "If applicable add a proof like a picture. Attach one photo.", "source_max_files": 1, "source_max_bytes": 10485760},
+    {"id": "incident_kind", "label": "What kind of incident has happened?", "type": "single_choice", "required": true, "choices": [["accident", "Accident"], ["near_miss", "Near miss"], ["risk", "At risk situation/Unsafe Condition"]]},
+    {"id": "was_injured", "label": "Was anyone injured?", "type": "single_choice", "required": true, "choices": [["yes", "Yes"], ["no", "No"]]},
+    {"id": "injured_person", "label": "Name of Injured Person", "type": "short_text", "required": false},
+    {"id": "location", "label": "Where did it happen? (Location)", "type": "short_text", "required": true},
+    {"id": "incident_date", "label": "When did this happen?", "type": "date", "required": true},
+    {"id": "description", "path": "/data/description/description", "label": "Describe the incident or condition (How it happened or what is noticed)", "type": "paragraph", "required": true},
+    {"id": "immediate_action", "path": "/data/actions/immediate_action", "label": "What immediate action was taken?", "type": "paragraph", "required": true},
+    {"id": "preventive_action", "label": "What can be done to prevent this or a similar incident from happening again?", "type": "paragraph", "required": true},
+    {"id": "control_in_place", "label": "Has the control been put in place?", "type": "single_choice", "required": true, "choices": [["yes", "Yes"], ["no", "No"]]},
+    {"id": "response_status", "label": "response status", "type": "single_choice", "required": true, "hint": "This assigns a status to the entry, please tick \"new in\"", "default": "new_in", "choices": [["new_in", "new in"]]}
+  ]
+}
