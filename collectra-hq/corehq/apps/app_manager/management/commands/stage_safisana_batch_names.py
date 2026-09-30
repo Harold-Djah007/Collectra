@@ -30,6 +30,18 @@ NAME_CALCULATION = (
 )
 
 
+def repair_hidden_date_bind(model):
+    """Hidden values cannot have Required or Validation Condition settings."""
+    date_bind = one(model, f'./x:bind[@nodeset="{DATE}"]')
+    changed = False
+    for attribute in ('required', 'constraint'):
+        for key in (attribute, '{http://commcarehq.org/xforms/vellum}' + attribute):
+            if key in date_bind.attrib:
+                del date_bind.attrib[key]
+                changed = True
+    return changed
+
+
 def upgrade_source(source):
     source = source.encode('utf-8') if isinstance(source, str) else source
     root = etree.fromstring(source)
@@ -49,6 +61,8 @@ def upgrade_source(source):
                 or body.xpath('.//*[@ref=$path]', path=DATE)
                 or body.xpath('.//*[@ref=$path]', path=LEGACY_NAME)):
             raise ValueError('The staged naming fields changed; review manually')
+        if repair_hidden_date_bind(model):
+            return etree.tostring(root, encoding='UTF-8', xml_declaration=True, pretty_print=True)
         return source
     if bed.xpath('./x:item/x:value/text()', namespaces=NS) != list(BED_CODES) + ['other']:
         raise ValueError('The reviewed bed choices changed; review manually')
@@ -77,8 +91,7 @@ def upgrade_source(source):
 
     for name in ('registration_date', 'generated_batch_name'):
         etree.SubElement(lst, f'{{{XMLNS}}}{name}')
-    bind(DATE, type='xsd:date', required='true()', readonly='true()',
-         constraint=". <= today() and . >= date('2000-01-01') and . <= date('2099-12-31')")
+    bind(DATE, type='xsd:date', readonly='true()')
     bind(GENERATED_NAME, type='xsd:string', calculate=NAME_CALCULATION,
          readonly='true()', required='true()')
     # Keep the historical numeric export field; the case name uses a string
