@@ -2,8 +2,10 @@
 
 import os
 import shutil
+import signal
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -100,21 +102,31 @@ class LauncherSafetyTests(unittest.TestCase):
         self.stub("uv", "exit 0")
         self.stub("ss", "exit 0")
         self.stub("curl", "exit 0")
+        run_pid = self.root / "docker-run.pid"
+        self.env["TEST_RUN_PID"] = str(run_pid)
         self.stub("docker", '''
 case "$1" in
-    info|stop) exit 0 ;;
+    info) exit 0 ;;
+    stop) kill "$(cat "$TEST_RUN_PID")"; exit 0 ;;
     container) exit 1 ;;
     run)
         while [[ "$1" != --cidfile ]]; do shift; done
         echo owned-container-id > "$2"
-        kill -TERM "$PPID"
-        exit 0 ;;
+        echo "$$" > "$TEST_RUN_PID"
+        exec tail -f /dev/null ;;
 esac''')
-        result = subprocess.run(
+        process = subprocess.Popen(
             ["bash", str(target), "collectra.example.com"],
-            env=self.env, capture_output=True, text=True, timeout=10,
+            env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         )
-        self.assertEqual(result.returncode, 143)
+        self.addCleanup(lambda: process.kill() if process.poll() is None else None)
+        deadline = time.monotonic() + 5
+        while not run_pid.exists() and process.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertTrue(run_pid.exists(), "Proxy stub did not start")
+        process.send_signal(signal.SIGTERM)
+        process.communicate(timeout=10)
+        self.assertEqual(process.returncode, 143)
         self.assertIn("docker stop owned-container-id", self.commands())
         self.assertNotIn("docker stop collectra-local-accelerator", self.commands())
 
