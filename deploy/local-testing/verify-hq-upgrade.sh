@@ -10,6 +10,53 @@ export COLLECTRA_FORMPLAYER_URL=http://127.0.0.1:18080
 report_dir="${COLLECTRA_VERIFY_REPORT_DIR:-$HOME/collectra-hq-verification}"
 mkdir -p "$report_dir"
 
+# Fail before the test suite if local infrastructure is unavailable.
+"$python_bin" - <<'PY'
+import json
+import os
+from urllib.request import urlopen
+
+import psycopg2
+import redis
+
+errors = []
+def check(label, probe):
+    try:
+        probe()
+        print(label + ': ready')
+    except Exception:
+        errors.append(label)
+        print(label + ': unavailable')
+
+def postgres_ready():
+    connection = psycopg2.connect(
+        host='127.0.0.1', port=5432, dbname='postgres',
+        user='commcarehq', password='commcarehq', connect_timeout=3,
+    )
+    connection.close()
+
+def elasticsearch_ready():
+    with urlopen('http://127.0.0.1:9200/', timeout=3) as response:
+        data = json.load(response)
+        if 'version' not in data:
+            raise ValueError('Unexpected Elasticsearch response')
+
+def formplayer_ready():
+    with urlopen(os.environ['COLLECTRA_FORMPLAYER_URL'] + '/serverup', timeout=3) as response:
+        if json.load(response).get('status') != 'ok':
+            raise ValueError('Formplayer is not ready')
+
+check('PostgreSQL (5432)', postgres_ready)
+check('Redis (6379)', lambda: redis.Redis(
+    host='127.0.0.1', port=6379, socket_connect_timeout=3, socket_timeout=3,
+).ping())
+check('Elasticsearch (9200)', elasticsearch_ready)
+check('Formplayer (18080)', formplayer_ready)
+if errors:
+    raise SystemExit('Verification stopped before tests. Start the local Docker services '
+                     'and test preview, then rerun. Unavailable: ' + ', '.join(errors))
+PY
+
 "$python_bin" manage.py check
 node "$repo_root/deploy/local-testing/test-dashboard-loading.cjs"
 
