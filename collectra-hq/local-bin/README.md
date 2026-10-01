@@ -1,12 +1,14 @@
 # Collectra local launchers
 
 Use `./local-bin/start-collectra` for normal development on the laptop or the
-same local network.
+same local network. A second launcher is refused, and occupied web ports must
+be freed by stopping their owner; the launcher does not kill unrelated services.
 
 Use `./local-bin/start-collectra-public` for a temporary cellular-data test. It
 starts a Cloudflare Quick Tunnel, publishes a temporary HTTPS hostname, and
 then starts the normal Collectra services. Keep that terminal open for the
-entire test.
+entire test. The tunnel follows `COLLECTRA_BIND_PORT` (8000 by default), and
+stopping this launcher also stops its HQ child and tunnel.
 
 The public launcher requires `cloudflared`. Follow Cloudflare's official
 installation instructions:

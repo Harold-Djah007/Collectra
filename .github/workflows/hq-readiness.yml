@@ -171,7 +171,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate shell entry point
-        run: bash -n deploy/local-testing/start-optimized-origin.sh
+        run: |
+          bash -n deploy/local-testing/start-optimized-origin.sh
+          bash -n collectra-hq/local-bin/start-collectra
+          bash -n collectra-hq/local-bin/start-collectra-public
+
+      - name: Check launcher failure paths
+        run: python -m unittest discover -s deploy/local-testing/tests -v
 
       - name: Validate Caddy configuration
         run: >-

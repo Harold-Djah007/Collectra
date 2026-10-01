@@ -5,16 +5,29 @@ project_root="${COLLECTRA_PROJECT_ROOT:-$HOME/projects/Collectra-Cursor/collectr
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}/collectra"
 tunnel_log="$state_root/cloudflared.log"
 tunnel_pid=""
+hq_pid=""
+bind_port="${COLLECTRA_BIND_PORT:-8000}"
+
+if [[ ! "$bind_port" =~ ^[0-9]+$ ]] || (( bind_port < 1 || bind_port > 65535 )); then
+    echo "COLLECTRA_BIND_PORT must be an integer from 1 through 65535." >&2
+    exit 2
+fi
 
 mkdir -p "$state_root"
 cd "$project_root"
 
 cleanup_tunnel() {
+    if [[ "$hq_pid" =~ ^[0-9]+$ ]] && kill -0 "$hq_pid" >/dev/null 2>&1; then
+        kill "$hq_pid" >/dev/null 2>&1 || true
+        wait "$hq_pid" 2>/dev/null || true
+    fi
     if [[ "$tunnel_pid" =~ ^[0-9]+$ ]] && kill -0 "$tunnel_pid" >/dev/null 2>&1; then
         kill "$tunnel_pid" >/dev/null 2>&1 || true
     fi
 }
-trap cleanup_tunnel EXIT INT TERM
+trap cleanup_tunnel EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 if ! command -v cloudflared >/dev/null 2>&1; then
     echo "cloudflared is required for public cellular testing."
@@ -26,7 +39,7 @@ fi
 echo "Creating a temporary public HTTPS address..."
 cloudflared tunnel \
     --no-autoupdate \
-    --url http://127.0.0.1:8000 \
+    --url "http://127.0.0.1:${bind_port}" \
     >"$tunnel_log" 2>&1 &
 tunnel_pid=$!
 
@@ -59,4 +72,6 @@ echo "Public Collectra address: $public_url"
 echo "This temporary address remains available only while this command is running."
 echo "Tunnel logs: $tunnel_log"
 
-"$project_root/local-bin/start-collectra"
+"$project_root/local-bin/start-collectra" &
+hq_pid=$!
+wait "$hq_pid"

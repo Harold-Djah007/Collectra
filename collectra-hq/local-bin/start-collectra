@@ -11,6 +11,14 @@ cd "$project_root"
 
 celery_pid=""
 pillowtop_pid=""
+web_pid=""
+
+# Keep another launcher from replacing this instance's worker PID files.
+exec 9>"$state_root/launcher.lock"
+if ! flock -n 9; then
+    echo "Collectra is already running. Stop its launcher before starting another instance." >&2
+    exit 1
+fi
 
 if [[ ! "$bind_port" =~ ^[0-9]+$ ]] || (( bind_port < 1 || bind_port > 65535 )); then
     echo "COLLECTRA_BIND_PORT must be an integer from 1 through 65535." >&2
@@ -44,7 +52,7 @@ stop_managed_process() {
 cleanup() {
     echo
     echo "Stopping Collectra background workers..."
-    for pid in "$pillowtop_pid" "$celery_pid"
+    for pid in "$web_pid" "$pillowtop_pid" "$celery_pid"
     do
         if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" >/dev/null 2>&1; then
             kill "$pid" >/dev/null 2>&1 || true
@@ -52,7 +60,14 @@ cleanup() {
     done
     rm -f "$state_root/pillowtop.pid" "$state_root/celery.pid"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+if fuser "${bind_port}/tcp" >/dev/null 2>&1; then
+    echo "Port ${bind_port} is already in use. Stop its owner before starting Collectra." >&2
+    exit 1
+fi
 
 echo "Waiting for Docker Desktop..."
 until docker info >/dev/null 2>&1
@@ -107,9 +122,8 @@ do
 done
 
 if fuser "${bind_port}/tcp" >/dev/null 2>&1; then
-    echo "Stopping the previous process on port ${bind_port}..."
-    fuser -k "${bind_port}/tcp" >/dev/null 2>&1 || true
-    sleep 2
+    echo "Port ${bind_port} became busy during startup. Stop its owner before retrying." >&2
+    exit 1
 fi
 
 # Stop legacy Docker workers. The managed workers below use the current checkout.
@@ -127,7 +141,7 @@ uv run celery -A corehq worker \
     --loglevel=INFO \
     --pool=solo \
     --queues="$celery_queues" \
-    >"$state_root/celery.log" 2>&1 &
+    >"$state_root/celery.log" 2>&1 9>&- &
 celery_pid=$!
 echo "$celery_pid" >"$state_root/celery.pid"
 
@@ -135,7 +149,7 @@ echo "Starting Pillowtop indexer..."
 uv run python manage.py run_ptop \
     --pillow-key=core \
     --processor-chunk-size=1 \
-    >"$state_root/pillowtop.log" 2>&1 &
+    >"$state_root/pillowtop.log" 2>&1 9>&- &
 pillowtop_pid=$!
 echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
 
@@ -164,4 +178,6 @@ uv run gunicorn \
     --max-requests-jitter 100 \
     --access-logfile - \
     --error-logfile - \
-    deployment.gunicorn.collectra_wsgi:application
+    deployment.gunicorn.collectra_wsgi:application 9>&- &
+web_pid=$!
+wait "$web_pid"

@@ -34,6 +34,9 @@ COLLECTRA_SKIP_ASSET_BUILD=1 \
   tribute-legislation-yrs-invalid.trycloudflare.com
 ```
 
+A duplicate launch leaves the existing origin running. On exit, the launcher
+stops only the proxy container created by that invocation.
+
 Keep both the optimized-origin terminal and the `cloudflared` terminal open.
 If the Quick Tunnel process exits, its random hostname expires. Start a new
 tunnel with QUIC, copy its reported hostname, and pass that hostname to the
