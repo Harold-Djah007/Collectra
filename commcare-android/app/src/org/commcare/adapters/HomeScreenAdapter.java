@@ -1,6 +1,8 @@
 package org.commcare.adapters;
 
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.lifecycle.LifecycleOwnerKt;
+import androidx.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +15,9 @@ import org.commcare.activities.HomeButtons;
 import org.commcare.dalvik.R;
 import org.commcare.views.CollectraMotion;
 import org.commcare.views.CustomBanner;
+import org.commcare.tasks.LatestTaskExecutor;
+import org.commcare.utils.SyncDetailCalculations;
+import org.javarosa.core.services.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +33,8 @@ public class HomeScreenAdapter
         extends SquareButtonAdapter {
 
     private final HomeCardDisplayData[] buttonData;
+    private final StandardHomeActivity activity;
+    private final LatestTaskExecutor<Integer> syncStatusExecutor = new LatestTaskExecutor<>();
 
     private static final int TYPE_HEADER = 1;
     private final int screenHeight, screenWidth;
@@ -40,6 +47,7 @@ public class HomeScreenAdapter
                              boolean isDemoUser) {
         super(activity);
 
+        this.activity = activity;
         buttonData = HomeButtons.buildButtonData(activity, buttonsToHide, isDemoUser);
         syncButtonPosition = calcSyncButtonPos();
 
@@ -117,6 +125,35 @@ public class HomeScreenAdapter
         );
         headerHolder.headerImage.setImageResource(R.drawable.collectra_mark);
 
+        bindQuickAction(headerHolder.start, R.drawable.home_start);
+        bindQuickAction(headerHolder.resume, R.drawable.home_incomplete);
+        bindQuickAction(headerHolder.sync, R.drawable.home_sync);
+        headerHolder.syncStatus.setText(R.string.collectra_today_checking_sync);
+        syncStatusExecutor.submit(
+                LifecycleOwnerKt.getLifecycleScope(activity),
+                SyncDetailCalculations::getNumUnsentForms,
+                new LatestTaskExecutor.Callback<>() {
+                    @Override
+                    public void onResult(Integer count) {
+                        if (activity.isFinishing() || activity.isDestroyed()) {
+                            return;
+                        }
+                        String lastSync = SyncDetailCalculations.getLastSyncTimeAndMessage().second;
+                        headerHolder.syncStatus.setText(count > 0
+                                ? activity.getResources().getQuantityString(
+                                        R.plurals.collectra_today_waiting_sync, count, count, lastSync)
+                                : lastSync);
+                    }
+
+                    @Override
+                    public void onError(@NonNull Exception exception) {
+                        Logger.exception("Could not load home sync status", exception);
+                        if (!activity.isFinishing() && !activity.isDestroyed()) {
+                            headerHolder.syncStatus.setText(R.string.collectra_today_sync_unavailable);
+                        }
+                    }
+                });
+
         if (!mastheadAnimated) {
             mastheadAnimated = true;
             CollectraMotion.startLogoPulse(headerHolder.headerImage);
@@ -132,6 +169,18 @@ public class HomeScreenAdapter
                         .start();
             }
         }
+    }
+
+    private void bindQuickAction(View action, int imageResource) {
+        for (HomeCardDisplayData button : buttonData) {
+            if (button.imageResource == imageResource) {
+                action.setVisibility(View.VISIBLE);
+                action.setOnClickListener(button.listener);
+                return;
+            }
+        }
+        action.setVisibility(View.GONE);
+        action.setOnClickListener(null);
     }
 
     @Override
@@ -167,6 +216,10 @@ public class HomeScreenAdapter
         public final TextView greeting;
         public final TextView tagline;
         public final View accent;
+        public final TextView syncStatus;
+        public final View start;
+        public final View resume;
+        public final View sync;
 
         public HeaderViewHolder(View itemView) {
             super(itemView);
@@ -178,6 +231,10 @@ public class HomeScreenAdapter
             greeting = itemView.findViewById(R.id.collectra_home_greeting);
             tagline = itemView.findViewById(R.id.collectra_home_tagline);
             accent = itemView.findViewById(R.id.collectra_home_accent);
+            syncStatus = itemView.findViewById(R.id.collectra_today_sync_status);
+            start = itemView.findViewById(R.id.collectra_today_start);
+            resume = itemView.findViewById(R.id.collectra_today_resume);
+            sync = itemView.findViewById(R.id.collectra_today_sync);
         }
     }
 }

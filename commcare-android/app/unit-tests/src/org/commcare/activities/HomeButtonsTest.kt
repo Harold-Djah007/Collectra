@@ -1,5 +1,6 @@
 package org.commcare.activities
 
+import android.view.View
 import io.mockk.every
 import org.commcare.android.database.user.models.FormRecord
 import org.commcare.android.util.ActivityAssertions.assertStarted
@@ -24,6 +25,35 @@ import org.robolectric.shadows.ShadowToast
  */
 class HomeButtonsTest : BaseHomeScreenActivityTest() {
     // region where each button goes
+
+    @Test
+    fun `today start shortcut opens the app menu`() {
+        val home = buildVisibleHome()
+
+        home.findViewById<View>(org.commcare.dalvik.R.id.collectra_today_start).performClick()
+        assertStartedForResult(home, MenuActivity::class.java)
+    }
+
+    @Test
+    fun `today resume shortcut only opens unfinished forms`() {
+        val home = buildVisibleHome()
+
+        home.findViewById<View>(org.commcare.dalvik.R.id.collectra_today_resume).performClick()
+        val started = assertStartedForResult(home, FormRecordListActivity::class.java)
+        assertEquals(FormRecord.STATUS_INCOMPLETE, started.getStringExtra(FormRecord.META_STATUS))
+    }
+
+    @Test
+    fun `today sync shortcut uses the offline warning`() {
+        every { ConnectivityStatus.isNetworkAvailable(any()) } returns false
+        every { ConnectivityStatus.isAirplaneModeOn(any()) } returns true
+        val home = buildVisibleHome()
+
+        home.findViewById<View>(org.commcare.dalvik.R.id.collectra_today_sync).performClick()
+
+        assertEquals(Localization.get("notification.sync.airplane.action"),
+                     ShadowToast.getTextOfLatestToast())
+    }
 
     @Test
     fun `start opens the app's root menu`() {

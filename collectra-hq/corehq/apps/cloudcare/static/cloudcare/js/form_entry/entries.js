@@ -1157,22 +1157,88 @@ function GeoPointEntry(question, options) {
     self.templateType = 'geo';
     self.map = null;
     self.hasMap = () => !!self.map;
+    self.mapAvailable = ko.observable(false);
+    self.mapExpanded = ko.observable(false);
+    self.searchAvailable = ko.observable(false);
+    self.mapNotice = ko.observable('');
+    self.locationError = ko.observable('');
+    self.locating = ko.observable(false);
+    self.latitude = ko.observable(self.rawAnswer()[0] ?? '');
+    self.longitude = ko.observable(self.rawAnswer()[1] ?? '');
+    self.captureVersion = 0;
+    self.rawAnswer.subscribe(function (value) {
+        self.latitude(value[0] ?? '');
+        self.longitude(value[1] ?? '');
+    });
     self.control_width = constants.CONTROL_WIDTH;
 
     self.DEFAULT = {
-        lat: 30,
+        lat: 0,
         lon: 0,
-        zoom: 1,
-        anszoom: 6,
+        zoom: 2,
+        anszoom: 16,
     };
 
     self.onClear = function () {
+        self.captureVersion += 1;
+        self.locating(false);
+        self.locationError('');
         self.rawAnswer([]);
+        if (self.map && self.centerMarker) {
+            self.map.removeLayer(self.centerMarker);
+            self.centerMarker = null;
+        }
+    };
+
+    self.applyCoordinates = function (latitude, longitude, extra = []) {
+        if (latitude === '' || longitude === '' || latitude === null || longitude === null
+                || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))
+                || Math.abs(Number(latitude)) > 90 || Math.abs(Number(longitude)) > 180) {
+            self.locationError(gettext('Enter latitude between -90 and 90 and longitude between -180 and 180.'));
+            return false;
+        }
+        const lat = Number(latitude), lon = Number(longitude);
+        self.locationError('');
+        self.rawAnswer([lat, lon, ...extra]);
+        if (self.map) {
+            self.placeMarker(lat, lon);
+            self.map.setView([lat, lon], Math.max(self.map.getZoom(), self.DEFAULT.anszoom));
+        }
+        return true;
+    };
+
+    self.saveCoordinates = function () {
+        self.captureVersion += 1;
+        self.locating(false);
+        return self.applyCoordinates(String(self.latitude()).trim(), String(self.longitude()).trim());
+    };
+
+    self.captureLocation = function () {
+        if (!navigator.geolocation) {
+            self.locationError(gettext('Location capture is unavailable. Enter coordinates manually.'));
+            return;
+        }
+        const version = ++self.captureVersion;
+        self.locationError('');
+        self.locating(true);
+        navigator.geolocation.getCurrentPosition(function (position) {
+            if (version !== self.captureVersion) { return; }
+            self.locating(false);
+            const coords = position.coords;
+            self.applyCoordinates(coords.latitude, coords.longitude,
+                [coords.altitude ?? 0, coords.accuracy]);
+        }, function (error) {
+            if (version !== self.captureVersion) { return; }
+            self.locating(false);
+            self.locationError(error.code === 1
+                ? gettext('Location permission was denied. Allow location access or enter coordinates manually.')
+                : gettext('Could not obtain your location. Try again or enter coordinates manually.'));
+        }, {enableHighAccuracy: true, timeout: 15000, maximumAge: 0});
     };
 
     self.loadMap = function () {
         var token = initialPageData.get("mapbox_access_token");
-        if (token) {
+        self.mapAvailable(true);
             // if a default answer exists, use that instead
             let lat = self.rawAnswer().length ? self.rawAnswer()[0] : self.DEFAULT.lat;
             let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
@@ -1180,34 +1246,71 @@ function GeoPointEntry(question, options) {
 
             self.map = L.map(self.entryId, {
                 zoomControl: false,
+                scrollWheelZoom: false,
             }).setView([lat, lon], zoom);
             L.control.zoom({
                 position: 'bottomright',
             }).addTo(self.map);
-
-            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
+            const tiles = token ? L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                         + token, {
                 id: 'mapbox/streets-v11',
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                 tileSize: 512,
                 zoomOffset: -1,
-            }).addTo(self.map);
-            self.map.on('move', self.updateCenter);
+            }) : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+            });
+            let tileFailures = 0;
+            tiles.on('loading', function () { tileFailures = 0; });
+            tiles.on('tileerror', function () {
+                tileFailures += 1;
+                self.mapNotice(gettext('Map tiles could not load. Check your connection; GPS and coordinate entry still work.'));
+            });
+            tiles.on('load', function () { if (!tileFailures) { self.mapNotice(''); } });
+            tiles.addTo(self.map);
+            if (self.rawAnswer().length >= 2) { self.placeMarker(lat, lon); }
+            self.map.on('click', function (event) {
+                self.captureVersion += 1;
+                self.locating(false);
+                self.applyCoordinates(event.latlng.lat, event.latlng.lng);
+            });
+            if (token && L.mapbox) {
+                L.mapbox.accessToken = token;
+                self.geocoder = L.mapbox.geocoder('mapbox.places');
+                self.searchAvailable(true);
+            }
+            setTimeout(function () { self.map.invalidateSize(); }, 0);
+    };
 
-            self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
-
-            L.mapbox.accessToken = token;
-            self.geocoder = L.mapbox.geocoder('mapbox.places');
+    self.placeMarker = function (lat, lon) {
+        if (self.centerMarker) {
+            self.centerMarker.setLatLng([lat, lon]);
         } else {
-            question.error(gettext('Map layer not configured.'));
+            const icon = L.divIcon({
+                className: 'collectra-location-pin',
+                html: '<span style="display:block;width:26px;height:26px;background:#00a6a6;border:4px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px #173e5866"></span>',
+                iconSize: [26, 26], iconAnchor: [13, 26],
+            });
+            self.centerMarker = L.marker([lat, lon], {draggable: true, icon}).addTo(self.map);
+            self.centerMarker.on('dragend', function () {
+                const point = self.centerMarker.getLatLng();
+                self.captureVersion += 1;
+                self.locating(false);
+                self.applyCoordinates(point.lat, point.lng);
+            });
         }
+    };
 
+    self.toggleMapSize = function () {
+        self.mapExpanded(!self.mapExpanded());
+        setTimeout(function () { if (self.map) { self.map.invalidateSize(); } }, 0);
     };
 
     self.afterRender = function () {
         if (typeof L === 'undefined') {
-            question.error(gettext('Could not load map. Please try again later.'));
+            self.mapNotice(gettext('Map unavailable. Use your location or enter coordinates below.'));
         } else {
             self.loadMap();
         }
@@ -1216,14 +1319,17 @@ function GeoPointEntry(question, options) {
     self.updateCenter = function () {
         var center = self.map.getCenter();
         self.centerMarker.setLatLng(center);
-        self.rawAnswer([center.lat, center.lng]);
+        const previous = self.rawAnswer();
+        const unchanged = previous.length >= 2 && Math.abs(previous[0] - center.lat) < 1e-10
+            && Math.abs(previous[1] - center.lng) < 1e-10;
+        self.rawAnswer([center.lat, center.lng, ...(unchanged ? previous.slice(2) : [])]);
     };
 
     self.formatLat = function () {
-        return self.formatCoordinate(self.rawAnswer()[0] || null, ['N', 'S']);
+        return self.formatCoordinate(self.rawAnswer()[0] ?? null, ['N', 'S']);
     };
     self.formatLon = function () {
-        return self.formatCoordinate(self.rawAnswer()[1] || null, ['E', 'W']);
+        return self.formatCoordinate(self.rawAnswer()[1] ?? null, ['E', 'W']);
     };
     self.formatCoordinate = function (coordinate, cardinalities) {
         var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities[1];
@@ -1234,6 +1340,7 @@ function GeoPointEntry(question, options) {
     };
 
     self.search = function (form) {
+        if (!self.geocoder) { return false; }
         var query = $(form).find('.query').val();
         self.geocoder.query(query, function (err, data) {
             if (err === null) {

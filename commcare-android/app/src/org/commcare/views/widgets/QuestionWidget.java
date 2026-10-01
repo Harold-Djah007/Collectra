@@ -494,7 +494,7 @@ public abstract class QuestionWidget extends LinearLayout implements QuestionExt
             }
         }
 
-        if (mPrompt.getLongText() == null) {
+        if (!hasQuestionText(mPrompt)) {
             mQuestionText.setVisibility(GONE);
         }
 
@@ -517,6 +517,10 @@ public abstract class QuestionWidget extends LinearLayout implements QuestionExt
             MediaLayout mediaLayout = MediaLayout.buildComprehensiveLayout(getContext(), mQuestionText, audioURI, imageURI, videoURI, bigImageURI, qrCodeContent, inlineVideoUri, ttsText, mPrompt.getIndex().hashCode());
             addView(mediaLayout, mLayout);
         }
+    }
+
+    static boolean hasQuestionText(FormEntryPrompt prompt) {
+        return prompt.getLongText() != null || prompt.getMarkdownText() != null;
     }
 
     protected void addToCompactLayout(View view) {

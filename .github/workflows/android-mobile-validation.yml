@@ -12,7 +12,7 @@ on:
       - "commcare-android/**"
       - ".github/workflows/android-mobile-validation.yml"
   push:
-    branches: [main]
+    branches: [main, hd/safisana-form-workflows-2026-09-24]
     paths:
       - "commcare-android/**"
       - ".github/workflows/android-mobile-validation.yml"

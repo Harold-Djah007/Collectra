@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+hq_root="$repo_root/collectra-hq"
+localsettings_target="$(readlink -f "$hq_root/localsettings.py")"
+blob_root="$(dirname "$localsettings_target")/sharedfiles"
+proxy_name="collectra-alert-test-proxy"
+formplayer_name="collectra-alert-test-formplayer"
+resource_bridge_name="collectra-alert-test-resources"
+log_file="$repo_root/alert-test-runserver.log"
+pillow_log="$repo_root/alert-test-case-indexer.log"
+
+if [[ ! -d "$blob_root/blobdb" ]]; then
+    echo "Existing form blobs not found at $blob_root/blobdb" >&2
+    exit 1
+fi
+if ! curl -fsS --max-time 3 http://127.0.0.1:9200/ >/dev/null 2>&1; then
+    echo 'Collectra Elasticsearch is not responding on port 9200.' >&2
+    echo 'From the main collectra-hq checkout run: ./scripts/docker up -d elasticsearch6' >&2
+    echo 'Wait for curl -fsS http://127.0.0.1:9200/ to succeed, then retry.' >&2
+    exit 1
+fi
+if ! (exec 6<>/dev/tcp/127.0.0.1/9092) 2>/dev/null; then
+    echo 'Collectra Kafka is not responding on port 9092.' >&2
+    echo 'From the main collectra-hq checkout run: ./scripts/docker up -d zookeeper kafka' >&2
+    echo 'Wait for the Kafka container to become healthy, then retry.' >&2
+    exit 1
+fi
+if ss -ltn | awk '{print $4}' | grep -Eq '(^|:)8011$'; then
+    echo 'Port 8011 is occupied. Stop the earlier test runserver first.' >&2
+    exit 1
+fi
+proxy_port=''
+for candidate in 8012 8013 8014 8015 8016 8017 8018 8019; do
+    if ! ss -ltn | awk '{print $4}' | grep -Eq "(^|:)$candidate$"; then
+        proxy_port="$candidate"
+        break
+    fi
+done
+if [[ -z $proxy_port ]]; then
+    echo 'No free test port was found between 8012 and 8019.' >&2
+    exit 1
+fi
+echo "Using http://localhost:$proxy_port for Collectra HQ and Formplayer preview."
+if docker container inspect "$proxy_name" >/dev/null 2>&1; then
+    echo "The earlier $proxy_name container still exists. Stop it first." >&2
+    exit 1
+fi
+if docker container inspect "$resource_bridge_name" >/dev/null 2>&1; then
+    echo "The earlier $resource_bridge_name container still exists. Stop it first." >&2
+    exit 1
+fi
+owns_formplayer=0
+server_pid=''
+pillow_pid=''
+cleanup() {
+    if [[ -n $pillow_pid ]]; then
+        kill "$pillow_pid" 2>/dev/null || true
+        wait "$pillow_pid" 2>/dev/null || true
+    fi
+    if [[ -n $server_pid ]]; then
+        kill "$server_pid" 2>/dev/null || true
+    fi
+    docker stop "$proxy_name" >/dev/null 2>&1 || true
+    docker stop "$resource_bridge_name" >/dev/null 2>&1 || true
+    if [[ $owns_formplayer == 1 ]]; then
+        docker stop "$formplayer_name" >/dev/null 2>&1 || true
+    fi
+}
+trap cleanup EXIT
+if ! curl -fsS --max-time 3 http://127.0.0.1:18080/serverup >/dev/null 2>&1; then
+    if ss -ltn | awk '{print $4}' | grep -Eq '(^|:)18080$'; then
+        echo 'Port 18080 is occupied by a service that is not responding as Formplayer.' >&2
+        exit 1
+    fi
+    if docker container inspect "$formplayer_name" >/dev/null 2>&1; then
+        echo "The earlier $formplayer_name container still exists. Stop it first." >&2
+        exit 1
+    fi
+    postgres_container="$(docker ps --filter 'name=^/hqservice-postgres-1$' --format '{{.ID}}' | head -n 1)"
+    if [[ -z $postgres_container ]]; then
+        echo 'Collectra PostgreSQL is not running. Start it with ./scripts/docker up -d postgres redis.' >&2
+        exit 1
+    fi
+    postgres_ready=0
+    for attempt in $(seq 1 60); do
+        if docker exec "$postgres_container" pg_isready -U commcarehq -d postgres >/dev/null 2>&1; then
+            postgres_ready=1
+            break
+        fi
+        sleep 1
+    done
+    if [[ $postgres_ready != 1 ]]; then
+        echo 'Collectra PostgreSQL did not become ready within 60 seconds.' >&2
+        docker logs --tail 25 "$postgres_container" >&2 || true
+        exit 1
+    fi
+    if [[ -z $(docker ps --filter 'name=^/hqservice-redis-1$' --format '{{.ID}}' | head -n 1) ]]; then
+        echo 'Collectra Redis is not running. Start it with ./scripts/docker up -d redis.' >&2
+        exit 1
+    fi
+    postgres_network="$(docker inspect -f '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$postgres_container" | head -n 1)"
+    if [[ -z $postgres_network ]]; then
+        echo 'Could not find the Collectra PostgreSQL Docker network.' >&2
+        exit 1
+    fi
+    # Keep Formplayer test sessions separate from other Collectra environments.
+    formplayer_database=collectra_alert_formplayer
+    if ! docker exec "$postgres_container" psql -U commcarehq -d postgres -tAc \
+            "SELECT 1 FROM pg_database WHERE datname='$formplayer_database'" | grep -qx 1; then
+        docker exec "$postgres_container" createdb -U commcarehq "$formplayer_database"
+    fi
+    docker run --rm --detach --name "$formplayer_name" \
+        --network "$postgres_network" \
+        --publish 18080:8080 \
+        --add-host=host.docker.internal:host-gateway \
+        --env COMMCARE_HOST=http://host.docker.internal:8011 \
+        --env COMMCARE_ALTERNATE_ORIGINS="http://localhost:$proxy_port,http://127.0.0.1:$proxy_port" \
+        --env AUTH_KEY=secretkey \
+        --env EXTERNAL_REQUEST_MODE=replace-host \
+        --env POSTGRESQL_HOST=postgres \
+        --env POSTGRESQL_PORT=5432 \
+        --env "POSTGRESQL_DATABASE=$formplayer_database" \
+        --env POSTGRESQL_USERNAME=commcarehq \
+        --env POSTGRESQL_PASSWROD=commcarehq \
+        --env POSTGRESQL_PASSWORD=commcarehq \
+        --env REDIS_HOSTNAME=redis \
+        docker.io/dimagi/formplayer \
+        java org.springframework.boot.loader.launch.JarLauncher >/dev/null
+    owns_formplayer=1
+    ready=0
+    for attempt in $(seq 1 40); do
+        if curl -fsS --max-time 2 http://127.0.0.1:18080/serverup >/dev/null 2>&1; then
+            ready=1
+            break
+        fi
+        sleep 2
+    done
+    if [[ $ready != 1 ]]; then
+        echo 'Formplayer failed to start. Recent output:' >&2
+        docker logs --tail 35 "$formplayer_name" >&2 || true
+        docker stop "$formplayer_name" >/dev/null 2>&1 || true
+        exit 1
+    fi
+fi
+
+export COLLECTRA_SHARED_DRIVE_ROOT="$blob_root"
+export COLLECTRA_FORMPLAYER_URL="http://127.0.0.1:18080"
+export COLLECTRA_FORMPLAYER_URL_WEBAPPS="http://localhost:$proxy_port/formplayer"
+# Report pagination uses absolute URLs built from BASE_ADDRESS. Keep them on
+# the same local proxy as the HQ page and embedded Formplayer preview.
+export COLLECTRA_BASE_ADDRESS="localhost:$proxy_port"
+export COLLECTRA_DEFAULT_PROTOCOL="http"
+
+cd "$hq_root"
+if [[ ${1:-} != --skip-build ]]; then
+    yarn build
+fi
+
+"$hq_root/.venv/bin/python" manage.py runserver 0.0.0.0:8011 >"$log_file" 2>&1 &
+server_pid=$!
+
+# CommCare's resource downloader also fetches absolute URLs directly, outside
+# Spring's replace-host client. Give localhost:$proxy_port a route to HQ inside
+# Formplayer's network namespace while keeping browser/report URLs unchanged.
+resource_container="$(docker ps --filter publish=18080 --format '{{.ID}}')"
+if [[ -z $resource_container || $resource_container == *$'\n'* ]]; then
+    echo 'Expected one Docker Formplayer container publishing port 18080.' >&2
+    exit 1
+fi
+bash "$repo_root/deploy/local-testing/start-formplayer-resource-bridge.sh" \
+    "$resource_container" "$proxy_port" >/dev/null
+
+# Case List reads Elasticsearch. Keep its Kafka consumer running alongside HQ,
+# unless the user already started one in another terminal or Docker.
+if pgrep -f 'manage.py run_ptop --pillow-name (CaseToElasticsearchPillow|case-pillow)' >/dev/null \
+        || [[ -n $(docker ps --filter 'name=^/hqservice-pillowtop-1$' --format '{{.ID}}') ]]; then
+    echo 'A case indexing worker is already running; using it.'
+else
+    "$hq_root/.venv/bin/python" manage.py run_ptop \
+        --pillow-name CaseToElasticsearchPillow >"$pillow_log" 2>&1 &
+    pillow_pid=$!
+    echo "Case indexing worker started; log: $pillow_log"
+fi
+
+docker run --rm --detach --name "$proxy_name" \
+    --publish "127.0.0.1:$proxy_port:80" \
+    --add-host=host.docker.internal:host-gateway \
+    --volume "$repo_root/deploy/local-testing/Caddyfile.alert-test:/etc/caddy/Caddyfile:ro" \
+    caddy:2 >/dev/null
+
+for attempt in $(seq 1 30); do
+    if curl -fsS --max-time 3 "http://127.0.0.1:$proxy_port/formplayer/serverup" >/dev/null \
+            && curl -fsS --max-time 3 -o /dev/null "http://127.0.0.1:$proxy_port/a/safisana/" \
+            && bash "$repo_root/deploy/local-testing/check-formplayer-resource-bridge.sh" \
+                "$resource_bridge_name" "$proxy_port"; then
+        echo "Collectra test is ready: http://localhost:$proxy_port/a/safisana/"
+        echo "Open the form editor through the same URL. Press Ctrl+C here to stop the test services."
+        while kill -0 "$server_pid" 2>/dev/null; do
+            if [[ -n $pillow_pid ]] && ! kill -0 "$pillow_pid" 2>/dev/null; then
+                echo 'Case indexing worker stopped. Recent output:' >&2
+                tail -n 25 "$pillow_log" >&2
+                exit 1
+            fi
+            sleep 5
+        done
+        wait "$server_pid"
+        exit $?
+    fi
+    if ! kill -0 "$server_pid" 2>/dev/null; then
+        break
+    fi
+    sleep 1
+done
+echo "Test did not become ready. Recent HQ output:" >&2
+tail -n 25 "$log_file" >&2
+docker logs --tail 25 "$proxy_name" >&2 || true
+docker logs --tail 25 "$resource_bridge_name" >&2 || true
+exit 1

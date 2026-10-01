@@ -1,0 +1,9 @@
+:80 {
+    handle_path /formplayer/* {
+        reverse_proxy host.docker.internal:18080 {
+            header_up -Origin
+        }
+    }
+
+    reverse_proxy host.docker.internal:8011
+}

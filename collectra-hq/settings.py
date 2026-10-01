@@ -1216,6 +1216,34 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+# Detached test worktrees can share the original checkout's filesystem blobs.
+# Apply after localsettings so no local file needs to be edited or copied.
+_collectra_shared_drive_root = os.environ.get('COLLECTRA_SHARED_DRIVE_ROOT')
+if _collectra_shared_drive_root:
+    SHARED_DRIVE_ROOT = _collectra_shared_drive_root
+else:
+    # A detached test worktree commonly links localsettings.py to the main
+    # checkout. Its form XML blobs must use that checkout's shared drive too,
+    # including when manage.py or gunicorn is started outside the test launcher.
+    _localsettings_path = os.path.join(os.path.dirname(__file__), 'localsettings.py')
+    _worktree_shared_root = os.path.join(os.path.dirname(__file__), 'sharedfiles')
+    if (os.path.islink(_localsettings_path)
+            and (not SHARED_DRIVE_ROOT
+                 or os.path.realpath(SHARED_DRIVE_ROOT) == os.path.realpath(_worktree_shared_root))):
+        _source_shared_root = os.path.join(os.path.dirname(os.path.realpath(_localsettings_path)),
+                                           'sharedfiles')
+        if os.path.isdir(_source_shared_root):
+            SHARED_DRIVE_ROOT = _source_shared_root
+
+# A test worktree can use the already running formplayer and route browser
+# requests through its own same-origin proxy on a free port.
+_collectra_formplayer_url = os.environ.get('COLLECTRA_FORMPLAYER_URL')
+if _collectra_formplayer_url:
+    FORMPLAYER_URL = _collectra_formplayer_url
+_collectra_browser_formplayer_url = os.environ.get('COLLECTRA_FORMPLAYER_URL_WEBAPPS')
+if _collectra_browser_formplayer_url:
+    FORMPLAYER_URL_WEBAPPS = _collectra_browser_formplayer_url
+
 
 # Allow launchers and hosted environments to publish Collectra at a stable
 # address without rewriting the developer's untracked localsettings.py file.

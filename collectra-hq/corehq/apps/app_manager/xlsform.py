@@ -4,6 +4,7 @@ import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from zipfile import ZipFile
 
 from lxml import etree
 from openpyxl import load_workbook
@@ -18,6 +19,7 @@ XSD_NAMESPACE = "http://www.w3.org/2001/XMLSchema"
 VELLUM_NAMESPACE = "http://commcarehq.org/xforms/vellum"
 
 MAX_XLSFORM_SIZE = 10 * 1024 * 1024
+MAX_EXPANDED_XLSFORM_SIZE = 50 * 1024 * 1024
 XML_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
 REFERENCE_RE = re.compile(r"\$\{([^}]+)\}")
 SELECTED_AT_REFERENCE_RE = re.compile(
@@ -224,11 +226,26 @@ def _language_code(value, fallback="en"):
 
 
 def _sheet_records(sheet):
-    values = sheet.iter_rows(values_only=True)
+    if (sheet.max_row or 0) > 10000 or (sheet.max_column or 0) > 200:
+        raise XlsFormError(f"Sheet '{sheet.title}' exceeds the import limit of 10000 rows or 200 columns.")
+    def checked_values():
+        for row_number, row in enumerate(sheet.iter_rows(), 1):
+            if row_number > 10000:
+                raise XlsFormError(f"Sheet '{sheet.title}' exceeds the import limit of 10000 rows.")
+            for cell in row:
+                if cell.data_type == 'f':
+                    raise XlsFormError(
+                        f"Excel formula in {sheet.title}!{cell.coordinate}. "
+                        "Use literal values or put XLSForm expressions in the calculation column."
+                    )
+            yield tuple(cell.value for cell in row)
+    values = checked_values()
     first_row = next(values, None)
     if not first_row:
         return []
     headers = [_normalize_header(value) for value in first_row]
+    if len([header for header in headers if header]) != len({header for header in headers if header}):
+        raise XlsFormError(f"Duplicate column headers on sheet '{sheet.title}'.")
     if not any(headers):
         return []
     records = []
@@ -288,6 +305,11 @@ def _parse_choices(sheet, default_language, issues):
                 "error", "Every choice needs list_name and name.", "choices", row_number,
             ))
             continue
+        if re.search(r'\s', name):
+            issues.append(XlsFormIssue(
+                'error', f"Choice '{name}' contains whitespace; use a single choice code.",
+                'choices', row_number, 'name',
+            ))
         key = (list_name, name)
         if key in seen:
             issues.append(XlsFormIssue(
@@ -348,17 +370,32 @@ def parse_xlsform(file_or_stream, filename=None):
     """Return a canonical XLSForm definition without modifying an application."""
     filename = filename or getattr(file_or_stream, "name", "uploaded.xlsx")
     try:
-        workbook = load_workbook(file_or_stream, read_only=True, data_only=True)
+        with ZipFile(file_or_stream) as archive:
+            entries = archive.infolist()
+            if len(entries) > 5000 or sum(entry.file_size for entry in entries) > MAX_EXPANDED_XLSFORM_SIZE:
+                raise XlsFormError('The expanded workbook exceeds the safe import limit (50 MB or 5000 entries).')
+        if hasattr(file_or_stream, 'seek'):
+            file_or_stream.seek(0)
+        workbook = load_workbook(file_or_stream, read_only=True, data_only=False, keep_links=False)
+    except XlsFormError:
+        raise
     except Exception as exc:
         raise XlsFormError(f"The workbook could not be opened: {exc}") from exc
 
     try:
         sheets = {sheet.title.strip().lower(): sheet for sheet in workbook.worksheets}
+        if len(sheets) != len(workbook.worksheets):
+            raise XlsFormError('Sheet names must be unique after trimming spaces and ignoring case.')
         if "survey" not in sheets:
             raise XlsFormError("The workbook must contain a sheet named 'survey'.")
 
         settings = _parse_settings(sheets.get("settings"), filename)
         issues = []
+        if settings['instance_name']:
+            issues.append(XlsFormIssue(
+                'warning', 'instance_name is not imported; the form title is used instead.',
+                'settings', column='instance_name',
+            ))
         choices = _parse_choices(sheets.get("choices"), settings["default_language"], issues)
         choices_by_list = {}
         for choice in choices:
@@ -371,6 +408,26 @@ def parse_xlsform(file_or_stream, filename=None):
             raw_type = record.get("type", "")
             kind, data_type, list_name = _parse_row_type(raw_type)
             name = record.get("name", "")
+
+            for column, value in record.items():
+                if value and (column in {'repeat_count', 'parameters', 'read_only', 'readonly'}
+                              or column.startswith(('bind::', 'body::', 'media::', 'label::image',
+                                                    'label::audio', 'label::video'))):
+                    issues.append(XlsFormIssue(
+                        'error', f"Column '{column}' is not supported; it cannot be silently discarded.",
+                        'survey', row_number, column,
+                    ))
+            if re.search(r'select[_\s]+(?:one|multiple)[_\s]+from[_\s]+file', raw_type, re.I):
+                issues.append(XlsFormIssue(
+                    'error', 'External choice files are not supported. Supply choices on the choices sheet.',
+                    'survey', row_number, 'type',
+                ))
+            default = record.get('default', '')
+            if REFERENCE_RE.search(default) or re.match(r'^[A-Za-z_][\w-]*\s*\(', default):
+                issues.append(XlsFormIssue(
+                    'error', 'Expression defaults are not supported; use a calculation or a literal default.',
+                    'survey', row_number, 'default',
+                ))
 
             if not raw_type:
                 issues.append(XlsFormIssue("error", "Question type is required.", "survey", row_number, "type"))
@@ -472,6 +529,7 @@ def parse_xlsform(file_or_stream, filename=None):
         known_names = set(seen_names)
         for row in rows:
             expressions = {
+                "required": row.required,
                 "relevant": row.relevant,
                 "constraint": row.constraint,
                 "calculation": row.calculation,
@@ -481,7 +539,7 @@ def parse_xlsform(file_or_stream, filename=None):
                 for reference in REFERENCE_RE.findall(expression):
                     if reference not in known_names:
                         issues.append(XlsFormIssue(
-                            "warning",
+                            "error",
                             f"Expression references '${{{reference}}}', which is not a survey question.",
                             "survey", row.row, column,
                         ))
@@ -517,6 +575,22 @@ def _replace_references(expression, references):
     if not expression:
         return ""
     return REFERENCE_RE.sub(lambda match: references.get(match.group(1), match.group(0)), expression)
+
+
+def _context_references(row, references, repeat_paths):
+    """Resolve fields in the same repeat relative to the current bound node."""
+    current = [*row.path, row.name]
+    result = dict(references)
+    for name, reference in references.items():
+        target = reference.removeprefix('/data/').split('/')
+        shared = 0
+        for left, right in zip(current, target):
+            if left != right:
+                break
+            shared += 1
+        if any(tuple(current[:depth]) in repeat_paths for depth in range(1, shared + 1)):
+            result[name] = '../' * (len(current) - shared) + '/'.join(target[shared:]) or '.'
+    return result
 
 
 def _guard_selected_at_calculation(expression):
@@ -569,7 +643,10 @@ def _build_choice_instance(model, row, choices, references):
         for key, value in choice.filters.items():
             if XML_NAME_RE.match(key):
                 etree.SubElement(item, key).text = value
-    filter_expression = _replace_references(row.choice_filter, references)
+    # Predicate evaluation occurs on a choice item, not on the question node.
+    filter_references = {name: 'current()/' + ref if ref.startswith('../')
+                         else 'current()' if ref == '.' else ref for name, ref in references.items()}
+    filter_expression = _replace_references(row.choice_filter, filter_references)
     nodeset = f"instance('{instance_id}')/root/item"
     if filter_expression:
         nodeset += f"[{filter_expression}]"
@@ -610,6 +687,7 @@ def build_xform(definition):
         for row in definition.rows
         if not row.kind.startswith("end_")
     }
+    repeat_paths = {tuple([*row.path, row.name]) for row in definition.rows if row.kind == 'begin_repeat'}
     choices_by_list = {}
     for choice in definition.choices:
         choices_by_list.setdefault(choice.list_name, []).append(choice)
@@ -621,7 +699,7 @@ def build_xform(definition):
                 model,
                 row,
                 choices_by_list.get(row.list_name, []),
-                references,
+                _context_references(row, references, repeat_paths),
             )
 
     data_parents = {(): data}
@@ -645,6 +723,7 @@ def build_xform(definition):
         if row.kind.startswith("end_"):
             continue
         ref = _data_ref(row)
+        row_references = _context_references(row, references, repeat_paths)
         text_id = "/".join([*row.path, f"{row.name}-label"])
         hint_id = "/".join([*row.path, f"{row.name}-hint"]) if row.hints else ""
         constraint_id = "/".join([*row.path, f"{row.name}-constraintMsg"])
@@ -665,21 +744,25 @@ def build_xform(definition):
             else:
                 bind_attrs["type"] = row.data_type
         if row.relevant:
-            bind_attrs["relevant"] = _replace_references(row.relevant, references)
+            bind_attrs["relevant"] = _replace_references(row.relevant, row_references)
         if row.required:
-            bind_attrs["required"] = _replace_references(row.required, references)
+            bind_attrs["required"] = _replace_references(row.required, row_references)
         if row.constraint:
-            bind_attrs["constraint"] = _replace_references(row.constraint, references)
+            bind_attrs["constraint"] = _replace_references(row.constraint, row_references)
         calculation = row.calculation
+        metadata_type = _normalize_type(row.raw_type)
+        if row.kind == 'calculate' and not calculation and metadata_type in {'start', 'today'}:
+            etree.SubElement(model, _xforms_tag('setvalue'), {
+                'event': 'xforms-ready', 'ref': ref,
+                'value': 'now()' if metadata_type == 'start' else 'today()',
+            })
         if row.kind == "calculate" and not calculation:
             calculation = {
-                "start": "now()",
                 "end": "now()",
-                "today": "today()",
             }.get(_normalize_type(row.raw_type), "")
         if calculation:
             calculation = _guard_selected_at_calculation(calculation)
-            bind_attrs["calculate"] = _replace_references(calculation, references)
+            bind_attrs["calculate"] = _replace_references(calculation, row_references)
         if row.kind == "note":
             bind_attrs["readonly"] = "true()"
         if row.constraint_messages:

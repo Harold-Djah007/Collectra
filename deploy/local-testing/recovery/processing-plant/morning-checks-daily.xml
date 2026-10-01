@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Morning Checks Daily</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/7292611C-E519-4CA4-A084-97C2D36644A6" uiVersion="1" version="1" name="Morning Checks Daily">
+					<airblower>
+						<airblower />
+					</airblower>
+					<ou_pressure>
+						<ou_pressure_chk />
+					</ou_pressure>
+					<gas_piping_dig>
+						<main_gas_valve_chk />
+						<parallel_digester_valve_chk />
+						<digester_condense_chk />
+					</gas_piping_dig>
+					<air_release>
+						<air_release_chk />
+					</air_release>
+					<gas_piping_chp>
+						<parallel_valve_chp_chk />
+						<chp_condense_chk />
+					</gas_piping_chp>
+					<flare>
+						<flare_main_chk />
+						<flare_sample_valve />
+					</flare>
+					<chp>
+						<chp_kwh />
+						<chp_total_run_hours />
+					</chp>
+					<chp2>
+						<chp2_kwh />
+						<chp2_total_run_hours />
+					</chp2>
+					<cntrl_panel>
+						<cntrl_panel_switch_chk />
+						<desul_panel_valve_chk />
+					</cntrl_panel>
+				</data>
+			</instance>
+			<bind vellum:nodeset="#form/airblower" nodeset="/data/airblower" />
+			<bind vellum:nodeset="#form/airblower/airblower" nodeset="/data/airblower/airblower" />
+			<bind vellum:nodeset="#form/ou_pressure" nodeset="/data/ou_pressure" />
+			<bind vellum:nodeset="#form/ou_pressure/ou_pressure_chk" nodeset="/data/ou_pressure/ou_pressure_chk" />
+			<bind vellum:nodeset="#form/gas_piping_dig" nodeset="/data/gas_piping_dig" />
+			<bind vellum:nodeset="#form/gas_piping_dig/main_gas_valve_chk" nodeset="/data/gas_piping_dig/main_gas_valve_chk" />
+			<bind vellum:nodeset="#form/gas_piping_dig/parallel_digester_valve_chk" nodeset="/data/gas_piping_dig/parallel_digester_valve_chk" />
+			<bind vellum:nodeset="#form/gas_piping_dig/digester_condense_chk" nodeset="/data/gas_piping_dig/digester_condense_chk" />
+			<bind vellum:nodeset="#form/air_release" nodeset="/data/air_release" />
+			<bind vellum:nodeset="#form/air_release/air_release_chk" nodeset="/data/air_release/air_release_chk" />
+			<bind vellum:nodeset="#form/gas_piping_chp" nodeset="/data/gas_piping_chp" />
+			<bind vellum:nodeset="#form/gas_piping_chp/parallel_valve_chp_chk" nodeset="/data/gas_piping_chp/parallel_valve_chp_chk" />
+			<bind vellum:nodeset="#form/gas_piping_chp/chp_condense_chk" nodeset="/data/gas_piping_chp/chp_condense_chk" />
+			<bind vellum:nodeset="#form/flare" nodeset="/data/flare" />
+			<bind vellum:nodeset="#form/flare/flare_main_chk" nodeset="/data/flare/flare_main_chk" />
+			<bind vellum:nodeset="#form/flare/flare_sample_valve" nodeset="/data/flare/flare_sample_valve" />
+			<bind vellum:nodeset="#form/chp" nodeset="/data/chp" />
+			<bind vellum:nodeset="#form/chp/chp_kwh" nodeset="/data/chp/chp_kwh" type="xsd:int" />
+			<bind vellum:nodeset="#form/chp/chp_total_run_hours" nodeset="/data/chp/chp_total_run_hours" type="xsd:int" vellum:constraint=". &lt; #form/chp/chp_kwh" constraint=". &lt; /data/chp/chp_kwh" />
+			<bind vellum:nodeset="#form/chp2" nodeset="/data/chp2" />
+			<bind vellum:nodeset="#form/chp2/chp2_kwh" nodeset="/data/chp2/chp2_kwh" type="xsd:int" />
+			<bind vellum:nodeset="#form/chp2/chp2_total_run_hours" nodeset="/data/chp2/chp2_total_run_hours" type="xsd:int" vellum:constraint=". &lt; #form/chp2/chp2_kwh" constraint=". &lt; /data/chp2/chp2_kwh" />
+			<bind vellum:nodeset="#form/cntrl_panel" nodeset="/data/cntrl_panel" />
+			<bind vellum:nodeset="#form/cntrl_panel/cntrl_panel_switch_chk" nodeset="/data/cntrl_panel/cntrl_panel_switch_chk" />
+			<bind vellum:nodeset="#form/cntrl_panel/desul_panel_valve_chk" nodeset="/data/cntrl_panel/desul_panel_valve_chk" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="airblower-label"><value>Airblower</value></text>
+					<text id="airblower/airblower-airblower_chk-label"><value>Please check valve of airblower</value></text>
+					<text id="ou_pressure-label"><value>Over/Under pressure device</value></text>
+					<text id="ou_pressure/ou_pressure_chk-ou_water_level-label"><value>Please check water level on both tubes and fill if needed</value></text>
+					<text id="gas_piping_dig-label"><value>Gas Piping</value></text>
+					<text id="gas_piping_dig/main_gas_valve_chk-main_gas_valve_chk-label"><value>Please check main gas valve</value></text>
+					<text id="gas_piping_dig/parallel_digester_valve_chk-parrallel_digester_valve_chk-label"><value>Please check the parallel valve at digester</value></text>
+					<text id="gas_piping_dig/digester_condense_chk-parralel_digester_valve_chk-label"><value>Check condense pit at digester</value></text>
+					<text id="air_release-label"><value>Air release valve</value></text>
+					<text id="air_release/air_release_chk-air_release_chk-label"><value>Please check air release valve</value></text>
+					<text id="gas_piping_chp-label"><value>Gas piping</value></text>
+					<text id="gas_piping_chp/parallel_valve_chp_chk-parrallel_digester_valve_chk-label"><value>Confirm setting for CHP parallel valves</value></text>
+					<text id="gas_piping_chp/chp_condense_chk-parralel_digester_valve_chk-label"><value>Check condense pit at CHP</value></text>
+					<text id="flare-label"><value>Flare</value></text>
+					<text id="flare/flare_main_chk-flare_main_chk-label"><value>Please check flare main valve (black)</value></text>
+					<text id="flare/flare_sample_valve-flare_main_chk-label"><value>Please check flare sample valve (small yellow)</value></text>
+					<text id="chp-label"><value>CHP1</value></text>
+					<text id="chp/chp_kwh-label"><value>**CHP1** total **kWh** reading</value><value form="markdown">**CHP1** total **kWh** reading</value></text>
+					<text id="chp/chp_total_run_hours-label"><value>**CHP1** total **run** hours</value><value form="markdown">**CHP1** total **run** hours</value></text>
+					<text id="chp2-label"><value>CHP2</value></text>
+					<text id="chp2/chp2_kwh-label"><value>**CHP2** total **kWh** reading</value><value form="markdown">**CHP2** total **kWh** reading</value></text>
+					<text id="chp2/chp2_total_run_hours-label"><value>**CHP2** total **run** hours</value><value form="markdown">**CHP2** total **run** hours</value></text>
+					<text id="cntrl_panel-label"><value>Control Panel</value></text>
+					<text id="cntrl_panel/cntrl_panel_switch_chk-cntrl_panel_swith_chk-label"><value>Please switch on control panel</value></text>
+					<text id="cntrl_panel/desul_panel_valve_chk-cntrl_panel_valve_chk-label"><value>Please make sure desulpharization main valve is closed when not pumping.</value></text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<group vellum:ref="#form/airblower" ref="/data/airblower" appearance="field-list"><label ref="jr:itext('airblower-label')" /><select vellum:ref="#form/airblower/airblower" ref="/data/airblower/airblower"><item><label ref="jr:itext('airblower/airblower-airblower_chk-label')" /><value>airblower_chk</value></item></select></group>
+		<group vellum:ref="#form/ou_pressure" ref="/data/ou_pressure" appearance="field-list"><label ref="jr:itext('ou_pressure-label')" /><select vellum:ref="#form/ou_pressure/ou_pressure_chk" ref="/data/ou_pressure/ou_pressure_chk"><item><label ref="jr:itext('ou_pressure/ou_pressure_chk-ou_water_level-label')" /><value>ou_water_level</value></item></select></group>
+		<group vellum:ref="#form/gas_piping_dig" ref="/data/gas_piping_dig" appearance="field-list"><label ref="jr:itext('gas_piping_dig-label')" /><select vellum:ref="#form/gas_piping_dig/main_gas_valve_chk" ref="/data/gas_piping_dig/main_gas_valve_chk"><item><label ref="jr:itext('gas_piping_dig/main_gas_valve_chk-main_gas_valve_chk-label')" /><value>main_gas_valve_chk</value></item></select><select vellum:ref="#form/gas_piping_dig/parallel_digester_valve_chk" ref="/data/gas_piping_dig/parallel_digester_valve_chk"><item><label ref="jr:itext('gas_piping_dig/parallel_digester_valve_chk-parrallel_digester_valve_chk-label')" /><value>parrallel_digester_valve_chk</value></item></select><select vellum:ref="#form/gas_piping_dig/digester_condense_chk" ref="/data/gas_piping_dig/digester_condense_chk"><item><label ref="jr:itext('gas_piping_dig/digester_condense_chk-parralel_digester_valve_chk-label')" /><value>parralel_digester_valve_chk</value></item></select></group>
+		<group vellum:ref="#form/air_release" ref="/data/air_release" appearance="field-list"><label ref="jr:itext('air_release-label')" /><select vellum:ref="#form/air_release/air_release_chk" ref="/data/air_release/air_release_chk"><item><label ref="jr:itext('air_release/air_release_chk-air_release_chk-label')" /><value>air_release_chk</value></item></select></group>
+		<group vellum:ref="#form/gas_piping_chp" ref="/data/gas_piping_chp" appearance="field-list"><label ref="jr:itext('gas_piping_chp-label')" /><select vellum:ref="#form/gas_piping_chp/parallel_valve_chp_chk" ref="/data/gas_piping_chp/parallel_valve_chp_chk"><item><label ref="jr:itext('gas_piping_chp/parallel_valve_chp_chk-parrallel_digester_valve_chk-label')" /><value>parrallel_digester_valve_chk</value></item></select><select vellum:ref="#form/gas_piping_chp/chp_condense_chk" ref="/data/gas_piping_chp/chp_condense_chk"><item><label ref="jr:itext('gas_piping_chp/chp_condense_chk-parralel_digester_valve_chk-label')" /><value>parralel_digester_valve_chk</value></item></select></group>
+		<group vellum:ref="#form/flare" ref="/data/flare" appearance="field-list"><label ref="jr:itext('flare-label')" /><select vellum:ref="#form/flare/flare_main_chk" ref="/data/flare/flare_main_chk"><item><label ref="jr:itext('flare/flare_main_chk-flare_main_chk-label')" /><value>flare_main_chk</value></item></select><select vellum:ref="#form/flare/flare_sample_valve" ref="/data/flare/flare_sample_valve"><item><label ref="jr:itext('flare/flare_sample_valve-flare_main_chk-label')" /><value>flare_main_chk</value></item></select></group>
+		<group vellum:ref="#form/chp" ref="/data/chp" appearance="field-list"><label ref="jr:itext('chp-label')" /><input vellum:ref="#form/chp/chp_kwh" ref="/data/chp/chp_kwh"><label ref="jr:itext('chp/chp_kwh-label')" /></input><input vellum:ref="#form/chp/chp_total_run_hours" ref="/data/chp/chp_total_run_hours"><label ref="jr:itext('chp/chp_total_run_hours-label')" /></input></group>
+		<group vellum:ref="#form/chp2" ref="/data/chp2" appearance="field-list"><label ref="jr:itext('chp2-label')" /><input vellum:ref="#form/chp2/chp2_kwh" ref="/data/chp2/chp2_kwh"><label ref="jr:itext('chp2/chp2_kwh-label')" /></input><input vellum:ref="#form/chp2/chp2_total_run_hours" ref="/data/chp2/chp2_total_run_hours"><label ref="jr:itext('chp2/chp2_total_run_hours-label')" /></input></group>
+		<group vellum:ref="#form/cntrl_panel" ref="/data/cntrl_panel" appearance="field-list"><label ref="jr:itext('cntrl_panel-label')" /><select vellum:ref="#form/cntrl_panel/cntrl_panel_switch_chk" ref="/data/cntrl_panel/cntrl_panel_switch_chk"><item><label ref="jr:itext('cntrl_panel/cntrl_panel_switch_chk-cntrl_panel_swith_chk-label')" /><value>cntrl_panel_swith_chk</value></item></select><select vellum:ref="#form/cntrl_panel/desul_panel_valve_chk" ref="/data/cntrl_panel/desul_panel_valve_chk"><item><label ref="jr:itext('cntrl_panel/desul_panel_valve_chk-cntrl_panel_valve_chk-label')" /><value>cntrl_panel_valve_chk</value></item></select></group>
+	</h:body>
+</h:html>

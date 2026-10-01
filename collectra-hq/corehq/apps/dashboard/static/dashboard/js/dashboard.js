@@ -7,14 +7,30 @@ import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/bootstrap5/main";  // post-link
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // popover
 
+// Limit dashboard requests so failed dependencies produce a retryable error.
+var dashboardJSON = function (url, data) {
+    return $.ajax({url: url, data: data, dataType: "json", timeout: 15000});
+};
+
 var tileModel = function (options) {
     var self = {};
     self.title = options.title;
     self.slug = options.slug;
     self.icon = options.icon;
+    self.cardClasses = 'collectra-card-' + options.slug;
+    self.kicker = ({applications: '01 / BUILD', reports: '02 / MONITOR', data: '03 / EXPORT',
+        users: '04 / TEAM', messaging: '05 / CONNECT', settings: '06 / CONFIGURE',
+        help: '07 / SUPPORT'})[options.slug] || 'COLLECTRA';
+    self.actionText = ({applications: 'Manage applications', reports: 'View reports',
+        data: 'Explore data', users: 'Manage users', messaging: 'Open messaging',
+        settings: 'Open settings', help: 'Find answers'})[options.slug] || 'Open tool';
     self.url = options.url;
     self.helpText = options.help_text;
     self.hasError = ko.observable(false);
+    self.itemsLoading = ko.observable(Boolean(options.has_item_list));
+    self.totalLoading = ko.observable(Boolean(options.has_item_list));
+    self.pageGeneration = 0;
+    self.totalRequestActive = false;
 
     // Might get updated if this tile supports an item list but it's empty
     self.hasItemList = ko.observable(options.has_item_list);
@@ -39,7 +55,7 @@ var tileModel = function (options) {
         // Show spinner if this is an ajax tile, it's still waiting for one or both requests,
         // and neither request has errored out
         return self.hasItemList()
-               && (self.items().length === 0 || self.totalPages() === undefined)
+               && (self.itemsLoading() || self.totalLoading())
                && !self.hasError();
     });
     self.showItemList = ko.computed(function () {
@@ -52,36 +68,34 @@ var tileModel = function (options) {
     // Paging
     if (self.hasItemList()) {
         self.goToPage = function (page) {
-            // If request takes a noticeable amount of time, clear items, which will show spinner
-            var done = false;
-            _.delay(function () {
-                if (!done) {
-                    self.items([]);     // clear items to show spinner
-                }
-            }, 500);
+            var generation = ++self.pageGeneration;
+            self.itemsLoading(true);
+            self.hasError(false);
 
-            // Send request for items on current page
             $.ajax({
                 method: "GET",
+                timeout: 15000,
                 url: initialPageData.reverse('dashboard_tile', self.slug),
-                data: {
-                    itemsPerPage: self.itemsPerPage,
-                    currentPage: page,
-                },
+                data: {itemsPerPage: self.itemsPerPage, currentPage: page},
                 success: function (data) {
-                    self.items(data.items);
-                    done = true;
+                    if (generation === self.pageGeneration) { self.items(data.items); }
                 },
                 error: function () {
-                    self.hasError(true);
+                    if (generation === self.pageGeneration) { self.hasError(true); }
+                },
+                complete: function () {
+                    if (generation === self.pageGeneration) { self.itemsLoading(false); }
                 },
             });
 
             // Total number of pages is also a separate request, but it only needs to run once
             // and then self.totalPages() never changes again
-            if (self.totalItems() === undefined) {
+            if (self.totalItems() === undefined && !self.totalRequestActive) {
+                self.totalRequestActive = true;
+                self.totalLoading(true);
                 $.ajax({
                     method: "GET",
+                    timeout: 15000,
                     url: initialPageData.reverse('dashboard_tile_total', self.slug),
                     success: function (data) {
                         self.totalItems(data.total);
@@ -92,6 +106,10 @@ var tileModel = function (options) {
                     },
                     error: function () {
                         self.hasError(true);
+                    },
+                    complete: function () {
+                        self.totalRequestActive = false;
+                        self.totalLoading(false);
                     },
                 });
             }
@@ -107,6 +125,18 @@ var tileModel = function (options) {
 var dashboardModel = function (options) {
     var self = {};
     self.tiles = _.map(options.tiles, function (t) { return tileModel(t); });
+    self.query = ko.observable("");
+    self.clearSearch = function () { self.query(""); };
+    self.filteredTiles = ko.pureComputed(function () {
+        var needle = self.query().trim().toLocaleLowerCase();
+        if (!needle) { return self.tiles; }
+        return _.filter(self.tiles, function (tile) {
+            return [tile.title, tile.helpText].concat(_.pluck(tile.items(), "name"))
+                .some(function (text) {
+                    return String(text || "").toLocaleLowerCase().includes(needle);
+                });
+        });
+    });
     return self;
 };
 
@@ -114,4 +144,203 @@ $(function () {
     $("#dashboard-tiles").koApplyBindings(dashboardModel({
         tiles: initialPageData.get("dashboard_tiles"),
     }));
+
+    var alertsPanel = $("#operational-alerts");
+    if (alertsPanel.length) {
+        var alertsModel = {
+            alerts: ko.observableArray([]),
+            loading: ko.observable(true),
+            error: ko.observable(false),
+            lastUpdated: ko.observable(""),
+            selectedSeverity: ko.observable("all"),
+        };
+        alertsModel.filteredAlerts = ko.pureComputed(function () {
+            var selected = alertsModel.selectedSeverity();
+            if (selected === "all") { return alertsModel.alerts(); }
+            return _.filter(alertsModel.alerts(), function (alert) { return alert.severity === selected; });
+        });
+        alertsModel.showAll = function () { alertsModel.selectedSeverity("all"); };
+        alertsModel.showUrgent = function () { alertsModel.selectedSeverity("urgent"); };
+        alertsModel.showFollowUp = function () { alertsModel.selectedSeverity("follow_up"); };
+        alertsModel.emptyTitle = ko.pureComputed(function () {
+            if (alertsModel.selectedSeverity() === "urgent") { return "No urgent issues in this list"; }
+            if (alertsModel.selectedSeverity() === "follow_up") { return "No follow-up issues in this list"; }
+            return "No issues in recent submissions";
+        });
+        alertsModel.emptyDescription = ko.pureComputed(function () {
+            return alertsModel.selectedSeverity() === "all"
+                ? "No flagged issues were found in the recent dashboard sample. Check form reports for the complete history."
+                : "Select Reported issues to see all recent submissions needing attention.";
+        });
+        alertsModel.urgentCount = ko.pureComputed(function () {
+            return _.filter(alertsModel.alerts(), function (alert) { return alert.severity === "urgent"; }).length;
+        });
+        alertsModel.followUpCount = ko.pureComputed(function () {
+            return alertsModel.alerts().length - alertsModel.urgentCount();
+        });
+        var alertsRequestActive = false;
+        alertsModel.refresh = function () {
+            if (alertsRequestActive) { return; }
+            alertsRequestActive = true;
+            alertsModel.loading(true);
+            alertsModel.error(false);
+            dashboardJSON(initialPageData.reverse("dashboard_operational_alerts"))
+                .done(function (data) {
+                    alertsModel.alerts(_.map(data.alerts, function (alert) {
+                        alert.when = new Date(alert.received_on).toLocaleString();
+                        return alert;
+                    }));
+                    alertsModel.lastUpdated("Updated " + new Date().toLocaleTimeString([], {
+                        hour: "numeric", minute: "2-digit",
+                    }));
+                })
+                .fail(function () {
+                    alertsModel.error(true);
+                })
+                .always(function () {
+                    alertsRequestActive = false;
+                    alertsModel.loading(false);
+                });
+        };
+        alertsPanel.koApplyBindings(alertsModel);
+        alertsModel.refresh();
+        window.setInterval(function () {
+            if (!document.hidden) { alertsModel.refresh(); }
+        }, 60000);
+    }
+
+    var reopenPanel = $("#reopen-requests");
+    if (reopenPanel.length) {
+        var reopenModel = {
+            pendingRequests: ko.observableArray([]),
+            pendingNextCursor: ko.observable(null),
+            historyRequests: ko.observableArray([]),
+            historyNextCursor: ko.observable(null),
+            historyLoaded: ko.observable(false),
+            activeView: ko.observable("pending"),
+            loading: ko.observable(true),
+            loaded: ko.observable(false),
+            error: ko.observable(false),
+            requestGeneration: 0,
+        };
+        reopenModel.pendingCount = ko.computed(function () {
+            return reopenModel.pendingRequests().length;
+        });
+        reopenModel.pendingCountLabel = ko.computed(function () {
+            return reopenModel.pendingCount() + (reopenModel.pendingNextCursor() ? "+" : "");
+        });
+        reopenModel.visibleRequests = ko.computed(function () {
+            return reopenModel.activeView() === "pending"
+                ? reopenModel.pendingRequests() : reopenModel.historyRequests();
+        });
+        reopenModel.showPending = function () {
+            reopenModel.activeView("pending");
+            reopenModel.refresh();
+        };
+        reopenModel.showHistory = function () {
+            reopenModel.activeView("history");
+            if (!reopenModel.historyLoaded()) { reopenModel.refresh(); }
+        };
+        reopenModel.refresh = function (append) {
+            append = append === true;
+            var view = reopenModel.activeView();
+            var cursor = append ? (view === "history"
+                ? reopenModel.historyNextCursor() : reopenModel.pendingNextCursor()) : null;
+            var generation = ++reopenModel.requestGeneration;
+            reopenModel.loading(true);
+            reopenModel.error(false);
+            dashboardJSON(initialPageData.reverse("dashboard_reopen_requests"), {
+                view: view,
+                cursor: cursor || "",
+            })
+                .done(function (data) {
+                    if (generation !== reopenModel.requestGeneration) { return; }
+                    var requests = _.map(data.requests, function (request) {
+                        request.when = new Date(request.received_on).toLocaleString();
+                        request.bedLabel = request.bed === "other" ? "Other drying bed"
+                            : "Drying bed " + request.bed.replace("dry_bed_", "");
+                        request.statusLabel = request.status === "handled" ? "Handled" : "Pending";
+                        request.reviewOpen = ko.observable(false);
+                        request.suggestions = ko.observableArray([]);
+                        request.suggestionsLoading = ko.observable(false);
+                        request.suggestionsLoaded = ko.observable(false);
+                        request.suggestionsError = ko.observable(false);
+                        request.caseId = ko.observable("");
+                        request.checking = ko.observable(false);
+                        request.reviewError = ko.observable("");
+                        request.candidate = ko.observable(null);
+                        request.caseId.subscribe(function () { request.candidate(null); });
+                        request.toggleReview = function () {
+                            request.reviewOpen(!request.reviewOpen());
+                            if (request.reviewOpen() && request.name && !request.suggestionsLoaded()) {
+                                request.suggestionsLoading(true);
+                                dashboardJSON(initialPageData.reverse("dashboard_reopen_candidates"), {
+                                    request_id: request.form_id,
+                                }).done(function (result) {
+                                    request.suggestions(_.map(result.candidates, function (item) {
+                                        item.openedLabel = item.opened_on
+                                            ? "Opened " + new Date(item.opened_on).toLocaleDateString() : "";
+                                        return item;
+                                    }));
+                                    request.suggestionsLoaded(true);
+                                }).fail(function () {
+                                    request.suggestionsError(true);
+                                }).always(function () { request.suggestionsLoading(false); });
+                            }
+                        };
+                        request.chooseCase = function (item) { request.caseId(item.case_id); };
+                        request.verify = function () {
+                            request.candidate(null);
+                            request.reviewError("");
+                            if (!request.caseId().trim()) {
+                                request.reviewError("Enter the original case ID from Case List.");
+                                return;
+                            }
+                            request.checking(true);
+                            dashboardJSON(initialPageData.reverse("dashboard_reopen_preview"), {
+                                request_id: request.form_id,
+                                case_id: request.caseId().trim(),
+                            }).done(function (candidate) {
+                                if (request.caseId().trim() === candidate.case_id) {
+                                    request.candidate(candidate);
+                                }
+                            }).fail(function (xhr) {
+                                request.reviewError(xhr.responseJSON && xhr.responseJSON.error
+                                    ? xhr.responseJSON.error : "Could not check that case. Try again.");
+                            }).always(function () { request.checking(false); });
+                        };
+                        return request;
+                    });
+                    if (view === "history") {
+                        reopenModel.historyRequests(append
+                            ? reopenModel.historyRequests().concat(requests) : requests);
+                        reopenModel.historyNextCursor(data.next_cursor || null);
+                        reopenModel.historyLoaded(true);
+                    } else {
+                        reopenModel.pendingRequests(append
+                            ? reopenModel.pendingRequests().concat(requests) : requests);
+                        reopenModel.pendingNextCursor(data.next_cursor || null);
+                    }
+                    reopenModel.loaded(true);
+                })
+                .fail(function () {
+                    if (generation === reopenModel.requestGeneration) { reopenModel.error(true); }
+                })
+                .always(function () {
+                    if (generation === reopenModel.requestGeneration) { reopenModel.loading(false); }
+                });
+        };
+        reopenModel.loadOlderHistory = function () {
+            if (!reopenModel.loading() && reopenModel.historyNextCursor()) {
+                reopenModel.refresh(true);
+            }
+        };
+        reopenModel.loadOlderPending = function () {
+            if (!reopenModel.loading() && reopenModel.pendingNextCursor()) {
+                reopenModel.refresh(true);
+            }
+        };
+        reopenPanel.koApplyBindings(reopenModel);
+        reopenModel.refresh();
+    }
 });

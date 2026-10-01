@@ -89,7 +89,8 @@
               </div>
             {% else %}
               <div class="alert alert-success mt-4 mb-0">
-                <strong>{% trans "Ready to import." %}</strong>
+                <strong>{% trans "Workbook structure passed." %}</strong>
+                {% trans "Saving also validates the generated form with Formplayer." %}
                 {% blocktrans count counter=definition.question_count %}1 question was recognized.{% plural %}{{ counter }} questions were recognized.{% endblocktrans %}
               </div>
             {% endif %}
