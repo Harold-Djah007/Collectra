@@ -7,6 +7,7 @@ localsettings_target="$(readlink -f "$hq_root/localsettings.py")"
 blob_root="$(dirname "$localsettings_target")/sharedfiles"
 proxy_name="collectra-alert-test-proxy"
 formplayer_name="collectra-alert-test-formplayer"
+resource_bridge_name="collectra-alert-test-resources"
 log_file="$repo_root/alert-test-runserver.log"
 pillow_log="$repo_root/alert-test-case-indexer.log"
 
@@ -46,6 +47,10 @@ if docker container inspect "$proxy_name" >/dev/null 2>&1; then
     echo "The earlier $proxy_name container still exists. Stop it first." >&2
     exit 1
 fi
+if docker container inspect "$resource_bridge_name" >/dev/null 2>&1; then
+    echo "The earlier $resource_bridge_name container still exists. Stop it first." >&2
+    exit 1
+fi
 owns_formplayer=0
 server_pid=''
 pillow_pid=''
@@ -58,6 +63,7 @@ cleanup() {
         kill "$server_pid" 2>/dev/null || true
     fi
     docker stop "$proxy_name" >/dev/null 2>&1 || true
+    docker stop "$resource_bridge_name" >/dev/null 2>&1 || true
     if [[ $owns_formplayer == 1 ]]; then
         docker stop "$formplayer_name" >/dev/null 2>&1 || true
     fi
@@ -155,6 +161,17 @@ fi
 "$hq_root/.venv/bin/python" manage.py runserver 0.0.0.0:8011 >"$log_file" 2>&1 &
 server_pid=$!
 
+# CommCare's resource downloader also fetches absolute URLs directly, outside
+# Spring's replace-host client. Give localhost:$proxy_port a route to HQ inside
+# Formplayer's network namespace while keeping browser/report URLs unchanged.
+resource_container="$(docker ps --filter publish=18080 --format '{{.ID}}')"
+if [[ -z $resource_container || $resource_container == *$'\n'* ]]; then
+    echo 'Expected one Docker Formplayer container publishing port 18080.' >&2
+    exit 1
+fi
+bash "$repo_root/deploy/local-testing/start-formplayer-resource-bridge.sh" \
+    "$resource_container" "$proxy_port" >/dev/null
+
 # Case List reads Elasticsearch. Keep its Kafka consumer running alongside HQ,
 # unless the user already started one in another terminal or Docker.
 if pgrep -f 'manage.py run_ptop --pillow-name (CaseToElasticsearchPillow|case-pillow)' >/dev/null \
@@ -175,7 +192,9 @@ docker run --rm --detach --name "$proxy_name" \
 
 for attempt in $(seq 1 30); do
     if curl -fsS --max-time 3 "http://127.0.0.1:$proxy_port/formplayer/serverup" >/dev/null \
-            && curl -fsS --max-time 3 -o /dev/null "http://127.0.0.1:$proxy_port/a/safisana/"; then
+            && curl -fsS --max-time 3 -o /dev/null "http://127.0.0.1:$proxy_port/a/safisana/" \
+            && docker exec "$resource_bridge_name" wget -q -O /dev/null -T 3 \
+                "http://127.0.0.1:$proxy_port/a/safisana/"; then
         echo "Collectra test is ready: http://localhost:$proxy_port/a/safisana/"
         echo "Open the form editor through the same URL. Press Ctrl+C here to stop the test services."
         while kill -0 "$server_pid" 2>/dev/null; do
@@ -197,4 +216,5 @@ done
 echo "Test did not become ready. Recent HQ output:" >&2
 tail -n 25 "$log_file" >&2
 docker logs --tail 25 "$proxy_name" >&2 || true
+docker logs --tail 25 "$resource_bridge_name" >&2 || true
 exit 1
