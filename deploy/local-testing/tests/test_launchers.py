@@ -88,6 +88,41 @@ class LauncherSafetyTests(unittest.TestCase):
         self.assertIn("already running", result.stderr)
         self.assertEqual(pid_file.read_text(), "12345\n")
 
+    def public_project(self, body):
+        project = self.root / "public-project"
+        launcher = project / "local-bin" / "start-collectra"
+        launcher.parent.mkdir(parents=True)
+        launcher.write_text(f"#!/bin/bash\n{body}\n")
+        launcher.chmod(0o755)
+        self.env["COLLECTRA_PROJECT_ROOT"] = str(project)
+        self.stub("cloudflared", "echo https://test-origin.trycloudflare.com; exec tail -f /dev/null")
+
+    def test_public_tunnel_uses_configured_web_port(self):
+        self.public_project("exit 0")
+        self.env["COLLECTRA_BIND_PORT"] = "8011"
+        result = self.run_launcher("collectra-hq/local-bin/start-collectra-public")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("--url http://127.0.0.1:8011", self.commands())
+
+    def test_public_termination_stops_hq_child(self):
+        child_pid = self.root / "public-hq.pid"
+        self.env["TEST_HQ_PID"] = str(child_pid)
+        self.public_project('echo "$$" > "$TEST_HQ_PID"; exec tail -f /dev/null')
+        process = subprocess.Popen(
+            ["bash", str(ROOT / "collectra-hq/local-bin/start-collectra-public")],
+            env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        )
+        self.addCleanup(lambda: process.kill() if process.poll() is None else None)
+        deadline = time.monotonic() + 5
+        while not child_pid.exists() and process.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertTrue(child_pid.exists(), "HQ stub did not start")
+        process.send_signal(signal.SIGTERM)
+        process.communicate(timeout=10)
+        self.assertEqual(process.returncode, 143)
+        with self.assertRaises(ProcessLookupError):
+            os.kill(int(child_pid.read_text()), 0)
+
     def test_termination_stops_only_owned_proxy(self):
         # Build an isolated repo so the HQ child never starts real services.
         script_dir = self.root / "deploy" / "local-testing"
