@@ -1,26 +1,28 @@
 {% load i18n %}
 
 <script type="text/html" id="geo-entry-ko-template">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-    <tr>
-      <td class="lat coordinate" data-bind="text: formatLat()"></td>
-      <td class="lon coordinate" data-bind="text: formatLon()"></td>
-      <td align="right" valign="bottom">
-        <button type="button" class="btn btn-outline-primary btn-sm clear" data-bind="click: onClear">{% trans "Clear location" %}</button>
-      </td>
-    </tr>
-    </tbody>
-  </table>
-  <div class="map" data-bind="
-    visible: mapAvailable,
-    attr: {
-      'id': entryId,
-      'aria-labelledby': entryId + '-label',
-    }">
-    <div class="wait" data-bind="visible: !hasMap()" >{% trans "Please wait while the map loads" %}</div>
+  <div class="border rounded overflow-hidden" style="background:#fff;box-shadow:0 3px 12px #173e5810">
+    <div class="d-flex justify-content-between align-items-center p-2" style="background:#edf9f8">
+      <strong class="small">{% trans "Choose the farm location" %}</strong>
+      <button type="button" class="btn btn-outline-primary btn-sm" data-bind="click: onClear">{% trans "Clear" %}</button>
+    </div>
+    <div class="map" style="margin:0;border:0" data-bind="
+      visible: mapAvailable,
+      style: { height: mapExpanded() ? '420px' : '260px' },
+      attr: { id: entryId, 'aria-labelledby': entryId + '-label' }">
+    </div>
+    <div class="d-flex justify-content-between align-items-center px-2 py-2 border-top">
+      <span class="small">
+        <span data-bind="text: formatLat()"></span> · <span data-bind="text: formatLon()"></span>
+      </span>
+      <button type="button" class="btn btn-outline-primary btn-sm" data-bind="visible: mapAvailable, click: toggleMapSize, attr: { 'aria-expanded': mapExpanded }">
+        <span data-bind="visible: !mapExpanded()">{% trans "Larger map" %}</span>
+        <span data-bind="visible: mapExpanded">{% trans "Smaller map" %}</span>
+      </button>
+    </div>
   </div>
-  <div data-bind="visible: mapAvailable">
+  <p class="small text-muted mt-2" data-bind="visible: mapAvailable">{% trans "Tap the farm on the map. Drag the pin to fine-tune its position." %}</p>
+  <div data-bind="visible: searchAvailable">
     <form data-bind="submit: search">
       <div class="mt-1" data-bind="css: control_width">
         <div class="input-group">
@@ -40,6 +42,8 @@
   </button>
   <span class="small" role="status" data-bind="visible: locating">{% trans "Getting location…" %}</span>
   <p class="small text-muted mt-2">{% trans "Use current location only when you are at the farm or site. Otherwise enter its coordinates." %}</p>
+  <details class="border rounded p-2 mt-2">
+    <summary class="small" style="cursor:pointer">{% trans "Enter coordinates" %}</summary>
   <div class="row mt-2">
     <div class="col-6">
       <label data-bind="attr: { for: entryId + '-latitude' }">{% trans "Latitude" %}</label>
@@ -55,5 +59,6 @@
   <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-bind="click: saveCoordinates">
     {% trans "Use these coordinates" %}
   </button>
+  </details>
   <p class="small text-danger mt-2" role="alert" data-bind="visible: locationError, text: locationError"></p>
 </script>

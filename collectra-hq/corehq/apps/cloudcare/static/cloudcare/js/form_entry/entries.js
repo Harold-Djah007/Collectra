@@ -1158,6 +1158,8 @@ function GeoPointEntry(question, options) {
     self.map = null;
     self.hasMap = () => !!self.map;
     self.mapAvailable = ko.observable(false);
+    self.mapExpanded = ko.observable(false);
+    self.searchAvailable = ko.observable(false);
     self.mapNotice = ko.observable('');
     self.locationError = ko.observable('');
     self.locating = ko.observable(false);
@@ -1171,10 +1173,10 @@ function GeoPointEntry(question, options) {
     self.control_width = constants.CONTROL_WIDTH;
 
     self.DEFAULT = {
-        lat: 30,
+        lat: 0,
         lon: 0,
-        zoom: 1,
-        anszoom: 6,
+        zoom: 2,
+        anszoom: 16,
     };
 
     self.onClear = function () {
@@ -1182,6 +1184,10 @@ function GeoPointEntry(question, options) {
         self.locating(false);
         self.locationError('');
         self.rawAnswer([]);
+        if (self.map && self.centerMarker) {
+            self.map.removeLayer(self.centerMarker);
+            self.centerMarker = null;
+        }
     };
 
     self.applyCoordinates = function (latitude, longitude, extra = []) {
@@ -1193,8 +1199,11 @@ function GeoPointEntry(question, options) {
         }
         const lat = Number(latitude), lon = Number(longitude);
         self.locationError('');
-        if (self.map) { self.map.setView([lat, lon], self.DEFAULT.anszoom); }
         self.rawAnswer([lat, lon, ...extra]);
+        if (self.map) {
+            self.placeMarker(lat, lon);
+            self.map.setView([lat, lon], Math.max(self.map.getZoom(), self.DEFAULT.anszoom));
+        }
         return true;
     };
 
@@ -1229,8 +1238,7 @@ function GeoPointEntry(question, options) {
 
     self.loadMap = function () {
         var token = initialPageData.get("mapbox_access_token");
-        if (token) {
-            self.mapAvailable(true);
+        self.mapAvailable(true);
             // if a default answer exists, use that instead
             let lat = self.rawAnswer().length ? self.rawAnswer()[0] : self.DEFAULT.lat;
             let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
@@ -1238,29 +1246,66 @@ function GeoPointEntry(question, options) {
 
             self.map = L.map(self.entryId, {
                 zoomControl: false,
+                scrollWheelZoom: false,
             }).setView([lat, lon], zoom);
             L.control.zoom({
                 position: 'bottomright',
             }).addTo(self.map);
-
-            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
+            const tiles = token ? L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                         + token, {
                 id: 'mapbox/streets-v11',
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                 tileSize: 512,
                 zoomOffset: -1,
-            }).addTo(self.map);
-            self.map.on('move', self.updateCenter);
+            }) : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+            });
+            let tileFailures = 0;
+            tiles.on('loading', function () { tileFailures = 0; });
+            tiles.on('tileerror', function () {
+                tileFailures += 1;
+                self.mapNotice(gettext('Map tiles could not load. Check your connection; GPS and coordinate entry still work.'));
+            });
+            tiles.on('load', function () { if (!tileFailures) { self.mapNotice(''); } });
+            tiles.addTo(self.map);
+            if (self.rawAnswer().length >= 2) { self.placeMarker(lat, lon); }
+            self.map.on('click', function (event) {
+                self.captureVersion += 1;
+                self.locating(false);
+                self.applyCoordinates(event.latlng.lat, event.latlng.lng);
+            });
+            if (token && L.mapbox) {
+                L.mapbox.accessToken = token;
+                self.geocoder = L.mapbox.geocoder('mapbox.places');
+                self.searchAvailable(true);
+            }
+            setTimeout(function () { self.map.invalidateSize(); }, 0);
+    };
 
-            self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
-
-            L.mapbox.accessToken = token;
-            self.geocoder = L.mapbox.geocoder('mapbox.places');
+    self.placeMarker = function (lat, lon) {
+        if (self.centerMarker) {
+            self.centerMarker.setLatLng([lat, lon]);
         } else {
-            self.mapNotice(gettext('Map not configured. Use your location or enter coordinates below.'));
+            const icon = L.divIcon({
+                className: 'collectra-location-pin',
+                html: '<span style="display:block;width:26px;height:26px;background:#00a6a6;border:4px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px #173e5866"></span>',
+                iconSize: [26, 26], iconAnchor: [13, 26],
+            });
+            self.centerMarker = L.marker([lat, lon], {draggable: true, icon}).addTo(self.map);
+            self.centerMarker.on('dragend', function () {
+                const point = self.centerMarker.getLatLng();
+                self.captureVersion += 1;
+                self.locating(false);
+                self.applyCoordinates(point.lat, point.lng);
+            });
         }
+    };
 
+    self.toggleMapSize = function () {
+        self.mapExpanded(!self.mapExpanded());
+        setTimeout(function () { if (self.map) { self.map.invalidateSize(); } }, 0);
     };
 
     self.afterRender = function () {
