@@ -8,6 +8,11 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 
 const XML_NAME = /^[A-Za-z_][A-Za-z0-9_.-]*$/;
 
+function localDate(date) {
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')].join('-');
+}
+
 
 function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -164,6 +169,8 @@ class XlsFormPreview {
         this.validationRequested = false;
         this.currentErrors = [];
         this.expressionWarnings = new Set();
+        this.startedAt = new Date().toISOString();
+        this.startedDate = localDate(new Date(this.startedAt));
 
         this.rows.forEach((row) => {
             const path = row.path.join("/");
@@ -189,9 +196,10 @@ class XlsFormPreview {
         const type = row.raw_type.toLowerCase().replaceAll("_", " ").trim();
         const now = new Date();
         if (type === "today") {
-            return now.toISOString().slice(0, 10);
+            return this.startedDate;
         }
-        if (type === "start" || type === "end") {
+        if (type === 'start') { return this.startedAt; }
+        if (type === "end") {
             return now.toISOString();
         }
         return "";
@@ -225,7 +233,7 @@ class XlsFormPreview {
             keys.forEach((key) => {
                 const node = xmlDocument.createElement(row.name);
                 const value = Object.hasOwn(this.answers, key) ? this.answers[key] : this.getAnswer(row, context);
-                node.textContent = Array.isArray(value) ? value.join(" ") : String(value || "");
+                node.textContent = Array.isArray(value) ? value.join(" ") : String(value ?? "");
                 data.appendChild(node);
                 nodes[key] = node;
                 nodes[row.name] = nodes[row.name] || node;
@@ -247,10 +255,19 @@ class XlsFormPreview {
         return {document: xmlDocument, nodes: nodes, choiceNode: choiceNode};
     }
 
-    prepareExpression(expression) {
-        expression = expression.replace(/\$\{([^}]+)\}/g, (match, name) => `/data/${name}`);
+    prepareExpression(expression, context = {}, state = null) {
+        expression = expression.replace(/\$\{([^}]+)\}/g, (match, name) => {
+            const target = this.rowByName[name];
+            const repeats = target?.path.filter((item) => this.rowByName[item]?.kind === 'begin_repeat') || [];
+            if (state && target && repeats.length && repeats.every((item) => Object.hasOwn(context, item))) {
+                const node = state.nodes[this.answerKey(target, context)];
+                const peers = [...state.document.documentElement.children].filter((item) => item.nodeName === name);
+                if (node) { return `/data/${name}[${peers.indexOf(node) + 1}]`; }
+            }
+            return `/data/${name}`;
+        });
         expression = expression.replace(/<>/g, "!=");
-        expression = expression.replace(/\btoday\(\)/gi, `'${new Date().toISOString().slice(0, 10)}'`);
+        expression = expression.replace(/\btoday\(\)/gi, `'${localDate(new Date())}'`);
         expression = expression.replace(/\bnow\(\)/gi, `'${new Date().toISOString()}'`);
         expression = replaceFunction(expression, "selected", (argumentsList) => {
             if (argumentsList.length !== 2) {
@@ -337,7 +354,7 @@ class XlsFormPreview {
             state.nodes[this.answerKey(row, context)] || state.nodes[row.name] || state.document.documentElement
         );
         try {
-            const prepared = this.prepareExpression(expression);
+            const prepared = this.prepareExpression(expression, context, state);
             const result = state.document.evaluate(
                 prepared,
                 contextNode,
@@ -351,28 +368,47 @@ class XlsFormPreview {
         }
     }
 
+    contextsFor(row) {
+        let contexts = [{}];
+        row.path.filter((name) => this.rowByName[name]?.kind === 'begin_repeat').forEach((name) => {
+            contexts = contexts.flatMap((context) => Array.from(
+                {length: this.repeatCounts[this.answerKey(this.rowByName[name], context)] || 1},
+                (_, index) => ({...context, [name]: index}),
+            ));
+        });
+        return contexts;
+    }
+
     recalculate() {
-        for (let pass = 0; pass < 4; pass += 1) {
+        const calculations = this.rows.filter((row) => row.kind === "calculate");
+        const maxPasses = Math.min(calculations.length + 1, 50);
+        for (let pass = 0; pass < maxPasses; pass += 1) {
             let changed = false;
-            this.rows.filter((row) => row.kind === "calculate").forEach((row) => {
-                const expression = row.calculation;
-                if (!expression) {
-                    const implicitValue = this.implicitCalculation(row);
-                    const answerKey = this.answerKey(row, {});
-                    if (implicitValue && !Object.hasOwn(this.answers, answerKey)) {
-                        this.setAnswer(row, {}, implicitValue);
+            calculations.forEach((row) => {
+                this.contextsFor(row).forEach((context) => {
+                    const expression = row.calculation;
+                    if (!expression) {
+                        const implicitValue = this.implicitCalculation(row);
+                        const answerKey = this.answerKey(row, context);
+                        if (implicitValue && !Object.hasOwn(this.answers, answerKey)) {
+                            this.setAnswer(row, context, implicitValue);
+                            changed = true;
+                        }
+                        return;
+                    }
+                    const result = this.evaluate(expression, row, context, null);
+                    if (result.error) { this.expressionWarnings.add(`${row.name}: ${result.error}`); }
+                    if (!result.error && String(this.getAnswer(row, context)) !== String(result.value)) {
+                        this.setAnswer(row, context, result.value);
                         changed = true;
                     }
-                    return;
-                }
-                const result = this.evaluate(expression, row, {}, null);
-                if (!result.error && String(this.getAnswer(row, {})) !== String(result.value)) {
-                    this.setAnswer(row, {}, result.value);
-                    changed = true;
-                }
+                });
             });
             if (!changed) {
                 break;
+            }
+            if (pass === maxPasses - 1) {
+                this.expressionWarnings.add("Calculations did not settle in the browser preview.");
             }
         }
     }
@@ -394,6 +430,7 @@ class XlsFormPreview {
             return false;
         }
         const result = this.evaluate(row.required, row, context, null);
+        if (result.error) { this.expressionWarnings.add(`${row.name}: ${result.error}`); }
         return result.error ? false : asBoolean(result.value);
     }
 
@@ -419,6 +456,7 @@ class XlsFormPreview {
         }
         if (row.constraint && !isEmpty(value)) {
             const result = this.evaluate(row.constraint, row, context, null);
+            if (result.error) { this.expressionWarnings.add(`${row.name}: ${result.error}`); }
             if (!result.error && !asBoolean(result.value)) {
                 return localized(
                     row.constraint_messages,
@@ -458,6 +496,8 @@ class XlsFormPreview {
         reset.type = "button";
         reset.addEventListener("click", () => {
             this.answers = {};
+            this.startedAt = new Date().toISOString();
+            this.startedDate = localDate(new Date(this.startedAt));
             Object.keys(this.repeatCounts).forEach((name) => {
                 this.repeatCounts[name] = 1;
             });
@@ -633,6 +673,30 @@ class XlsFormPreview {
         parent.appendChild(group);
     }
 
+    removeRepeatEntry(row, context, index) {
+        const ancestors = row.path.filter((name) => this.rowByName[name]?.kind === 'begin_repeat');
+        const reindex = (values) => {
+            const result = {};
+            Object.entries(values).forEach(([key, value]) => {
+                const parts = key.split('::');
+                const entries = (parts[1] || '').split('|').filter(Boolean).map((part) => part.split(':'));
+                const positions = Object.fromEntries(entries);
+                const affected = Object.hasOwn(positions, row.name) && ancestors.every((name) =>
+                    Number(positions[name]) === (context[name] || 0));
+                if (affected && Number(positions[row.name]) === index) { return; }
+                if (affected && Number(positions[row.name]) > index) {
+                    entries.forEach((entry) => { if (entry[0] === row.name) { entry[1] = Number(entry[1]) - 1; } });
+                    parts[1] = entries.map((entry) => entry.join(':')).join('|');
+                }
+                result[parts.join('::')] = value;
+            });
+            return result;
+        };
+        this.answers = reindex(this.answers);
+        this.repeatCounts = reindex(this.repeatCounts);
+        this.repeatCounts[this.answerKey(row, context)] -= 1;
+    }
+
     renderRepeat(parent, row, context) {
         if (!this.visible(row, context)) {
             return;
@@ -641,7 +705,8 @@ class XlsFormPreview {
         const legend = element("legend", "float-none w-auto px-2 fs-6 fw-semibold");
         legend.textContent = localized(row.labels, this.language, row.name);
         repeat.appendChild(legend);
-        const count = this.repeatCounts[row.name] || 1;
+        const repeatKey = this.answerKey(row, context);
+        const count = this.repeatCounts[repeatKey] || 1;
         for (let index = 0; index < count; index += 1) {
             const repeatContext = {...context, [row.name]: index};
             const instance = element("div", "border rounded p-3 bg-white mb-3");
@@ -651,7 +716,7 @@ class XlsFormPreview {
                 const remove = element("button", "btn btn-outline-danger btn-sm", gettext("Remove"));
                 remove.type = "button";
                 remove.addEventListener("click", () => {
-                    this.repeatCounts[row.name] -= 1;
+                    this.removeRepeatEntry(row, context, index);
                     this.render();
                 });
                 heading.appendChild(remove);
@@ -665,7 +730,7 @@ class XlsFormPreview {
         const add = element("button", "btn btn-outline-primary btn-sm", gettext("Add another entry"));
         add.type = "button";
         add.addEventListener("click", () => {
-            this.repeatCounts[row.name] = count + 1;
+            this.repeatCounts[repeatKey] = count + 1;
             this.render();
         });
         repeat.appendChild(add);
@@ -700,12 +765,15 @@ class XlsFormPreview {
                     "alert alert-danger mt-3 mb-0",
                     `${this.currentErrors.length} ${gettext("test response errors must be corrected.")}`,
                 ));
-            } else {
+            } else if (!this.expressionWarnings.size) {
                 actions.appendChild(element(
                     "div",
                     "alert alert-success mt-3 mb-0",
                     gettext("Preview validation passed. No data was submitted."),
                 ));
+            } else {
+                actions.appendChild(element('div', 'alert alert-warning mt-3 mb-0',
+                    gettext('Preview checks are incomplete. Test advanced logic in the saved form with Formplayer.')));
             }
         }
         if (this.expressionWarnings.size) {

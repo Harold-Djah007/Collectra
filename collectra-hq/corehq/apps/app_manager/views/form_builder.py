@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import replace
 
 from django.contrib import messages
 from django.core.cache import cache
@@ -7,9 +8,14 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict, require_can_edit_apps
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    ModuleNotFoundException,
+    XFormValidationError,
+    XFormValidationFailed,
+)
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.views.apps import clear_app_cache
+from corehq.apps.app_manager.xform import validate_xform
 from corehq.apps.app_manager.xlsform import (
     MAX_XLSFORM_SIZE,
     XlsFormDefinition,
@@ -123,6 +129,13 @@ def _validate_upload(upload):
 
 
 def _save_draft(request, domain, app, definition, token):
+    # Validate before creating a module/form or mutating an existing draft.
+    form_title = (request.POST.get("form_title") or "").strip() or definition.form_title
+    source = build_xform(replace(definition, form_title=form_title))
+    try:
+        validate_xform(source)
+    except (XFormValidationError, XFormValidationFailed) as exc:
+        raise XlsFormError(f"Formplayer validation did not pass: {exc}") from exc
     language = definition.default_language or "en"
     if app is None:
         app_name = (request.POST.get("app_name") or "").strip() or definition.form_title
@@ -138,9 +151,8 @@ def _save_draft(request, domain, app, definition, token):
         except ModuleNotFoundException as exc:
             raise XlsFormError(str(exc)) from exc
 
-    form_title = (request.POST.get("form_title") or "").strip() or definition.form_title
     form = module.new_form(form_title, language)
-    form.source = build_xform(definition)
+    form.source = source
 
     for app_language in definition.languages:
         if app_language not in app.langs:

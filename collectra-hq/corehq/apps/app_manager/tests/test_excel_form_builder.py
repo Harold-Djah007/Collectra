@@ -263,6 +263,7 @@ class XlsFormCompilerTest(SimpleTestCase):
 
 
 class XlsFormDraftSaveTest(SimpleTestCase):
+    @patch("corehq.apps.app_manager.views.form_builder.validate_xform")
     @patch("corehq.apps.app_manager.views.form_builder.messages.success")
     @patch("corehq.apps.app_manager.views.form_builder.clear_app_cache")
     @patch("corehq.apps.app_manager.views.form_builder.cache.delete")
@@ -279,6 +280,7 @@ class XlsFormDraftSaveTest(SimpleTestCase):
         delete_preview,
         clear_app_cache,
         success_message,
+        native_validate,
     ):
         definition = parse_xlsform(_representative_xlsform(), "household.xlsx")
         form = MagicMock()
@@ -306,7 +308,9 @@ class XlsFormDraftSaveTest(SimpleTestCase):
         new_module.assert_called_once_with("Baseline Surveys", "en")
         app.add_module.assert_called_once_with(module)
         module.new_form.assert_called_once_with("Household Survey 2026", "en")
-        compile_xform.assert_called_once_with(definition)
+        from dataclasses import replace
+        compile_xform.assert_called_once_with(replace(definition, form_title='Household Survey 2026'))
+        native_validate.assert_called_once_with('<compiled-xform />')
         self.assertEqual(form.source, "<compiled-xform />")
         self.assertEqual(app.langs, ["en", "fr"])
         app.save.assert_called_once_with()
@@ -314,3 +318,149 @@ class XlsFormDraftSaveTest(SimpleTestCase):
         clear_app_cache.assert_called_once_with(request, "test-domain")
         success_message.assert_called_once()
         redirect_to_form.assert_called_once_with("view_form", "test-domain", "app-1", "form-1")
+
+
+class XlsFormImportSafetyTest(SimpleTestCase):
+    def test_excessive_sheet_dimensions_are_rejected(self):
+        workbook = Workbook()
+        workbook.active.title = 'survey'
+        workbook.active.cell(10001, 1, 'text')
+        stream = BytesIO()
+        workbook.save(stream)
+        stream.seek(0)
+        with self.assertRaisesMessage(XlsFormError, '10000 rows or 200 columns'):
+            parse_xlsform(stream, 'huge.xlsx')
+
+    def test_filtered_choices_inside_repeat_use_the_current_question_context(self):
+        definition = parse_xlsform(_workbook_file([
+            ['type', 'name', 'label', 'choice_filter'],
+            ['begin repeat', 'visits', 'Visits', ''],
+            ['text', 'region', 'Region', ''],
+            ['select_one districts', 'district', 'District', '${region} = region'],
+            ['end repeat', '', '', ''],
+        ], [['list_name', 'name', 'label', 'region'], ['districts', 'one', 'One', 'north']]), 'filters.xlsx')
+        root = etree.fromstring(build_xform(definition).encode())
+        ns = {'x': XFORMS_NAMESPACE}
+        nodeset = root.xpath('//x:itemset/@nodeset', namespaces=ns)[0]
+        assert 'current()/../region = region' in nodeset
+
+    def test_repeat_calculations_use_the_current_entry_but_totals_use_all_entries(self):
+        definition = parse_xlsform(_workbook_file([
+            ['type', 'name', 'label', 'calculation'],
+            ['begin repeat', 'visits', 'Visits', ''],
+            ['integer', 'reading', 'Reading', ''],
+            ['calculate', 'double', '', '${reading} * 2'],
+            ['end repeat', '', '', ''],
+            ['calculate', 'total', '', 'sum(${double})'],
+        ]), 'repeats.xlsx')
+        root = etree.fromstring(build_xform(definition).encode())
+        ns = {'x': XFORMS_NAMESPACE}
+        assert root.xpath('//x:bind[@nodeset="/data/visits/double"]/@calculate', namespaces=ns) == ['../reading * 2']
+        assert root.xpath('//x:bind[@nodeset="/data/total"]/@calculate', namespaces=ns) == ['sum(/data/visits/double)']
+
+    def test_expanded_workbook_size_is_bounded(self):
+        with patch('corehq.apps.app_manager.xlsform.MAX_EXPANDED_XLSFORM_SIZE', 1):
+            with self.assertRaisesMessage(XlsFormError, 'expanded workbook exceeds'):
+                parse_xlsform(_representative_xlsform(), 'oversized.xlsx')
+
+    def test_excel_formula_is_not_silently_replaced_by_cached_value(self):
+        for column in ('label', 'calculation', 'default'):
+            with self.subTest(column=column):
+                stream = _workbook_file([['type', 'name', column], ['text', 'answer', '=1+2']])
+                with self.assertRaisesMessage(XlsFormError, 'Excel formula in survey!C2'):
+                    parse_xlsform(stream, 'formula.xlsx')
+
+    def test_duplicate_normalized_headers_are_rejected(self):
+        with self.assertRaisesMessage(XlsFormError, 'Duplicate column headers'):
+            parse_xlsform(_workbook_file([
+                ['type', 'name', 'label', ' Label '], ['text', 'answer', 'First', 'Second'],
+            ]), 'headers.xlsx')
+
+    def test_undefined_logic_references_block_import(self):
+        for column in ('required', 'relevant', 'constraint', 'calculation', 'choice_filter'):
+            with self.subTest(column=column):
+                definition = parse_xlsform(_workbook_file([
+                    ['type', 'name', 'label', column], ['text', 'answer', 'Answer', '${missing}'],
+                ]), 'missing.xlsx')
+                assert any(issue.level == 'error' and issue.column == column for issue in definition.issues)
+                with self.assertRaises(XlsFormError):
+                    build_xform(definition)
+
+    def test_unsupported_behavior_columns_block_import(self):
+        for column in ('repeat_count', 'parameters', 'read_only', 'bind::readonly', 'media::image'):
+            with self.subTest(column=column):
+                definition = parse_xlsform(_workbook_file([
+                    ['type', 'name', 'label', column], ['text', 'answer', 'Answer', '1'],
+                ]), 'unsupported.xlsx')
+                assert any(issue.column == column for issue in definition.errors)
+
+    def test_external_choice_file_cannot_be_mistaken_for_static_choices(self):
+        definition = parse_xlsform(_workbook_file([
+            ['type', 'name', 'label'], ['select_one_from_file beds.csv', 'bed', 'Bed'],
+        ], [['list_name', 'name', 'label'], ['beds.csv', 'one', 'One']]), 'external.xlsx')
+        assert any('External choice files' in issue.message for issue in definition.errors)
+
+    def test_literal_defaults_are_preserved_and_expression_defaults_rejected(self):
+        for value in ('${other}', 'today()'):
+            definition = parse_xlsform(_workbook_file([
+                ['type', 'name', 'label', 'default'], ['text', 'answer', 'Answer', value],
+            ]), 'defaults.xlsx')
+            assert any(issue.column == 'default' for issue in definition.errors)
+        definition = parse_xlsform(_workbook_file([
+            ['type', 'name', 'label', 'default'], ['text', 'answer', 'Answer', '0001'],
+        ]), 'defaults.xlsx')
+        assert not definition.errors
+        root = etree.fromstring(build_xform(definition).encode())
+        assert root.xpath('string(//*[local-name()="data"]/*[local-name()="answer"])') == '0001'
+
+    def test_choice_codes_cannot_contain_whitespace(self):
+        definition = parse_xlsform(_workbook_file([
+            ['type', 'name', 'label'], ['select_multiple beds', 'beds', 'Beds'],
+        ], [['list_name', 'name', 'label'], ['beds', 'bed one', 'Bed one']]), 'choices.xlsx')
+        assert any('whitespace' in issue.message for issue in definition.errors)
+
+    def test_start_and_today_metadata_are_initialized_once(self):
+        definition = parse_xlsform(_workbook_file([
+            ['type', 'name', 'label'], ['start', 'started', ''], ['today', 'day', ''],
+            ['end', 'finished', ''], ['text', 'answer', 'Answer'],
+        ]), 'metadata.xlsx')
+        root = etree.fromstring(build_xform(definition).encode())
+        ns = {'x': XFORMS_NAMESPACE}
+        for name, expression in (('started', 'now()'), ('day', 'today()')):
+            assert root.xpath('//x:setvalue[@ref=$ref and @event="xforms-ready"]/@value',
+                              namespaces=ns, ref='/data/' + name) == [expression]
+            assert not root.xpath('//x:bind[@nodeset=$ref]/@calculate', namespaces=ns, ref='/data/' + name)
+        assert root.xpath('//x:bind[@nodeset="/data/finished"]/@calculate', namespaces=ns) == ['now()']
+
+    def test_native_validation_failure_cannot_mutate_or_save_a_draft(self):
+        from corehq.apps.app_manager.exceptions import XFormValidationError, XFormValidationFailed
+        for error in (XFormValidationError('Invalid XPath'), XFormValidationFailed('Unavailable')):
+            with self.subTest(error=type(error).__name__), \
+                    patch('corehq.apps.app_manager.views.form_builder.validate_xform', side_effect=error), \
+                    patch('corehq.apps.app_manager.views.form_builder.Application.new_app') as new_app:
+                app = MagicMock()
+                with self.assertRaisesMessage(XlsFormError, 'Formplayer validation did not pass'):
+                    _save_draft(SimpleNamespace(POST={}), 'safisana', app,
+                                parse_xlsform(_representative_xlsform(), 'survey.xlsx'), 'token')
+                app.add_module.assert_not_called()
+                app.get_module_by_unique_id.assert_not_called()
+                app.save.assert_not_called()
+                new_app.assert_not_called()
+
+    def test_preview_tokens_are_scoped_to_domain_application_and_user(self):
+        from corehq.apps.app_manager.views.form_builder import _load_cached_definition
+        definition = parse_xlsform(_representative_xlsform(), 'survey.xlsx')
+        payload = {'domain': 'safisana', 'app_id': 'app-id', 'user_id': 'user-id',
+                   'definition': definition.to_dict()}
+        request = SimpleNamespace(couch_user=SimpleNamespace(get_id='user-id'))
+        app = SimpleNamespace(get_id='app-id')
+        with patch('corehq.apps.app_manager.views.form_builder.cache.get', return_value=payload):
+            assert _load_cached_definition(request, 'safisana', app, 'token').to_dict() == definition.to_dict()
+        for key in ('domain', 'app_id', 'user_id'):
+            wrong = dict(payload, **{key: 'other'})
+            with patch('corehq.apps.app_manager.views.form_builder.cache.get', return_value=wrong):
+                with self.assertRaises(XlsFormError):
+                    _load_cached_definition(request, 'safisana', app, 'token')
+        with patch('corehq.apps.app_manager.views.form_builder.cache.get', return_value=None):
+            with self.assertRaises(XlsFormError):
+                _load_cached_definition(request, 'safisana', app, 'token')

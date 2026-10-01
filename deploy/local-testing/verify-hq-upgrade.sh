@@ -59,8 +59,10 @@ PY
 
 "$python_bin" manage.py check
 node "$repo_root/deploy/local-testing/test-dashboard-loading.cjs"
+node "$repo_root/deploy/local-testing/test-xlsform-preview.cjs"
 
 "$python_bin" -m pytest --reusedb=1 \
+    corehq/apps/app_manager/tests/test_excel_form_builder.py \
     corehq/apps/app_manager/tests/test_form_readiness.py \
     corehq/apps/app_manager/tests/test_check_hq_form_readiness.py \
     corehq/apps/app_manager/tests/test_restore_form_xml_cache.py \
