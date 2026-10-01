@@ -7,6 +7,11 @@ import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/bootstrap5/main";  // post-link
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // popover
 
+// Limit dashboard requests so failed dependencies produce a retryable error.
+var dashboardJSON = function (url, data) {
+    return $.ajax({url: url, data: data, dataType: "json", timeout: 15000});
+};
+
 var tileModel = function (options) {
     var self = {};
     self.title = options.title;
@@ -22,6 +27,10 @@ var tileModel = function (options) {
     self.url = options.url;
     self.helpText = options.help_text;
     self.hasError = ko.observable(false);
+    self.itemsLoading = ko.observable(Boolean(options.has_item_list));
+    self.totalLoading = ko.observable(Boolean(options.has_item_list));
+    self.pageGeneration = 0;
+    self.totalRequestActive = false;
 
     // Might get updated if this tile supports an item list but it's empty
     self.hasItemList = ko.observable(options.has_item_list);
@@ -46,7 +55,7 @@ var tileModel = function (options) {
         // Show spinner if this is an ajax tile, it's still waiting for one or both requests,
         // and neither request has errored out
         return self.hasItemList()
-               && (self.items().length === 0 || self.totalPages() === undefined)
+               && (self.itemsLoading() || self.totalLoading())
                && !self.hasError();
     });
     self.showItemList = ko.computed(function () {
@@ -59,36 +68,34 @@ var tileModel = function (options) {
     // Paging
     if (self.hasItemList()) {
         self.goToPage = function (page) {
-            // If request takes a noticeable amount of time, clear items, which will show spinner
-            var done = false;
-            _.delay(function () {
-                if (!done) {
-                    self.items([]);     // clear items to show spinner
-                }
-            }, 500);
+            var generation = ++self.pageGeneration;
+            self.itemsLoading(true);
+            self.hasError(false);
 
-            // Send request for items on current page
             $.ajax({
                 method: "GET",
+                timeout: 15000,
                 url: initialPageData.reverse('dashboard_tile', self.slug),
-                data: {
-                    itemsPerPage: self.itemsPerPage,
-                    currentPage: page,
-                },
+                data: {itemsPerPage: self.itemsPerPage, currentPage: page},
                 success: function (data) {
-                    self.items(data.items);
-                    done = true;
+                    if (generation === self.pageGeneration) { self.items(data.items); }
                 },
                 error: function () {
-                    self.hasError(true);
+                    if (generation === self.pageGeneration) { self.hasError(true); }
+                },
+                complete: function () {
+                    if (generation === self.pageGeneration) { self.itemsLoading(false); }
                 },
             });
 
             // Total number of pages is also a separate request, but it only needs to run once
             // and then self.totalPages() never changes again
-            if (self.totalItems() === undefined) {
+            if (self.totalItems() === undefined && !self.totalRequestActive) {
+                self.totalRequestActive = true;
+                self.totalLoading(true);
                 $.ajax({
                     method: "GET",
+                    timeout: 15000,
                     url: initialPageData.reverse('dashboard_tile_total', self.slug),
                     success: function (data) {
                         self.totalItems(data.total);
@@ -99,6 +106,10 @@ var tileModel = function (options) {
                     },
                     error: function () {
                         self.hasError(true);
+                    },
+                    complete: function () {
+                        self.totalRequestActive = false;
+                        self.totalLoading(false);
                     },
                 });
             }
@@ -152,13 +163,13 @@ $(function () {
         alertsModel.showUrgent = function () { alertsModel.selectedSeverity("urgent"); };
         alertsModel.showFollowUp = function () { alertsModel.selectedSeverity("follow_up"); };
         alertsModel.emptyTitle = ko.pureComputed(function () {
-            if (alertsModel.selectedSeverity() === "urgent") { return "No urgent issues reported"; }
-            if (alertsModel.selectedSeverity() === "follow_up") { return "No follow-up issues reported"; }
-            return "No reported issues";
+            if (alertsModel.selectedSeverity() === "urgent") { return "No urgent issues in this list"; }
+            if (alertsModel.selectedSeverity() === "follow_up") { return "No follow-up issues in this list"; }
+            return "No issues in recent submissions";
         });
         alertsModel.emptyDescription = ko.pureComputed(function () {
             return alertsModel.selectedSeverity() === "all"
-                ? "No issues have been reported in these forms in the last 14 days."
+                ? "No flagged issues were found in the recent dashboard sample. Check form reports for the complete history."
                 : "Select Reported issues to see all recent submissions needing attention.";
         });
         alertsModel.urgentCount = ko.pureComputed(function () {
@@ -167,11 +178,13 @@ $(function () {
         alertsModel.followUpCount = ko.pureComputed(function () {
             return alertsModel.alerts().length - alertsModel.urgentCount();
         });
+        var alertsRequestActive = false;
         alertsModel.refresh = function () {
-            if (alertsModel.loading() && alertsModel.lastUpdated()) { return; }
+            if (alertsRequestActive) { return; }
+            alertsRequestActive = true;
             alertsModel.loading(true);
             alertsModel.error(false);
-            $.getJSON(initialPageData.reverse("dashboard_operational_alerts"))
+            dashboardJSON(initialPageData.reverse("dashboard_operational_alerts"))
                 .done(function (data) {
                     alertsModel.alerts(_.map(data.alerts, function (alert) {
                         alert.when = new Date(alert.received_on).toLocaleString();
@@ -185,6 +198,7 @@ $(function () {
                     alertsModel.error(true);
                 })
                 .always(function () {
+                    alertsRequestActive = false;
                     alertsModel.loading(false);
                 });
         };
@@ -235,7 +249,7 @@ $(function () {
             var generation = ++reopenModel.requestGeneration;
             reopenModel.loading(true);
             reopenModel.error(false);
-            $.getJSON(initialPageData.reverse("dashboard_reopen_requests"), {
+            dashboardJSON(initialPageData.reverse("dashboard_reopen_requests"), {
                 view: view,
                 cursor: cursor || "",
             })
@@ -260,7 +274,7 @@ $(function () {
                             request.reviewOpen(!request.reviewOpen());
                             if (request.reviewOpen() && request.name && !request.suggestionsLoaded()) {
                                 request.suggestionsLoading(true);
-                                $.getJSON(initialPageData.reverse("dashboard_reopen_candidates"), {
+                                dashboardJSON(initialPageData.reverse("dashboard_reopen_candidates"), {
                                     request_id: request.form_id,
                                 }).done(function (result) {
                                     request.suggestions(_.map(result.candidates, function (item) {
@@ -283,7 +297,7 @@ $(function () {
                                 return;
                             }
                             request.checking(true);
-                            $.getJSON(initialPageData.reverse("dashboard_reopen_preview"), {
+                            dashboardJSON(initialPageData.reverse("dashboard_reopen_preview"), {
                                 request_id: request.form_id,
                                 case_id: request.caseId().trim(),
                             }).done(function (candidate) {

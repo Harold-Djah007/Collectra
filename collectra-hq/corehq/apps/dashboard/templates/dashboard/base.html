@@ -100,7 +100,7 @@
           <div>
             <p class="collectra-alerts-eyebrow"><span class="collectra-live-dot" aria-hidden="true"></span> Safisana operations</p>
             <h2>Operational overview</h2>
-            <p>Morning Checks, Metering Round and Incident Reports · last 14 days</p>
+            <p>Morning Checks, Metering Round and Incident Reports · recent submissions within 14 days</p>
           </div>
           <div class="collectra-alerts-controls">
             <span class="collectra-last-updated" data-bind="visible: lastUpdated, text: lastUpdated"></span>
@@ -109,10 +109,11 @@
             </button>
           </div>
         </div>
+        <p class="collectra-last-updated">Shows up to 20 alerts from the latest 150 submissions per database. Counts describe this list; form reports contain the full history.</p>
         <div class="collectra-alerts-summary" data-bind="visible: !loading() &amp;&amp; !error()">
           <button type="button" class="collectra-summary-item collectra-summary-reported" data-bind="click: showAll, css: {'is-selected': selectedSeverity() === 'all'}, attr: {'aria-pressed': selectedSeverity() === 'all'}">
             <span class="collectra-summary-icon"><i class="fa fa-list-alt" aria-hidden="true"></i></span>
-            <span><strong data-bind="text: alerts().length"></strong><small>Reported issues</small></span>
+            <span><strong data-bind="text: alerts().length"></strong><small>Recent issues</small></span>
             <span class="collectra-summary-arrow" aria-hidden="true">↗</span>
           </button>
           <button type="button" class="collectra-summary-item collectra-summary-urgent" data-bind="click: showUrgent, css: {'is-selected': selectedSeverity() === 'urgent'}, attr: {'aria-pressed': selectedSeverity() === 'urgent'}">
