@@ -193,8 +193,8 @@ docker run --rm --detach --name "$proxy_name" \
 for attempt in $(seq 1 30); do
     if curl -fsS --max-time 3 "http://127.0.0.1:$proxy_port/formplayer/serverup" >/dev/null \
             && curl -fsS --max-time 3 -o /dev/null "http://127.0.0.1:$proxy_port/a/safisana/" \
-            && docker exec "$resource_bridge_name" wget -q -O /dev/null -T 3 \
-                "http://127.0.0.1:$proxy_port/a/safisana/"; then
+            && bash "$repo_root/deploy/local-testing/check-formplayer-resource-bridge.sh" \
+                "$resource_bridge_name" "$proxy_port"; then
         echo "Collectra test is ready: http://localhost:$proxy_port/a/safisana/"
         echo "Open the form editor through the same URL. Press Ctrl+C here to stop the test services."
         while kill -0 "$server_pid" 2>/dev/null; do

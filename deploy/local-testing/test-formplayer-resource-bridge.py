@@ -46,6 +46,40 @@ if [[ $1 == exec ]]; then printf '%s\\n' "$HOSTS"; fi
         self.assertNotIn('run --rm', calls)
         self.assertIn('host-gateway mapping', result.stderr)
 
+    def test_readiness_accepts_redirect_without_following_it(self):
+        self.check_readiness('HTTP/1.1 302 Found', expected=0)
+
+    def test_readiness_accepts_success(self):
+        self.check_readiness('HTTP/1.1 200 OK', expected=0)
+
+    def test_readiness_rejects_bad_gateway_and_empty_response(self):
+        for status in ['HTTP/1.1 502 Bad Gateway', '']:
+            with self.subTest(status=status):
+                self.check_readiness(status, expected=1)
+
+    def check_readiness(self, status, expected):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            # Execute the actual in-container probe shell, replacing only nc.
+            docker = root / 'docker'
+            docker.write_text('#!/bin/sh\nshift 2\nexec "$@"\n')
+            docker.chmod(0o755)
+            nc = root / 'nc'
+            nc.write_text('''#!/bin/sh
+cat > "$REQUEST_LOG"
+printf '%s\\r\\nLocation: https://unreachable.invalid/login\\r\\n\\r\\n' "$STATUS"
+''')
+            nc.chmod(0o755)
+            request_log = root / 'request'
+            environment = dict(os.environ, PATH=f'{directory}:{os.environ["PATH"]}',
+                               REQUEST_LOG=str(request_log), STATUS=status)
+            script = Path(__file__).with_name('check-formplayer-resource-bridge.sh')
+            result = subprocess.run(['bash', str(script), 'test-bridge', '8012'],
+                                    env=environment, capture_output=True, text=True, timeout=5)
+            self.assertEqual(result.returncode, expected, result.stderr)
+            self.assertIn('Host: localhost:8012', request_log.read_text())
+            self.assertIn('GET /a/safisana/ HTTP/1.0', request_log.read_text())
+
 
 if __name__ == '__main__':
     unittest.main()
