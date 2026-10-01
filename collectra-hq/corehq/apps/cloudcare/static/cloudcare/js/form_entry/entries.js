@@ -1157,6 +1157,17 @@ function GeoPointEntry(question, options) {
     self.templateType = 'geo';
     self.map = null;
     self.hasMap = () => !!self.map;
+    self.mapAvailable = ko.observable(false);
+    self.mapNotice = ko.observable('');
+    self.locationError = ko.observable('');
+    self.locating = ko.observable(false);
+    self.latitude = ko.observable(self.rawAnswer()[0] ?? '');
+    self.longitude = ko.observable(self.rawAnswer()[1] ?? '');
+    self.captureVersion = 0;
+    self.rawAnswer.subscribe(function (value) {
+        self.latitude(value[0] ?? '');
+        self.longitude(value[1] ?? '');
+    });
     self.control_width = constants.CONTROL_WIDTH;
 
     self.DEFAULT = {
@@ -1167,12 +1178,59 @@ function GeoPointEntry(question, options) {
     };
 
     self.onClear = function () {
+        self.captureVersion += 1;
+        self.locating(false);
+        self.locationError('');
         self.rawAnswer([]);
+    };
+
+    self.applyCoordinates = function (latitude, longitude, extra = []) {
+        if (latitude === '' || longitude === '' || latitude === null || longitude === null
+                || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))
+                || Math.abs(Number(latitude)) > 90 || Math.abs(Number(longitude)) > 180) {
+            self.locationError(gettext('Enter latitude between -90 and 90 and longitude between -180 and 180.'));
+            return false;
+        }
+        const lat = Number(latitude), lon = Number(longitude);
+        self.locationError('');
+        if (self.map) { self.map.setView([lat, lon], self.DEFAULT.anszoom); }
+        self.rawAnswer([lat, lon, ...extra]);
+        return true;
+    };
+
+    self.saveCoordinates = function () {
+        self.captureVersion += 1;
+        self.locating(false);
+        return self.applyCoordinates(String(self.latitude()).trim(), String(self.longitude()).trim());
+    };
+
+    self.captureLocation = function () {
+        if (!navigator.geolocation) {
+            self.locationError(gettext('Location capture is unavailable. Enter coordinates manually.'));
+            return;
+        }
+        const version = ++self.captureVersion;
+        self.locationError('');
+        self.locating(true);
+        navigator.geolocation.getCurrentPosition(function (position) {
+            if (version !== self.captureVersion) { return; }
+            self.locating(false);
+            const coords = position.coords;
+            self.applyCoordinates(coords.latitude, coords.longitude,
+                [coords.altitude ?? 0, coords.accuracy]);
+        }, function (error) {
+            if (version !== self.captureVersion) { return; }
+            self.locating(false);
+            self.locationError(error.code === 1
+                ? gettext('Location permission was denied. Allow location access or enter coordinates manually.')
+                : gettext('Could not obtain your location. Try again or enter coordinates manually.'));
+        }, {enableHighAccuracy: true, timeout: 15000, maximumAge: 0});
     };
 
     self.loadMap = function () {
         var token = initialPageData.get("mapbox_access_token");
         if (token) {
+            self.mapAvailable(true);
             // if a default answer exists, use that instead
             let lat = self.rawAnswer().length ? self.rawAnswer()[0] : self.DEFAULT.lat;
             let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
@@ -1200,14 +1258,14 @@ function GeoPointEntry(question, options) {
             L.mapbox.accessToken = token;
             self.geocoder = L.mapbox.geocoder('mapbox.places');
         } else {
-            question.error(gettext('Map layer not configured.'));
+            self.mapNotice(gettext('Map not configured. Use your location or enter coordinates below.'));
         }
 
     };
 
     self.afterRender = function () {
         if (typeof L === 'undefined') {
-            question.error(gettext('Could not load map. Please try again later.'));
+            self.mapNotice(gettext('Map unavailable. Use your location or enter coordinates below.'));
         } else {
             self.loadMap();
         }
@@ -1216,14 +1274,17 @@ function GeoPointEntry(question, options) {
     self.updateCenter = function () {
         var center = self.map.getCenter();
         self.centerMarker.setLatLng(center);
-        self.rawAnswer([center.lat, center.lng]);
+        const previous = self.rawAnswer();
+        const unchanged = previous.length >= 2 && Math.abs(previous[0] - center.lat) < 1e-10
+            && Math.abs(previous[1] - center.lng) < 1e-10;
+        self.rawAnswer([center.lat, center.lng, ...(unchanged ? previous.slice(2) : [])]);
     };
 
     self.formatLat = function () {
-        return self.formatCoordinate(self.rawAnswer()[0] || null, ['N', 'S']);
+        return self.formatCoordinate(self.rawAnswer()[0] ?? null, ['N', 'S']);
     };
     self.formatLon = function () {
-        return self.formatCoordinate(self.rawAnswer()[1] || null, ['E', 'W']);
+        return self.formatCoordinate(self.rawAnswer()[1] ?? null, ['E', 'W']);
     };
     self.formatCoordinate = function (coordinate, cardinalities) {
         var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities[1];
@@ -1234,6 +1295,7 @@ function GeoPointEntry(question, options) {
     };
 
     self.search = function (form) {
+        if (!self.geocoder) { return false; }
         var query = $(form).find('.query').val();
         self.geocoder.query(query, function (err, data) {
             if (err === null) {
