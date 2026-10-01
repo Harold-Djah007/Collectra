@@ -34,6 +34,7 @@ hq_ready_attempts=${COLLECTRA_HQ_READY_ATTEMPTS:-120}
 caddy_ready_attempts=${COLLECTRA_CADDY_READY_ATTEMPTS:-60}
 container_name=collectra-local-accelerator
 hq_pid=''
+caddy_pid=''
 
 if [[ ! "$web_workers" =~ ^[1-9][0-9]*$ ]]; then
     echo "COLLECTRA_WEB_WORKERS must be a positive integer." >&2
@@ -47,6 +48,9 @@ for setting_name in hq_ready_attempts caddy_ready_attempts; do
     fi
 done
 
+cid_dir=$(mktemp -d)
+cid_file="$cid_dir/caddy.cid"
+
 cleanup() {
     local status=$?
     trap - EXIT INT TERM
@@ -54,10 +58,15 @@ cleanup() {
         kill "$hq_pid" 2>/dev/null || true
         wait "$hq_pid" 2>/dev/null || true
     fi
-    docker stop "$container_name" >/dev/null 2>&1 || true
+    if [[ -s "$cid_file" ]]; then
+        docker stop "$(<"$cid_file")" >/dev/null 2>&1 || true
+    fi
+    rm -rf -- "$cid_dir"
     exit "$status"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
     echo "Docker is not available. Start Docker Desktop and try again." >&2
@@ -123,6 +132,7 @@ done
 echo "Starting the compressed, cacheable origin on port 8000..."
 docker run --rm \
     --name "$container_name" \
+    --cidfile "$cid_file" \
     --add-host host.docker.internal:host-gateway \
     --publish 8000:80 \
     --volume "$script_dir/Caddyfile:/etc/caddy/Caddyfile:ro" \
@@ -130,6 +140,10 @@ docker run --rm \
 caddy_pid=$!
 
 for ((attempt = 1; attempt <= caddy_ready_attempts; attempt++)); do
+    if ! kill -0 "$caddy_pid" 2>/dev/null; then
+        echo "The compressed origin stopped before becoming ready." >&2
+        exit 1
+    fi
     if curl -fsS --max-time 2 http://127.0.0.1:8000/ >/dev/null 2>&1; then
         break
     fi
