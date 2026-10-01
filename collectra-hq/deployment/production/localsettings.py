@@ -1,6 +1,7 @@
 """Environment-driven settings for the Collectra production stack."""
 
 import os
+from urllib.parse import urlsplit, urlunsplit
 
 
 def required(name):
@@ -12,6 +13,13 @@ def required(name):
 
 def integer(name, default):
     return int(os.environ.get(name, default))
+
+
+def redis_database_url(base_url, database):
+    parsed = urlsplit(base_url)
+    if parsed.scheme not in {"redis", "rediss"} or not parsed.hostname:
+        raise RuntimeError("REDIS_URL must be an absolute redis:// or rediss:// URL")
+    return urlunsplit(parsed._replace(path=f"/{database}"))
 
 
 COLLECTRA_HOST = required("COLLECTRA_HOST")
@@ -69,12 +77,12 @@ BIGCOUCH = True
 
 redis_cache = {
     "BACKEND": "django_redis.cache.RedisCache",
-    "LOCATION": f"{REDIS_URL}/0",
-    "REDIS_CLIENT_KWARGS": {"health_check_interval": 15},
-    "TEST_LOCATION": f"{REDIS_URL}/2",
+    "LOCATION": redis_database_url(REDIS_URL, 0),
+    "OPTIONS": {"REDIS_CLIENT_KWARGS": {"health_check_interval": 15}},
+    "TEST_LOCATION": redis_database_url(REDIS_URL, 2),
 }
 CACHES = {"default": redis_cache, "redis": redis_cache}
-CELERY_BROKER_URL = f"{REDIS_URL}/1"
+CELERY_BROKER_URL = redis_database_url(REDIS_URL, 1)
 CELERY_TASK_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = False
 

@@ -149,3 +149,7 @@ of inactivity. Adjust `COLLECTRA_SESSION_AGE_SECONDS` and
 `COLLECTRA_MIN_FREE_DISK_GB` available and rejects containers that report an unhealthy or
 still-starting health state. Run the check from monitoring after every deployment and at least every
 five minutes. Alert an operator on the first failure.
+
+Production Redis uses database 0 for caches, 1 for Celery, and 2 for tests.
+`REDIS_URL` may include credentials, TLS, a trailing slash, or an existing
+database number; each service selects its own database while retaining connection options.
