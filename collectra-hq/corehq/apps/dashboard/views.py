@@ -53,6 +53,7 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION
 from corehq.apps.users.views import DefaultProjectUserSettingsView, require_POST
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml, XFormNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
@@ -92,7 +93,7 @@ def dashboard_tile_total(request, domain, slug):
 @login_and_domain_required
 @require_GET
 def dashboard_operational_alerts(request, domain):
-    if (domain != 'safisana' or not user_can_view_reports(request.project, request.couch_user)
+    if (domain != 'safisana' or not _can_view_dashboard_submissions(request, domain)
             or not has_privilege(request, privileges.PROJECT_ACCESS)
             or not request.can_access_all_locations):
         return HttpResponseForbidden()
@@ -111,10 +112,7 @@ def dashboard_operational_alerts(request, domain):
 @location_safe
 @require_GET
 def dashboard_reopen_requests(request, domain):
-    if (domain != 'safisana' or not request.couch_user.can_edit_data()
-            or not user_can_view_reports(request.project, request.couch_user)
-            or not has_privilege(request, privileges.PROJECT_ACCESS)
-            or not request.can_access_all_locations):
+    if not _can_reopen_from_dashboard(request, domain):
         return HttpResponseForbidden()
     try:
         requests, next_cursor = reopen_requests_page(
@@ -128,9 +126,14 @@ def dashboard_reopen_requests(request, domain):
     ], 'next_cursor': next_cursor})
 
 
+def _can_view_dashboard_submissions(request, domain):
+    return (user_can_view_reports(request.project, request.couch_user)
+            and request.couch_user.can_view_report(domain, SUBMISSION_HISTORY_PERMISSION))
+
+
 def _can_reopen_from_dashboard(request, domain):
     return (domain == 'safisana' and request.couch_user.can_edit_data()
-            and user_can_view_reports(request.project, request.couch_user)
+            and _can_view_dashboard_submissions(request, domain)
             and has_privilege(request, privileges.PROJECT_ACCESS)
             and request.can_access_all_locations)
 
@@ -263,14 +266,14 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
             ),
             'show_operational_alerts': (
                 self.domain == 'safisana'
-                and user_can_view_reports(self.request.project, self.request.couch_user)
+                and _can_view_dashboard_submissions(self.request, self.domain)
                 and has_privilege(self.request, privileges.PROJECT_ACCESS)
                 and self.request.can_access_all_locations
             ),
             'show_reopen_requests': (
                 self.domain == 'safisana'
                 and self.request.couch_user.can_edit_data()
-                and user_can_view_reports(self.request.project, self.request.couch_user)
+                and _can_view_dashboard_submissions(self.request, self.domain)
                 and has_privilege(self.request, privileges.PROJECT_ACCESS)
                 and self.request.can_access_all_locations
             ),

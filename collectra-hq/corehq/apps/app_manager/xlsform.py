@@ -473,6 +473,14 @@ def parse_xlsform(file_or_stream, filename=None):
                     "survey", row_number, "type",
                 ))
 
+            if (_normalize_type(raw_type) in {'start', 'today'}
+                    and any(group[0] == 'begin_repeat' for group in group_stack)):
+                issues.append(XlsFormIssue(
+                    'error', 'Start and today metadata must be outside repeats; '
+                    'repeat initialization is unsupported.',
+                    'survey', row_number, 'type',
+                ))
+
             labels = _localized_values(record, "label", settings["default_language"])
             hints = _localized_values(record, "hint", settings["default_language"])
             if kind not in {"calculate"} and not labels:

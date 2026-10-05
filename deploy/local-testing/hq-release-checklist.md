@@ -32,6 +32,8 @@ validation and Case List index gaps. JSON and TSV reports are saved in
 `~/collectra-hq-verification`. It does not apply draft changes, publish applications
 or migrate the Azure database. Test execution uses the configured test databases.
 
+Dashboard submission details and reopening review require Submission History access; aggregate-report access alone is insufficient. Reopening history must remain pageable when malformed requests fill a shard's recent sample. XLSForm start/today metadata inside repeats is rejected until repeat initialization is supported.
+
 Form checks inspect editable applications, not every historical build. Engine
 validation checks source XML; actual submissions and case actions still need
 the rehearsal below. Inherited shadow forms are recorded as such; their parent

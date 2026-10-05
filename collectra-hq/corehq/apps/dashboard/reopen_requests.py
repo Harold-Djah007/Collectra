@@ -53,20 +53,27 @@ def reopen_requests_page(domain, view='pending', cursor=None):
         filters &= (Q(received_on__lt=received_on)
                     | Q(received_on=received_on, form_id__lt=form_id))
     forms = []
+    shard_boundaries = []
     for database in get_db_aliases_for_partitioned_query():
-        forms.extend(XFormInstance.objects.using(database)
-                     .filter(filters).order_by('-received_on', '-form_id')[:MAX_FORMS_PER_DATABASE])
+        shard_forms = list(XFormInstance.objects.using(database)
+                           .filter(filters).order_by('-received_on', '-form_id')[:MAX_FORMS_PER_DATABASE])
+        forms.extend(shard_forms)
+        if len(shard_forms) == MAX_FORMS_PER_DATABASE:
+            shard_boundaries.append((shard_forms[-1].received_on, shard_forms[-1].form_id))
     forms.sort(key=lambda form: (form.received_on, form.form_id), reverse=True)
+    boundary = max(shard_boundaries) if shard_boundaries else None
     requests = []
     last_form = None
     for form in forms:
+        if boundary and (form.received_on, form.form_id) < boundary:
+            return requests, _request_cursor(last_form)
         request = request_from_form(form)
         if request:
             if len(requests) == MAX_REQUESTS:
                 return requests, _request_cursor(last_form)
             requests.append(request)
-            last_form = form
-    return requests, None
+        last_form = form
+    return requests, _request_cursor(last_form) if boundary and last_form else None
 
 
 def request_from_form(form):
@@ -75,7 +82,7 @@ def request_from_form(form):
         return None
     bed = data.get('bed_number')
     reason = data.get('reason')
-    if bed not in BED_VALUES or not isinstance(reason, str) or not reason.strip():
+    if not isinstance(bed, str) or bed not in BED_VALUES or not isinstance(reason, str) or not reason.strip():
         return None
     date = data.get('batch_start_date')
     name = data.get('existing_batch_name')

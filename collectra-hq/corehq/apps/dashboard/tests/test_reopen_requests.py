@@ -33,6 +33,52 @@ def test_invalid_or_empty_request_cannot_enter_supervisor_queue():
     assert request_from_form(form({'bed_number': 'dry_bed_1', 'reason': ''})) is None
 
 
+@pytest.mark.parametrize('bed', [None, [], {}, 1])
+def test_non_string_bed_values_cannot_crash_request_history(bed):
+    assert request_from_form(form({'bed_number': bed, 'reason': 'Closed accidentally'})) is None
+
+
+def test_malformed_forms_do_not_hide_older_requests():
+    forms = [SimpleNamespace(
+        form_id=f'request-{number:03}', form_data={},
+        received_on=datetime(2026, 7, 1, tzinfo=UTC) - timedelta(minutes=number),
+    ) for number in range(101)]
+    forms[100].form_data = {'bed_number': 'dry_bed_1', 'reason': 'Closed too soon'}
+    with patch('corehq.apps.dashboard.reopen_requests.get_db_aliases_for_partitioned_query',
+               return_value=['shard']), patch(
+                   'corehq.apps.dashboard.reopen_requests.XFormInstance.objects.using'
+               ) as using:
+        query = using.return_value.filter.return_value.order_by.return_value
+        query.__getitem__.side_effect = [forms[:100], forms[100:]]
+        first, cursor = reopen_requests_page('safisana')
+        assert first == []
+        assert cursor.endswith('|request-099')
+        second, next_cursor = reopen_requests_page('safisana', cursor=cursor)
+        assert [item['form_id'] for item in second] == ['request-100']
+        assert next_cursor is None
+
+
+def test_page_cursor_does_not_skip_unread_forms_on_another_shard():
+    start = datetime(2026, 7, 1, tzinfo=UTC)
+    newer = [SimpleNamespace(form_id=f'new-{number:03}', form_data={},
+                             received_on=start - timedelta(minutes=number))
+             for number in range(100)]
+    older = SimpleNamespace(form_id='older-valid', received_on=start - timedelta(days=1),
+                            form_data={'bed_number': 'dry_bed_1', 'reason': 'Closed too soon'})
+    with patch('corehq.apps.dashboard.reopen_requests.get_db_aliases_for_partitioned_query',
+               return_value=['a', 'b']), patch(
+                   'corehq.apps.dashboard.reopen_requests.XFormInstance.objects.using'
+               ) as using:
+        query = using.return_value.filter.return_value.order_by.return_value
+        query.__getitem__.side_effect = [newer, [older], [], [older]]
+        first, cursor = reopen_requests_page('safisana')
+        assert first == []
+        assert cursor.endswith('|new-099')
+        second, next_cursor = reopen_requests_page('safisana', cursor=cursor)
+        assert [item['form_id'] for item in second] == ['older-valid']
+        assert next_cursor is None
+
+
 def test_archived_worker_request_remains_visible_as_handled():
     request = form({'bed_number': 'dry_bed_1', 'reason': 'Closed early'})
     request.state = XFormInstance.ARCHIVED
