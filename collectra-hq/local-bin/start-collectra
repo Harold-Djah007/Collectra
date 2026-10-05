@@ -168,14 +168,14 @@ uv run celery -A corehq worker \
     --loglevel=INFO \
     --pool=solo \
     --queues="$celery_queues" \
-    >"$state_root/celery.log" 2>&1 9>&- &
+    >"$state_root/celery.log" 2>&1 8>&- 9>&- &
 celery_pid=$!
 echo "$celery_pid" >"$state_root/celery.pid"
 
 echo "Starting CaseToElasticsearchPillow..."
 uv run python manage.py run_ptop \
     --pillow-name CaseToElasticsearchPillow \
-    >"$state_root/pillowtop.log" 2>&1 9>&- &
+    >"$state_root/pillowtop.log" 2>&1 8>&- 9>&- &
 pillowtop_pid=$!
 echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
 
@@ -219,6 +219,6 @@ uv run gunicorn \
     --max-requests-jitter 100 \
     --access-logfile - \
     --error-logfile - \
-    deployment.gunicorn.collectra_wsgi:application 9>&- &
+    deployment.gunicorn.collectra_wsgi:application 8>&- 9>&- &
 web_pid=$!
 wait "$web_pid"
