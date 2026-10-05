@@ -1,3 +1,4 @@
 *.sh text eol=lf
 gradlew text eol=lf
 collectra-hq/local-bin/start-* text eol=lf
+collectra-hq/scripts/docker text eol=lf
