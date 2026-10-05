@@ -98,6 +98,48 @@ class LauncherSafetyTests(unittest.TestCase):
         self.assertIn("already running", result.stderr)
         self.assertEqual(pid_file.read_text(), "12345\n")
 
+    def test_starting_owned_formplayer_is_waited_for_without_recreation(self):
+        self.env["COLLECTRA_SERVICE_READY_TIMEOUT"] = "1"
+        self.stub("fuser", "exit 1")
+        self.stub("curl", "exit 1")
+        self.stub("sleep", "exit 0")
+        self.stub("docker", '''
+if [[ "$1" == inspect && "$2" == hqservice-formplayer-1 ]]; then
+    echo '{"State":{"Running":true},"NetworkSettings":{"Ports":{"8080/tcp":[{"HostPort":"18081"}]}}}'
+elif [[ "$1" == inspect && "$2" == hqservice-kafka-1 ]]; then
+    echo healthy
+fi
+exit 0''')
+        result = self.run_launcher("collectra-hq/local-bin/start-collectra")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("waiting for it to finish starting", result.stdout)
+        self.assertIn("Formplayer did not become ready", result.stderr)
+        self.assertNotIn("--force-recreate", self.commands())
+
+    def test_kafka_wait_has_a_deadline_and_container_diagnostics(self):
+        self.env["COLLECTRA_SERVICE_READY_TIMEOUT"] = "1"
+        self.stub("fuser", "exit 1")
+        self.stub("curl", 'echo \'{"status":"ok"}\'')
+        self.stub("sleep", "exit 0")
+        self.stub("docker", "exit 0")
+        result = self.run_launcher("collectra-hq/local-bin/start-collectra")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Kafka did not become ready", result.stderr)
+        self.assertIn("docker logs --tail 100 hqservice-kafka-1", result.stderr)
+
+    def test_stopped_kafka_fails_without_waiting_for_the_deadline(self):
+        self.stub("fuser", "exit 1")
+        self.stub("curl", 'echo \'{"status":"ok"}\'')
+        self.stub("docker", '''
+if [[ "$1" == inspect && "$2" == hqservice-kafka-1 && "$4" == '{{.State.Status}}' ]]; then
+    echo exited
+fi
+exit 0''')
+        result = self.run_launcher("collectra-hq/local-bin/start-collectra")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Kafka stopped during startup", result.stderr)
+        self.assertNotIn("did not become ready", result.stderr)
+
     def test_termination_stops_only_owned_proxy(self):
         # Build an isolated repo so the HQ child never starts real services.
         script_dir = self.root / "deploy" / "local-testing"

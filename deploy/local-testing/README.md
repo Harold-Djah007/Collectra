@@ -1,5 +1,13 @@
 # Fast local field testing through a Quick Tunnel
 
+For a local demonstration, run `bash deploy/local-testing/start-fast-local.sh`
+from the repository root and open `http://localhost:8000` after the ready message.
+Keep that terminal open. Cold Docker startup can take several minutes; the
+launcher waits for the existing Collectra Formplayer container rather than
+rejecting its port while it starts. Each service has a five-minute readiness
+deadline (`COLLECTRA_SERVICE_READY_TIMEOUT`), and stopped containers report an
+error immediately with a command for inspecting their logs.
+
 Raw Django `runserver` serves the development webpack bundle without edge
 compression. In this checkout that bundle can exceed 40 MB, which makes a
 Quick Tunnel slow and can trigger Chrome's `ERR_CACHE_WRITE_FAILURE`.
@@ -7,7 +15,7 @@ Quick Tunnel slow and can trigger Chrome's `ERR_CACHE_WRITE_FAILURE`.
 `start-optimized-origin.sh` builds minified, cache-busted assets and inserts a
 local Caddy proxy between Gunicorn and the existing Cloudflare tunnel. Caddy
 compresses responses, reuses origin connections, and gives static assets a
-six-hour browser cache with stale-while-revalidate support. Gunicorn serves two
+six-hour browser cache with stale-while-revalidate support. Gunicorn serves one
 concurrent gevent workers by default instead of Django's development server.
 It does not change CommCare forms, installation, sync, cases, submissions, or
 project routing.

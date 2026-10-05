@@ -12,8 +12,13 @@ formplayer_port="${COLLECTRA_FORMPLAYER_PORT:-18081}"
 export COLLECTRA_FORMPLAYER_PORT="$formplayer_port"
 case_index_audit_domain="${COLLECTRA_CASE_INDEX_AUDIT_DOMAIN:-safisana}"
 case_index_auto_repair="${COLLECTRA_CASE_INDEX_AUTO_REPAIR:-1}"
+service_ready_timeout="${COLLECTRA_SERVICE_READY_TIMEOUT:-300}"
 
 mkdir -p "$state_root"
+if [[ ! "$service_ready_timeout" =~ ^[1-9][0-9]*$ ]]; then
+    echo "COLLECTRA_SERVICE_READY_TIMEOUT must be a positive integer." >&2
+    exit 2
+fi
 cd "$project_root"
 
 celery_pid=""
@@ -106,8 +111,42 @@ export COLLECTRA_FORMPLAYER_URL="http://127.0.0.1:${formplayer_port}"
 export COLLECTRA_FORMPLAYER_URL_WEBAPPS="${COLLECTRA_FORMPLAYER_URL_WEBAPPS:-http://localhost:${formplayer_port}}"
 
 formplayer_ready() {
-    curl --silent --fail --max-time 2 "$COLLECTRA_FORMPLAYER_URL/serverup" |
+    curl --silent --fail --max-time 5 "$COLLECTRA_FORMPLAYER_URL/serverup" |
         python3 -c 'import json, sys; sys.exit(0 if json.load(sys.stdin).get("status") == "ok" else 1)' 2>/dev/null
+}
+
+managed_formplayer_owns_port() {
+    docker inspect hqservice-formplayer-1 --format '{{json .}}' 2>/dev/null |
+        python3 -c 'import json, sys; c = json.load(sys.stdin); sys.exit(0 if c["State"]["Running"] and any(p["HostPort"] == sys.argv[1] for p in (c["NetworkSettings"]["Ports"].get("8080/tcp") or [])) else 1)' "$formplayer_port" 2>/dev/null
+}
+
+postgres_ready() {
+    docker exec hqservice-postgres-1 pg_isready -U commcarehq -d commcarehq >/dev/null 2>&1
+}
+
+kafka_ready() {
+    docker inspect hqservice-kafka-1 --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' 2>/dev/null | grep -q '^healthy$'
+}
+
+wait_for_service() {
+    local name="$1" container="$2" probe="$3" deadline=$((SECONDS + service_ready_timeout))
+    local container_state
+    echo "Waiting for $name..."
+    until "$probe"; do
+        container_state="$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || true)"
+        if [[ "$container_state" == exited || "$container_state" == dead ]]; then
+            echo "$name stopped during startup ($container_state)." >&2
+            echo "Inspect details with: docker logs --tail 100 $container" >&2
+            return 1
+        fi
+        if (( SECONDS >= deadline )); then
+            echo "$name did not become ready within ${service_ready_timeout} seconds." >&2
+            docker inspect "$container" --format 'Container state: {{.State.Status}}, exit code: {{.State.ExitCode}}{{if .State.Health}}, health: {{.State.Health.Status}}{{end}}' >&2 || true
+            echo "Inspect details with: docker logs --tail 100 $container" >&2
+            return 1
+        fi
+        sleep 2
+    done
 }
 
 echo "Collectra address: http://localhost:${bind_port}"
@@ -122,31 +161,20 @@ bash ./scripts/docker up -d \
 if formplayer_ready; then
     echo "Formplayer is already healthy on port ${formplayer_port}; reusing it."
 else
-    if ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)${formplayer_port}$"; then
+    if managed_formplayer_owns_port; then
+        echo "Collectra's Formplayer container owns port ${formplayer_port}; waiting for it to finish starting."
+    elif ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)${formplayer_port}$"; then
         echo "Port ${formplayer_port} is already in use, but the service there is not a healthy Formplayer." >&2
         echo "Stop the process/container using port ${formplayer_port}, then start Collectra again." >&2
         exit 1
+    else
+        bash ./scripts/docker up -d --force-recreate formplayer
     fi
-    bash ./scripts/docker up -d --force-recreate formplayer
 fi
 
-echo "Waiting for PostgreSQL..."
-until docker exec hqservice-postgres-1 \
-    pg_isready -U commcarehq -d commcarehq >/dev/null 2>&1; do
-    sleep 2
-done
-
-echo "Waiting for Kafka..."
-until docker inspect hqservice-kafka-1 \
-    --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' 2>/dev/null \
-    | grep -q '^healthy$'; do
-    sleep 2
-done
-
-echo "Waiting for Formplayer..."
-until formplayer_ready; do
-    sleep 2
-done
+wait_for_service PostgreSQL hqservice-postgres-1 postgres_ready
+wait_for_service Kafka hqservice-kafka-1 kafka_ready
+wait_for_service Formplayer hqservice-formplayer-1 formplayer_ready
 
 if fuser "${bind_port}/tcp" >/dev/null 2>&1; then
     echo "Port ${bind_port} became busy during startup. Stop its owner before retrying." >&2
