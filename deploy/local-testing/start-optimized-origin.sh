@@ -20,19 +20,25 @@ if [[ -z "$public_host" ]]; then
     exit 2
 fi
 if [[ "$public_host" == "NEW-HOSTNAME.trycloudflare.com" ]] ||
-        [[ ! "$public_host" =~ ^([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
+        [[ "$public_host" != localhost && ! "$public_host" =~ ^([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
     echo "PUBLIC_HOSTNAME must be the real fully qualified hostname printed by cloudflared." >&2
     exit 2
 fi
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/../.." && pwd)
-hq_root="$repo_root/collectra-hq"
+hq_root="${COLLECTRA_PROJECT_ROOT:-$repo_root/collectra-hq}"
 log_path=${COLLECTRA_LOCAL_HQ_LOG:-"$HOME/collectra-optimized-hq.log"}
-web_workers=${COLLECTRA_WEB_WORKERS:-2}
+web_workers=${COLLECTRA_WEB_WORKERS:-1}
 hq_ready_attempts=${COLLECTRA_HQ_READY_ATTEMPTS:-120}
 caddy_ready_attempts=${COLLECTRA_CADDY_READY_ATTEMPTS:-60}
 container_name=collectra-local-accelerator
+protocol=https
+base_address="$public_host"
+if [[ "$public_host" == localhost ]]; then
+    protocol=http
+    base_address="localhost:8000"
+fi
 hq_pid=''
 caddy_pid=''
 
@@ -100,10 +106,10 @@ echo "Generating the complete JavaScript translation catalog..."
 uv run python manage.py compilejsi18n
 
 echo "Starting the complete Collectra stack with $web_workers Gunicorn workers on private port 8001..."
-COLLECTRA_BASE_ADDRESS="$public_host" \
-COLLECTRA_DEFAULT_PROTOCOL=https \
+COLLECTRA_BASE_ADDRESS="$base_address" \
+COLLECTRA_DEFAULT_PROTOCOL="$protocol" \
 COLLECTRA_TRUST_PROXY_HTTPS=1 \
-COLLECTRA_FORMPLAYER_URL_WEBAPPS="https://$public_host/formplayer" \
+COLLECTRA_FORMPLAYER_URL_WEBAPPS="${protocol}://$base_address/formplayer" \
 COLLECTRA_PROJECT_ROOT="$hq_root" \
 COLLECTRA_BIND_HOST=0.0.0.0 \
 COLLECTRA_BIND_PORT=8001 \
@@ -134,6 +140,7 @@ docker run --rm \
     --name "$container_name" \
     --cidfile "$cid_file" \
     --add-host host.docker.internal:host-gateway \
+    --env "COLLECTRA_FORMPLAYER_PORT=${COLLECTRA_FORMPLAYER_PORT:-18081}" \
     --publish 8000:80 \
     --volume "$script_dir/Caddyfile:/etc/caddy/Caddyfile:ro" \
     caddy:2.8.4-alpine &
@@ -155,11 +162,21 @@ for ((attempt = 1; attempt <= caddy_ready_attempts; attempt++)); do
 done
 
 echo
+if [[ ${COLLECTRA_FAST_LOCAL:-0} == 1 ]]; then
+    echo "Warming common styles before the first browser visit..."
+    curl --fail --silent --show-error --max-time 60 --output /dev/null \
+        http://127.0.0.1:8000/accounts/login/
+fi
+
 echo "Optimized Collectra HQ is ready."
-echo "Public URL: https://$public_host"
+if [[ "$public_host" == localhost ]]; then
+    echo "Collectra URL: http://localhost:8000"
+else
+    echo "Collectra URL: https://$public_host"
+fi
 echo "HQ log:     $log_path"
 echo
-echo "Keep this terminal and the cloudflared terminal open while testing."
+echo "Keep this terminal open while testing."
 echo "Press Ctrl+C here to stop the optimized origin."
 
 wait "$caddy_pid"

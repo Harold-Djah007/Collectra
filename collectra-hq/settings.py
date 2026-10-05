@@ -1289,6 +1289,10 @@ if callable(COMPRESS_ENABLED):
 if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
 
+if os.environ.get("COLLECTRA_FAST_LOCAL") == "1" and not UNIT_TESTING:
+    COMPRESS_ENABLED = True
+    COMPRESS_OFFLINE = False
+
 # These default values can't be overridden.
 # Should you someday need to do so, use the lambda/if callable pattern above
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG

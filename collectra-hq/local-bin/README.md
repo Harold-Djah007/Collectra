@@ -29,3 +29,12 @@ services.
 The normal launcher uses Formplayer on port 18081 (override with
 `COLLECTRA_FORMPLAYER_PORT`) and allows the configured HQ browser origins.
 It checks the JSON health response before reusing a service.
+
+For faster local previews from a Windows checkout, run
+`bash deploy/local-testing/start-fast-local.sh` from the repository root.
+The launcher refreshes an isolated Linux runtime, builds minified assets when
+frontend sources change, and serves compressed, cacheable responses at
+`http://localhost:8000`. Edit the original checkout and restart to refresh it.
+The first run copies the code and builds assets; subsequent runs reuse them.
+The fast launcher also caches compiled styles instead of recompiling them on
+every page request. The normal development launcher keeps its existing settings.
