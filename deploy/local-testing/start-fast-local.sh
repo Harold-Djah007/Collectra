@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ $# -gt 1 ]]; then
+    echo "Usage: $0 [PUBLIC_HOSTNAME]" >&2
+    exit 2
+fi
+public_host=${1:-localhost}
+if [[ "$public_host" != localhost && ! "$public_host" =~ ^([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
+    echo "Use localhost or a reachable HTTPS hostname without a scheme, path, or port." >&2
+    exit 2
+fi
 repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 hq_root="$repo_root/collectra-hq"
 runtime_root="$HOME/.cache/collectra/fast-local/collectra-hq"
@@ -57,4 +66,4 @@ else
 fi
 export COLLECTRA_FAST_LOCAL=1
 export COLLECTRA_SKIP_ASSET_BUILD=1
-exec bash "$repo_root/deploy/local-testing/start-optimized-origin.sh" localhost
+exec bash "$repo_root/deploy/local-testing/start-optimized-origin.sh" "$public_host"

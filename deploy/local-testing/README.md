@@ -22,6 +22,20 @@ project routing.
 
 ## Keep the current Quick Tunnel URL
 
+The fast launcher defaults to `localhost:8000` for computer-only demonstrations.
+For phone QR installation, keep a Quick Tunnel to port 8000 running and start the
+fast launcher with its current hostname:
+
+```bash
+bash deploy/local-testing/start-fast-local.sh YOUR-CURRENT-HOSTNAME.trycloudflare.com
+```
+
+Open HQ through that HTTPS address and generate a fresh installation QR code.
+Previously generated profiles may still contain the old address; make a new app
+version if its downloaded profile uses `localhost`. Keep both terminals running
+through installation, login, and sync. Test the HTTPS address in the phone browser
+before scanning; an expired tunnel cannot serve application files.
+
 1. Leave the existing `cloudflared` process running. It should continue to
    target `http://127.0.0.1:8000`.
 2. Stop only the old Django `runserver` with `Ctrl+C` so port 8000 is free.

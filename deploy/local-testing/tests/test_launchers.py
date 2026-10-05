@@ -45,6 +45,22 @@ class LauncherSafetyTests(unittest.TestCase):
     def commands(self):
         return self.log.read_text() if self.log.exists() else ""
 
+    def test_fast_launcher_rejects_url_before_refreshing_runtime(self):
+        result = self.run_launcher(
+            "deploy/local-testing/start-fast-local.sh", "https://collectra.example.com",
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("without a scheme", result.stderr)
+        self.assertEqual(self.commands(), "")
+
+    def test_fast_launcher_rejects_extra_arguments(self):
+        result = self.run_launcher(
+            "deploy/local-testing/start-fast-local.sh", "collectra.example.com", "extra",
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Usage:", result.stderr)
+        self.assertEqual(self.commands(), "")
+
     def test_existing_proxy_survives_duplicate_launch(self):
         self.stub("docker", "exit 0")
         result = self.run_launcher(
