@@ -37,17 +37,18 @@ public class AsyncRestoreHelper {
             return new ResultAndError<>(DataPullTask.PullTaskResult.BAD_DATA);
         }
         try {
-            long waitTimeInMilliseconds = Integer.parseInt(retryHeader) * 1000;
-            Logger.log(LogTypes.TYPE_USER, "Retry-After header value was " + waitTimeInMilliseconds);
-            if (waitTimeInMilliseconds <= 0) {
-                throw new InvalidWaitTimeException(
-                        "Server response included a Retry-After header value of " + waitTimeInMilliseconds);
+            long waitTimeInSeconds = Long.parseLong(retryHeader);
+            long now = System.currentTimeMillis();
+            if (waitTimeInSeconds <= 0 || waitTimeInSeconds > (Long.MAX_VALUE - now) / 1000L) {
+                throw new NumberFormatException("Invalid Retry-After delay");
             }
+            long waitTimeInMilliseconds = waitTimeInSeconds * 1000L;
+            Logger.log(LogTypes.TYPE_USER, "Retry-After header value was " + waitTimeInMilliseconds);
 
-            retryAtTime = System.currentTimeMillis() + waitTimeInMilliseconds;
             if (!parseProgressFromRetryResult(response)) {
                 return new ResultAndError<>(DataPullTask.PullTaskResult.BAD_DATA);
             }
+            retryAtTime = now + waitTimeInMilliseconds;
             return new ResultAndError<>(DataPullTask.PullTaskResult.RETRY_NEEDED);
         } catch (NumberFormatException e) {
             Logger.log(LogTypes.TYPE_USER, "Invalid Retry-After header value: " + retryHeader);
@@ -74,7 +75,7 @@ public class AsyncRestoreHelper {
                 }
                 eventType = parser.next();
             } while (eventType != KXmlParser.END_DOCUMENT);
-        } catch (IOException | XmlPullParserException e) {
+        } catch (IOException | XmlPullParserException | NumberFormatException e) {
             Logger.log(LogTypes.TYPE_USER,
                     "Error while parsing progress values of retry result");
         } finally {
@@ -144,13 +145,6 @@ public class AsyncRestoreHelper {
 
     protected boolean retryWaitPeriodInProgress() {
         return retryAtTime != -1 && retryAtTime > System.currentTimeMillis();
-    }
-
-    private class InvalidWaitTimeException extends RuntimeException {
-
-        public InvalidWaitTimeException(String messsage) {
-            super(messsage);
-        }
     }
 
 }

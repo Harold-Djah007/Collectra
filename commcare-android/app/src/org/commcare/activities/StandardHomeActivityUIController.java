@@ -299,7 +299,11 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
 
     protected void updateSyncButtonMessage(String message) {
         // Manually route message payloads since RecyclerView payloads are a pain in the ass
-        adapter.setMessagePayload(adapter.getSyncButtonPosition(), message);
-        adapter.notifyItemChanged(adapter.getSyncButtonPosition());
+        int syncButtonPosition = adapter.getSyncButtonPosition();
+        if (syncButtonPosition >= 0) {
+            adapter.setMessagePayload(syncButtonPosition, message);
+            adapter.notifyItemChanged(syncButtonPosition);
+        }
+        adapter.notifyItemChanged(0);
     }
 }

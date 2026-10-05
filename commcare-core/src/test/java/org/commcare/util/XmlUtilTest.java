@@ -21,7 +21,7 @@ public class XmlUtilTest {
             byte[] bytes = StreamsUtil.inputStreamToByteArray(inputStream);
             String actualOutput = XmlUtil.getPrettyXml(bytes);
             String expectedOutput = getPrettyXml();
-            Assert.assertEquals(expectedOutput, actualOutput);
+            Assert.assertEquals(expectedOutput.replace("\r\n", "\n"), actualOutput.replace("\r\n", "\n"));
         }
     }
 

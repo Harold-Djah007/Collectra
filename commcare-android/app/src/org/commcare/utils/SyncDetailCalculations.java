@@ -219,20 +219,27 @@ public class SyncDetailCalculations {
     private static boolean unsentFormNumberLimitExceeded(int numUnsentForms) {
         SharedPreferences prefs =
                 CommCareApplication.instance().getCurrentApp().getAppPreferences();
-        int unsentFormNumberLimit = Integer.parseInt(prefs.getString(UNSENT_FORM_NUMBER_KEY, "5"));
-        return numUnsentForms > unsentFormNumberLimit;
+        return numUnsentForms > parseWarningLimit(prefs.getString(UNSENT_FORM_NUMBER_KEY, "5"));
     }
 
     private static boolean unsentFormTimeLimitExceeded(long lastSyncTime) {
         SharedPreferences prefs =
                 CommCareApplication.instance().getCurrentApp().getAppPreferences();
-        double unsentFormTimeLimitInDays =
-                Double.parseDouble(prefs.getString(UNSENT_FORM_TIME_KEY, "5"));
-        long unsentFormTimeLimitInMsecs = (int) (unsentFormTimeLimitInDays * 24 * 60 * 60 * 1000);
+        return timeLimitExceeded(lastSyncTime, new Date().getTime(),
+                prefs.getString(UNSENT_FORM_TIME_KEY, "5"));
+    }
 
-        long now = new Date().getTime();
-        long msecsSinceLastSync = (now - lastSyncTime);
+    static double parseWarningLimit(String configuredLimit) {
+        try {
+            double limit = Double.parseDouble(configuredLimit);
+            return Double.isNaN(limit) || Double.isInfinite(limit) || limit < 0 ? 5 : limit;
+        } catch (NumberFormatException | NullPointerException e) {
+            return 5;
+        }
+    }
 
-        return msecsSinceLastSync > unsentFormTimeLimitInMsecs;
+    static boolean timeLimitExceeded(long lastSyncTime, long now, String configuredDays) {
+        double limitInMillis = parseWarningLimit(configuredDays) * 86400000L;
+        return (double)now - lastSyncTime > limitInMillis;
     }
 }

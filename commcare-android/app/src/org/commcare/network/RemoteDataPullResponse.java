@@ -105,7 +105,9 @@ public class RemoteDataPullResponse {
             //If something goes wrong while we're reading into the cache
             //we may need to free the storage we reserved.
         } catch (IOException e) {
-            cache.release();
+            if (cache != null) {
+                cache.release();
+            }
             throw e;
         }
     }

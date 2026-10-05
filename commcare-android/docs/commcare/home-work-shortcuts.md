@@ -1,3 +1,7 @@
 # Home work shortcuts
 
 The mobile home puts Start work, Resume form, and Sync now above the app menu. These shortcuts invoke the existing home actions, including their offline handling. Resume form follows the app's incomplete-form setting and stays hidden when that feature is disabled. The sync summary reads the local unsent-form count and last sync time; it does not claim that an individual form has reached HQ.
+
+Sync warnings preserve fractional and long day thresholds. Invalid, negative, or non-finite profile thresholds fall back to five forms or five days.
+
+The home sync summary refreshes after sending or receiving data, including when the app hides the grid's sync button.

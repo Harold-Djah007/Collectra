@@ -1,6 +1,7 @@
 package org.commcare.activities
 
 import android.view.View
+import androidx.recyclerview.widget.RecyclerView
 import io.mockk.every
 import org.commcare.android.database.user.models.FormRecord
 import org.commcare.android.util.ActivityAssertions.assertStarted
@@ -27,6 +28,30 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
     // region where each button goes
 
     @Test
+    fun `sync completion refreshes the home summary as well as the sync card`() {
+        val home = buildVisibleHome()
+        val grid = home.findViewById<RecyclerView>(org.commcare.dalvik.R.id.home_gridview_buttons)
+        val changedPositions = mutableListOf<Int>()
+        grid.adapter!!.registerAdapterDataObserver(
+            object : RecyclerView.AdapterDataObserver() {
+                override fun onItemRangeChanged(
+                    positionStart: Int,
+                    itemCount: Int,
+                    payload: Any?,
+                ) {
+                    changedPositions.add(positionStart)
+                }
+            },
+        )
+
+        home.updateUiAfterDataPullOrSend("Sync complete", true)
+
+        assertTrue(changedPositions.contains(0))
+        assertTrue(changedPositions.any { it > 0 })
+        assertFalse(changedPositions.any { it < 0 })
+    }
+
+    @Test
     fun `today start shortcut opens the app menu`() {
         val home = buildVisibleHome()
 
@@ -51,8 +76,10 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
 
         home.findViewById<View>(org.commcare.dalvik.R.id.collectra_today_sync).performClick()
 
-        assertEquals(Localization.get("notification.sync.airplane.action"),
-                     ShadowToast.getTextOfLatestToast())
+        assertEquals(
+            Localization.get("notification.sync.airplane.action"),
+            ShadowToast.getTextOfLatestToast(),
+        )
     }
 
     @Test
