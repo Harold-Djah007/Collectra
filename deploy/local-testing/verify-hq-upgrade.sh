@@ -60,9 +60,11 @@ PY
 "$python_bin" manage.py check
 node "$repo_root/deploy/local-testing/test-dashboard-loading.cjs"
 node "$repo_root/deploy/local-testing/test-xlsform-preview.cjs"
+node "$repo_root/deploy/local-testing/test-gps-entry.cjs"
 
 "$python_bin" -m pytest --reusedb=1 \
     corehq/apps/app_manager/tests/test_excel_form_builder.py \
+    corehq/apps/app_manager/tests/test_xlsform_metadata.py \
     corehq/apps/app_manager/tests/test_form_readiness.py \
     corehq/apps/app_manager/tests/test_check_hq_form_readiness.py \
     corehq/apps/app_manager/tests/test_restore_form_xml_cache.py \
@@ -72,6 +74,7 @@ node "$repo_root/deploy/local-testing/test-xlsform-preview.cjs"
     corehq/apps/app_manager/tests/test_stage_safisana_close_only.py \
     corehq/apps/app_manager/tests/test_reconcile_safisana_reopen_request.py \
     corehq/apps/dashboard/tests/test_operational_alerts.py \
+    corehq/apps/dashboard/tests/test_dashboard_permissions.py \
     corehq/apps/dashboard/tests/test_reopen_requests.py \
     corehq/apps/dashboard/tests/test_reopen_archive_integration.py
 

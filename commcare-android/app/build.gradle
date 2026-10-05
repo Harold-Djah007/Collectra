@@ -606,7 +606,7 @@ android {
         ignoreAssetsPattern '!*.max.js:!*.max.css'
     }
     lint {
-        abortOnError false
+        abortOnError true
         disable 'MissingTranslation', 'ResourceType'
     }
 }

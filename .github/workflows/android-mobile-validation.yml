@@ -10,11 +10,13 @@ on:
   pull_request:
     paths:
       - "commcare-android/**"
+      - "commcare-core/**"
       - ".github/workflows/android-mobile-validation.yml"
   push:
     branches: [main, hd/safisana-form-workflows-2026-09-24]
     paths:
       - "commcare-android/**"
+      - "commcare-core/**"
       - ".github/workflows/android-mobile-validation.yml"
 
 permissions:
