@@ -88,6 +88,7 @@ desktop.ini
 # -------------------------
 *.tmp
 *.temp
+.build-tmp/
 *.swp
 *.swo
 *~
