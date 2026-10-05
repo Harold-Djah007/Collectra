@@ -19,7 +19,7 @@ if [[ -z "$public_host" ]]; then
     usage >&2
     exit 2
 fi
-if [[ "$public_host" == "NEW-HOSTNAME.trycloudflare.com" ]] ||
+if [[ "${public_host,,}" == new-hostname.trycloudflare.com || "${public_host,,}" == your-hostname.trycloudflare.com || "${public_host,,}" == your-current-hostname.trycloudflare.com ]] ||
         [[ "$public_host" != localhost && ! "$public_host" =~ ^([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
     echo "PUBLIC_HOSTNAME must be the real fully qualified hostname printed by cloudflared." >&2
     exit 2

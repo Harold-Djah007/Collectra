@@ -5,6 +5,10 @@ if [[ $# -gt 1 ]]; then
     exit 2
 fi
 public_host=${1:-localhost}
+if [[ "${public_host,,}" == your-hostname.trycloudflare.com || "${public_host,,}" == your-current-hostname.trycloudflare.com || "${public_host,,}" == new-hostname.trycloudflare.com ]]; then
+    echo "Replace the example hostname with the actual hostname printed by cloudflared." >&2
+    exit 2
+fi
 if [[ "$public_host" != localhost && ! "$public_host" =~ ^([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
     echo "Use localhost or a reachable HTTPS hostname without a scheme, path, or port." >&2
     exit 2

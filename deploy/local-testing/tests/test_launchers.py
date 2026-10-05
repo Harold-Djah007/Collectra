@@ -61,6 +61,14 @@ class LauncherSafetyTests(unittest.TestCase):
         self.assertIn("Usage:", result.stderr)
         self.assertEqual(self.commands(), "")
 
+    def test_example_tunnel_hostnames_are_rejected_before_startup(self):
+        for launcher in ("start-fast-local.sh", "start-optimized-origin.sh"):
+            for hostname in ("YOUR-HOSTNAME.trycloudflare.com", "your-current-hostname.trycloudflare.com", "NEW-HOSTNAME.trycloudflare.com"):
+                with self.subTest(launcher=launcher, hostname=hostname):
+                    result = self.run_launcher(f"deploy/local-testing/{launcher}", hostname)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertEqual(self.commands(), "")
+
     def test_existing_proxy_survives_duplicate_launch(self):
         self.stub("docker", "exit 0")
         result = self.run_launcher(
