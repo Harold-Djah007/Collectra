@@ -8,6 +8,8 @@ state_root="${XDG_STATE_HOME:-$HOME/.local/state}/collectra"
 bind_host="${COLLECTRA_BIND_HOST:-0.0.0.0}"
 bind_port="${COLLECTRA_BIND_PORT:-8000}"
 web_workers="${COLLECTRA_WEB_WORKERS:-1}"
+formplayer_port="${COLLECTRA_FORMPLAYER_PORT:-18081}"
+export COLLECTRA_FORMPLAYER_PORT="$formplayer_port"
 case_index_audit_domain="${COLLECTRA_CASE_INDEX_AUDIT_DOMAIN:-safisana}"
 case_index_auto_repair="${COLLECTRA_CASE_INDEX_AUTO_REPAIR:-1}"
 
@@ -28,6 +30,11 @@ if [[ ! "$bind_port" =~ ^[0-9]+$ ]] || (( bind_port < 1 || bind_port > 65535 ));
     echo "COLLECTRA_BIND_PORT must be an integer from 1 through 65535." >&2
     exit 2
 fi
+if [[ ! "$formplayer_port" =~ ^[0-9]+$ ]] || (( formplayer_port < 1 || formplayer_port > 65535 )); then
+    echo "COLLECTRA_FORMPLAYER_PORT must be a valid port." >&2
+    exit 2
+fi
+
 if [[ ! "$web_workers" =~ ^[1-9][0-9]*$ ]]; then
     echo "COLLECTRA_WEB_WORKERS must be a positive integer." >&2
     exit 2
@@ -94,6 +101,14 @@ else
     export COLLECTRA_DEFAULT_PROTOCOL="${COLLECTRA_DEFAULT_PROTOCOL:-http}"
 fi
 export COMMCARE_HOST="http://${wsl_ip}:${bind_port}"
+export COMMCARE_ALTERNATE_ORIGINS="http://localhost:${bind_port},http://127.0.0.1:${bind_port},${COMMCARE_HOST},${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS}"
+export COLLECTRA_FORMPLAYER_URL="http://127.0.0.1:${formplayer_port}"
+export COLLECTRA_FORMPLAYER_URL_WEBAPPS="${COLLECTRA_FORMPLAYER_URL_WEBAPPS:-http://localhost:${formplayer_port}}"
+
+formplayer_ready() {
+    curl --silent --fail --max-time 2 "$COLLECTRA_FORMPLAYER_URL/serverup" |
+        python3 -c 'import json, sys; sys.exit(0 if json.load(sys.stdin).get("status") == "ok" else 1)' 2>/dev/null
+}
 
 echo "Collectra address: http://localhost:${bind_port}"
 echo "Published mobile address: ${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE_ADDRESS}"
@@ -104,12 +119,12 @@ bash ./scripts/docker up -d \
     postgres couch redis elasticsearch6 \
     zookeeper kafka minio
 
-if curl --silent --fail --max-time 2 http://localhost:8080/serverup >/dev/null 2>&1; then
-    echo "Formplayer is already healthy on port 8080; reusing it."
+if formplayer_ready; then
+    echo "Formplayer is already healthy on port ${formplayer_port}; reusing it."
 else
-    if ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq '(^|:)8080$'; then
-        echo "Port 8080 is already in use, but the service there is not a healthy Formplayer." >&2
-        echo "Stop the process/container using port 8080, then start Collectra again." >&2
+    if ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)${formplayer_port}$"; then
+        echo "Port ${formplayer_port} is already in use, but the service there is not a healthy Formplayer." >&2
+        echo "Stop the process/container using port ${formplayer_port}, then start Collectra again." >&2
         exit 1
     fi
     bash ./scripts/docker up -d --force-recreate formplayer
@@ -129,8 +144,7 @@ until docker inspect hqservice-kafka-1 \
 done
 
 echo "Waiting for Formplayer..."
-until curl --silent --fail --max-time 2 \
-    http://localhost:8080/serverup >/dev/null 2>&1; do
+until formplayer_ready; do
     sleep 2
 done
 

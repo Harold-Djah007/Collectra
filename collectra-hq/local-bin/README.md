@@ -25,3 +25,7 @@ only for testing and presentations. Do not use them as the production address
 or submit sensitive company data through a temporary demo environment. A
 permanent deployment must use a stable HTTPS hostname and durable hosted data
 services.
+
+The normal launcher uses Formplayer on port 18081 (override with
+`COLLECTRA_FORMPLAYER_PORT`) and allows the configured HQ browser origins.
+It checks the JSON health response before reusing a service.

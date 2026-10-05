@@ -73,6 +73,17 @@ class LauncherSafetyTests(unittest.TestCase):
         self.assertNotIn("fuser -k", self.commands())
         self.assertNotIn("docker", self.commands())
 
+    def test_html_response_is_not_reused_as_formplayer(self):
+        self.stub("fuser", "exit 1")
+        self.stub("docker", "exit 0")
+        self.stub("curl", "echo '<html>unrelated app</html>'")
+        self.stub("ss", "echo 'LISTEN 0 128 0.0.0.0:18081 0.0.0.0:*'")
+        result = self.run_launcher("collectra-hq/local-bin/start-collectra")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("not a healthy Formplayer", result.stderr)
+        self.assertNotIn("already healthy", result.stdout)
+        self.assertNotIn("--force-recreate", self.commands())
+
     def test_duplicate_launcher_preserves_worker_pid_files(self):
         import fcntl
 
