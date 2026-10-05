@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.IntentFilter;
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.util.DisplayMetrics;

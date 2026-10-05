@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Build;
 import android.util.Log;
 
 import org.commcare.activities.DispatchActivity;

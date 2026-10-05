@@ -68,8 +68,10 @@ public class FormDefRecordV12  extends Persisted {
         mJrFormId = cursor.getString(cursor.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.JR_FORM_ID));
         mModelVersion = cursor.getInt(cursor.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.MODEL_VERSION));
         mUiVersion = cursor.getInt(cursor.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.UI_VERSION));
-        mFormMediaPath = cursor.getString(cursor.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.FORM_MEDIA_PATH));
-        mFormFilePath = cursor.getString(cursor.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.FORM_FILE_PATH));
+        mFormMediaPath = cursor.getString(
+                cursor.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.FORM_MEDIA_PATH));
+        mFormFilePath = cursor.getString(
+                cursor.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.FORM_FILE_PATH));
     }
 
     public void updateFilePath(SqlStorage<FormDefRecordV12> formDefRecordStorage, String newFilePath) {

@@ -224,8 +224,10 @@ public class UserDbUpgradeUtils {
                 cursor = c.getContentResolver().query(instanceUri, null, null, null, null);
                 if (cursor != null && cursor.getCount() > 0) {
                     cursor.moveToFirst();
-                    newRecord.setDisplayName(cursor.getString(cursor.getColumnIndexOrThrow(InstanceProviderAPI.InstanceColumns.DISPLAY_NAME)));
-                    newRecord.setFilePath(cursor.getString(cursor.getColumnIndexOrThrow(InstanceProviderAPI.InstanceColumns.INSTANCE_FILE_PATH)));
+                    newRecord.setDisplayName(cursor.getString(
+                            cursor.getColumnIndexOrThrow(InstanceProviderAPI.InstanceColumns.DISPLAY_NAME)));
+                    newRecord.setFilePath(cursor.getString(
+                            cursor.getColumnIndexOrThrow(InstanceProviderAPI.InstanceColumns.INSTANCE_FILE_PATH)));
                 }
             } finally {
                 if (cursor != null) {

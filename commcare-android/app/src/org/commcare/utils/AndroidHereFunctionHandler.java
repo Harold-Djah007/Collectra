@@ -120,7 +120,8 @@ public class AndroidHereFunctionHandler extends HereFunctionHandler implements L
                     }
                 }
 
-                // Looper is necessary because requestLocationUpdates is called inside an AsyncTask (EntityLoaderTask).
+                // Looper is necessary because requestLocationUpdates is called inside
+                // an AsyncTask (EntityLoaderTask).
                 // What values for minTime and minDistance?
                 mLocationManager.requestLocationUpdates(provider, 0, 0, this, Looper.getMainLooper());
                 requestingLocationUpdates = true;

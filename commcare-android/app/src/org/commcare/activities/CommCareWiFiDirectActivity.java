@@ -581,19 +581,19 @@ public class CommCareWiFiDirectActivity
 
         try {
             mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-    
+
                 @Override
                 public void onSuccess() {
                     Toast.makeText(CommCareWiFiDirectActivity.this,
                             localize("wifi.direct.discovery.start"),
                             Toast.LENGTH_SHORT).show();
                 }
-    
+
                 @Override
                 public void onFailure(int reasonCode) {
-    
+
                     Logger.log(TAG, "Discovery of Wi-fi peers failed");
-    
+
                     if (reasonCode == 0 || reasonCode == 2) {
                         Toast.makeText(CommCareWiFiDirectActivity.this,
                                 localize("wifi.direct.discovery.failed.generic"),
@@ -603,7 +603,7 @@ public class CommCareWiFiDirectActivity
                                 localize("wifi.direct.discovery.failed.specific", "" + reasonCode),
                                 Toast.LENGTH_SHORT).show();
                     }
-    
+
                 }
             });
         } catch (SecurityException e) {
@@ -631,12 +631,12 @@ public class CommCareWiFiDirectActivity
 
         try {
             mManager.connect(mChannel, config, new ActionListener() {
-    
+
                 @Override
                 public void onSuccess() {
                     myStatusText.setText(localize("wifi.direct.connect.success"));
                 }
-    
+
                 @Override
                 public void onFailure(int reason) {
                     Logger.log(TAG, "Connection to peer failed");
@@ -1034,7 +1034,8 @@ public class CommCareWiFiDirectActivity
     private void requestNearbyWifiPermission() {
         String[] permissions = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 ? new String[]{Manifest.permission.NEARBY_WIFI_DEVICES}
-                : new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+                : new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION};
         ActivityCompat.requestPermissions(this,
                 permissions,
                 NEARBY_WIFI_PERM_REQUEST);
