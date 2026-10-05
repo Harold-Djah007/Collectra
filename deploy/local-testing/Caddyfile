@@ -19,6 +19,7 @@
 	}
 
 	reverse_proxy host.docker.internal:8001 {
+		header_up X-Forwarded-Proto {$COLLECTRA_PUBLIC_PROTOCOL:http}
 		transport http {
 			keepalive 30s
 			keepalive_idle_conns 64

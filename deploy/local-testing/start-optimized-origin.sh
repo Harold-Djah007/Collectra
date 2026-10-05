@@ -141,6 +141,7 @@ docker run --rm \
     --cidfile "$cid_file" \
     --add-host host.docker.internal:host-gateway \
     --env "COLLECTRA_FORMPLAYER_PORT=${COLLECTRA_FORMPLAYER_PORT:-18081}" \
+    --env "COLLECTRA_PUBLIC_PROTOCOL=$protocol" \
     --publish 8000:80 \
     --volume "$script_dir/Caddyfile:/etc/caddy/Caddyfile:ro" \
     caddy:2.8.4-alpine &

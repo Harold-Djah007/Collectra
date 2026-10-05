@@ -36,6 +36,10 @@ version if its downloaded profile uses `localhost`. Keep both terminals running
 through installation, login, and sync. Test the HTTPS address in the phone browser
 before scanning; an expired tunnel cannot serve application files.
 
+The launcher sets Caddy's forwarded protocol to the selected public protocol so
+Django's login CSRF checks see HTTPS through the tunnel. Restart the launcher
+after changing the public hostname or protocol.
+
 1. Leave the existing `cloudflared` process running. It should continue to
    target `http://127.0.0.1:8000`.
 2. Stop only the old Django `runserver` with `Ctrl+C` so port 8000 is free.
