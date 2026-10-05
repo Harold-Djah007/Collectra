@@ -110,20 +110,23 @@ public class AndroidHereFunctionHandler extends HereFunctionHandler implements L
         Set<String> mProviders = GeoUtils.evaluateProvidersWithPermissions(mLocationManager, context);
 
         for (String provider : mProviders) {
-            // Ignore the inspector warnings; the permissions are already checked in evaluateProvidersWithPermissions.
-            if (location == null) {
-                Location lastKnownLocation = mLocationManager.getLastKnownLocation(provider);
-                if (lastKnownLocation != null) {
-                    this.location = lastKnownLocation;
-                    this.lastDisplayedLocation = lastKnownLocation;
-                    Log.i("HereFunctionHandler", "last known location: " + this.location);
+            try {
+                if (location == null) {
+                    Location lastKnownLocation = mLocationManager.getLastKnownLocation(provider);
+                    if (lastKnownLocation != null) {
+                        this.location = lastKnownLocation;
+                        this.lastDisplayedLocation = lastKnownLocation;
+                        Log.i("HereFunctionHandler", "last known location: " + this.location);
+                    }
                 }
-            }
 
-            // Looper is necessary because requestLocationUpdates is called inside an AsyncTask (EntityLoaderTask).
-            // What values for minTime and minDistance?
-            mLocationManager.requestLocationUpdates(provider, 0, 0, this, Looper.getMainLooper());
-            requestingLocationUpdates = true;
+                // Looper is necessary because requestLocationUpdates is called inside an AsyncTask (EntityLoaderTask).
+                // What values for minTime and minDistance?
+                mLocationManager.requestLocationUpdates(provider, 0, 0, this, Looper.getMainLooper());
+                requestingLocationUpdates = true;
+            } catch (SecurityException e) {
+                Log.w("HereFunctionHandler", "Location permission is unavailable", e);
+            }
         }
     }
 

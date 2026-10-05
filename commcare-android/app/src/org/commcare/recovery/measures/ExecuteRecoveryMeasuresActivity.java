@@ -119,6 +119,7 @@ public class ExecuteRecoveryMeasuresActivity extends CommCareActivity<ExecuteRec
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         switch (requestCode) {
             case PROMPT_APK_UPDATE:
             case PROMPT_APK_REINSTALL:

@@ -682,7 +682,7 @@ License.
     <string name="connect_opportunity_max_earnings_label">Gains maximum</string>
     <string name="connect_opportunity_learn_section_title">Apprentissage</string>
     <string name="connect_opportunity_learn_section_subtitle">Terminez la formation pour commencer les visites</string>
-    <plurals name="connect_opportunity_learn_modules_label">
+    <plurals name="connect_opportunity_learn_modules_label" tools:ignore="ImpliedQuantity">
         <item quantity="one">Module d\'apprentissage</item>
         <item quantity="other">Modules d\'apprentissage</item>
     </plurals>

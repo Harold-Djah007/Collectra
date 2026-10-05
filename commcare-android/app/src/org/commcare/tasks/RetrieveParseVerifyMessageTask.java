@@ -57,7 +57,7 @@ public abstract class RetrieveParseVerifyMessageTask<R> extends CommCareTask<Voi
             try {
                 while (cursor.moveToNext() && messageIterationCount <= SMS_CHECK_COUNT) { // must check the result to prevent exception
                     messageIterationCount++;
-                    String textMessageBody = cursor.getString(cursor.getColumnIndex("body"));
+                    String textMessageBody = cursor.getString(cursor.getColumnIndexOrThrow("body"));
                     if (textMessageBody.contains(GlobalConstants.SMS_INSTALL_KEY_STRING)) {
                         return processSMS(textMessageBody);
                     }

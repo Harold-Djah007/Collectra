@@ -93,15 +93,25 @@ class CommCareProviderLocationController(
         startLocationRequest()
     }
 
+    @SuppressLint("MissingPermission")
     private fun startLocationRequest() {
+        if (!isLocationPermissionGranted(mContext)) {
+            mListener?.missingPermissions()
+            return
+        }
         if (mLocationRequestStarted) {
             // We've already started location request so no need to request again!
             return
         }
         mLocationRequestStarted = true
         mListener?.onLocationRequestStart()
-        for (provider in mProviders) {
-            mLocationManager.requestLocationUpdates(provider, 0L, 0.0f, mLocationListener)
+        try {
+            for (provider in mProviders) {
+                mLocationManager.requestLocationUpdates(provider, 0L, 0.0f, mLocationListener)
+            }
+        } catch (e: SecurityException) {
+            mLocationRequestStarted = false
+            mListener?.missingPermissions()
         }
     }
 

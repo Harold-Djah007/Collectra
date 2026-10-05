@@ -74,7 +74,7 @@ public class TaskConnectorViewModel<R> extends ViewModel {
             releaseWakeLock();
 
             PowerManager pm = (PowerManager)activity.getSystemService(Context.POWER_SERVICE);
-            wakelock = pm.newWakeLock(lockLevel, "CollectraLock");
+            wakelock = pm.newWakeLock(lockLevel, "org.commcare.dalvik:CollectraLock");
             wakelock.acquire();
         }
     }

@@ -2,6 +2,8 @@ package org.commcare;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
@@ -42,6 +44,7 @@ import org.javarosa.core.services.storage.Persistable;
 import org.javarosa.core.util.externalizable.PrototypeFactory;
 import org.junit.Assert;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.TestLifecycleApplication;
 import org.robolectric.android.controller.ServiceController;
 
@@ -82,6 +85,16 @@ public class CommCareTestApplication extends CommCareApplication implements Test
     public void onCreate() {
         // set if before calling super to initialte the dataChangeLogger correctly
         setExternalStorageState(Environment.MEDIA_MOUNTED);
+
+        String receiverPermission = BuildConfig.APPLICATION_ID + ".DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION";
+        try {
+            PermissionInfo permission = getPackageManager().getPermissionInfo(receiverPermission, 0);
+            Assert.assertEquals(PermissionInfo.PROTECTION_SIGNATURE,
+                    permission.protectionLevel & PermissionInfo.PROTECTION_MASK_BASE);
+            Shadows.shadowOf(this).grantPermissions(receiverPermission);
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new IllegalStateException("The private receiver permission is missing from the test manifest", e);
+        }
 
         super.onCreate();
 

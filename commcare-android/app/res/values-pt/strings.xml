@@ -10,7 +10,7 @@
     the specific language governing permissions and limitations under the
     License.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="your_comment">Seu comentário</string>
     <string name="support_email_address_default"></string>
     <string name="manager_activity_name">Gerenciador de aplicativo</string>
@@ -689,7 +689,7 @@
     <string name="connect_opportunity_max_earnings_label">Ganhos máximos</string>
     <string name="connect_opportunity_learn_section_title">Aprendizagem</string>
     <string name="connect_opportunity_learn_section_subtitle">Conclua o treinamento para iniciar as visitas</string>
-    <plurals name="connect_opportunity_learn_modules_label">
+    <plurals name="connect_opportunity_learn_modules_label" tools:ignore="ImpliedQuantity">
         <item quantity="one">Módulo de aprendizagem</item>
         <item quantity="other">Módulos de aprendizagem</item>
     </plurals>

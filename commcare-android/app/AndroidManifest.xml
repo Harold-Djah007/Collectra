@@ -353,7 +353,8 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync"
-            android:name="org.commcare.services.NetworkNotificationService">
+            android:name="org.commcare.services.NetworkNotificationService"
+            tools:targetApi="34">
         </service>
         <service
             android:enabled="true"
@@ -564,9 +565,6 @@
             android:name="org.commcare.activities.DataChangeLogsActivity"
             android:exported="false"
             android:label="@string/title_data_change_logs_activity">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-            </intent-filter>
         </activity>
         <activity android:name="org.commcare.activities.TargetMismatchErrorActivity"/>
         <activity android:name="org.commcare.recovery.measures.ExecuteRecoveryMeasuresActivity"/>

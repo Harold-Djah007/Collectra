@@ -36,6 +36,7 @@ public abstract class SessionAwareCommCareActivity<R> extends BaseDrawerActivity
     public void onResumeSessionSafe() {
     }
 
+    @android.annotation.SuppressLint("MissingSuperCall")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         SessionAwareHelper.onActivityResultHelper(this, this, requestCode, resultCode, intent);

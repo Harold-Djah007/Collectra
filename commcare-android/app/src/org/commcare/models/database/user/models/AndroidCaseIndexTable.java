@@ -309,7 +309,7 @@ public class AndroidCaseIndexTable implements CaseIndexTable {
                     c.moveToFirst();
                     while (!c.isAfterLast()) {
                         int caseId = c.getInt(c.getColumnIndexOrThrow(COL_CASE_RECORD_ID));
-                        int targetCase = c.getInt(c.getColumnIndex(DatabaseHelper.ID_COL));
+                        int targetCase = c.getInt(c.getColumnIndexOrThrow(DatabaseHelper.ID_COL));
                         set.loadResult(caseId, targetCase);
                         c.moveToNext();
                     }

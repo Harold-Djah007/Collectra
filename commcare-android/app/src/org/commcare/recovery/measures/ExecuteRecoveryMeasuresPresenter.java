@@ -420,7 +420,7 @@ public class ExecuteRecoveryMeasuresPresenter implements BasePresenterContract, 
         mAppArchivePath = null;
         mCurrentMeasure = null;
         mLastDisplayStatus = null;
-        mLastExecutionStatus = -1;
+        mLastExecutionStatus = RecoveryMeasure.STATUS_WAITING;
         cczSelectionEnabled = false;
     }
 

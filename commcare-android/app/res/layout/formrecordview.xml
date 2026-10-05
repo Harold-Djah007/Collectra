@@ -57,7 +57,7 @@
                 android:gravity="center"
                 android:layout_toLeftOf="@id/formrecord_txt_upp_right"
                 android:layout_above="@+id/formrecord_txt_right"
-                android:tint="@color/cc_neutral_color"
+                app:tint="@color/cc_neutral_color"
                 android:tintMode="src_atop"
                 app:srcCompat="@android:drawable/stat_notify_sync_noanim"
                 android:layout_toStartOf="@id/formrecord_txt_upp_right" />

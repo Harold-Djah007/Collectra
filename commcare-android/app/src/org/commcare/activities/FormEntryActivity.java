@@ -307,11 +307,8 @@ public class FormEntryActivity extends SaveSessionCommCareActivity<FormEntryActi
         IntentFilter filter = new IntentFilter();
         filter.addAction(PollSensorAction.XPATH_ERROR_ACTION);
         filter.addAction(GeoUtils.ACTION_LOCATION_ERROR);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(mLocationServiceIssueReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(mLocationServiceIssueReceiver, filter);
-        }
+        androidx.core.content.ContextCompat.registerReceiver(this, mLocationServiceIssueReceiver,
+                filter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
@@ -1064,11 +1061,8 @@ public class FormEntryActivity extends SaveSessionCommCareActivity<FormEntryActi
         reportVideoUsageIfAny();
 
         IntentFilter intentFilter = new IntentFilter(PENGING_SYNC_ALERT_ACTION);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(pendingSyncAlertBroadcastReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(pendingSyncAlertBroadcastReceiver, intentFilter);
-        }
+        androidx.core.content.ContextCompat.registerReceiver(this, pendingSyncAlertBroadcastReceiver,
+                intentFilter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
 
         // Flag that a background sync shouldn't be triggered when this activity is in the foreground
         CommCareApplication.instance().setBackgroundSyncSafe(false);
@@ -1738,6 +1732,7 @@ public class FormEntryActivity extends SaveSessionCommCareActivity<FormEntryActi
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_CAMERA_PERMISSION, REQUEST_RECORD_AUDIO_PERMISSION: {
 

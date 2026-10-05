@@ -59,7 +59,7 @@
         android:layout_height="wrap_content"
         android:contentDescription="@null"
         android:src="@drawable/icon_chevron_right_white"
-        android:tint="@color/connect_grey"
+        app:tint="@color/connect_grey"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

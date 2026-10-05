@@ -103,6 +103,7 @@ public class FormRecordV5 extends Persisted implements EncryptedModel {
         return aesKey;
     }
 
+    @FormRecord.FormRecordStatus
     public String getStatus() {
         return status;
     }

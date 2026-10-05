@@ -4,6 +4,19 @@ Collectra Mobile accepts any connected Android network. Form entry remains avail
 installation, login, updates, and synchronization resume when either Wi-Fi or cellular data is
 connected.
 
+Location and Wi-Fi Direct operations report missing or revoked permissions instead of crashing.
+Wi-Fi Direct requests coarse and fine location on Android 12 and earlier, and nearby-device permission on
+Android 13 and later. Imported media tolerates content providers that omit optional filename or
+MIME-type columns. Java API desugaring includes the date and collection APIs used on Android 6.
+
+The session-aware activity-result helper deliberately owns result dispatch to preserve its session
+gate; task screens deliberately block Back while critical work runs. These methods retain narrow
+lint exceptions. Learning-module headings choose singular/plural text without a count placeholder
+because the count is displayed separately, so those headings retain an `ImpliedQuantity` exception.
+
+The Robolectric application verifies the private-receiver signature permission is declared and
+grants it to model Android installation; runtime receivers remain private in the APK.
+
 ## Configure the hosted Collectra HQ address
 
 Set the public HTTPS base address in `local.properties` before building the APK:
@@ -59,6 +72,12 @@ remain as fallbacks for compatibility.
 4. Confirm the unsent-form count becomes zero and the submission appears in Collectra HQ.
 5. From a clean installation, use **See Available Apps** over cellular data and confirm the
    configured Collectra applications are listed.
+6. Revoke location and Wi-Fi Direct permissions, reopen those features, and confirm a permission
+   request or failure message appears without a crash. On Android 12, grant precise location from
+   the combined approximate/precise request.
+7. Import images from the phone's document picker and confirm the form saves with its attachments.
+8. Save unsent forms, restart the phone, and install an update signed with the same certificate
+   without uninstalling. Confirm the forms remain and sync once connectivity returns.
 
 
 ## Produce separate test and field APKs

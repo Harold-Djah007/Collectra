@@ -95,7 +95,7 @@ public abstract class CommCareTask<Params, Progress, Result, Receiver>
             }
         }
 
-        if (networkNotificationRequested) {
+        if (networkNotificationRequested && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             CommCareApplication.instance().startForegroundService(getNotificationStopIntent());
             networkNotificationRequested = false;
         }
@@ -120,7 +120,7 @@ public abstract class CommCareTask<Params, Progress, Result, Receiver>
             }
         }
 
-        if (networkNotificationRequested) {
+        if (networkNotificationRequested && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             CommCareApplication.instance().startForegroundService(getNotificationStopIntent());
             networkNotificationRequested = false;
         }
@@ -172,7 +172,7 @@ public abstract class CommCareTask<Params, Progress, Result, Receiver>
             }
         }
 
-        if (networkNotificationRequested) {
+        if (networkNotificationRequested && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             CommCareApplication.instance().startForegroundService(getNotificationUpdateIntent());
         }
     }

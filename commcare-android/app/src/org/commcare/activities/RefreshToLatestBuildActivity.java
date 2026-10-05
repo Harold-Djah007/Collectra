@@ -62,6 +62,7 @@ public class RefreshToLatestBuildActivity extends CommCareActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         if (resultCode == RESULT_CANCELED) {
             errorOccurred(UPDATE_CANCELED);
         }

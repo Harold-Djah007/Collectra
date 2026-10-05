@@ -162,6 +162,7 @@ public class CallOutActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CALL_OR_SMS_PERMISSION_REQUEST) {
             for (int i = 0; i < permissions.length; i++) {
                 if (Manifest.permission.CALL_PHONE.equals(permissions[i]) &&

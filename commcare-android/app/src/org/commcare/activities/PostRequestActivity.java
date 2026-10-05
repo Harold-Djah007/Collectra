@@ -214,6 +214,7 @@ public class PostRequestActivity
         }
     }
 
+    @android.annotation.SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
         if (inErrorState) {

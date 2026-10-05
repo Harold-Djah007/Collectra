@@ -64,7 +64,7 @@
     <string name="about_cc">ስለ Collectra</string>
     <string name="accept_location">ዘለዉሉ ቦታ ይቕድሑ/ይዘግቡ</string>
     <string name="accuracy">ትኽክለኛነት</string>
-    <string name="activity_not_found">ቁፅፅር ዘድሊዮ ምንም ንጥፈት የለን</string>
+    <string name="activity_not_found">ቁፅፅር ዘድሊዮ ምንም ንጥፈት የለን: %1$s</string>
     <string name="altitude">ኣልቲቲዩድ</string>
     <string name="attachment_oversized">መጠንቀቕታ: %s mb ዝዓቐኑ ዓቢ ፋይል ተተሓሒዙ ኣሎ። እዚ ድማ ከከም ኩነታት መርበብካ ናብ ሰርቨር ኣብ ምቕራብ ጸገም ከስዕብ ይኽእል።</string>
     <string name="attachment_above_size_limit">ናይ ሚድያ ምትእስሳር ኣዝዩ ዓቢ (%1$s mb)። ዝለዓለ ዝፍቀድ መጠን %2$s mb እዩ።</string>
@@ -93,7 +93,7 @@
     <string name="jump_to_previous">ናብ ላዕሊ ኽድ</string>
     <string name="latitude">ርሕቀት ኣንፈት</string>
     <string name="loading_form">ቕጥዒ ይፀዓን ኣሎ</string>
-    <string name="location_provider_accuracy">ልክዕነት ቦታ</string>
+    <string name="location_provider_accuracy">ልክዕነት ቦታ: %1$s</string>
     <string name="longitude">ርሕቀት ኣንፈት/ሰሜን ደቡብ</string>
     <string name="no_items_display">ዝረአ ምስሊ የለን</string>
     <string name="ok">እሺ</string>
@@ -102,7 +102,7 @@
     <string name="play_video">ቪድዮ ክፈት</string>
     <string name="please_wait">በይዞኦም ሒደት ጊዜታት ይፀበዩ</string>
     <string name="please_wait_long">በይዞኦም ይፀበዩ፣ሒደት ደቓይቕ ክወስድ ይኽእል እዩ</string>
-    <string name="quit_application">ውፃእ</string>
+    <string name="quit_application">ውፃእ: %1$s</string>
     <string name="quit_form_title">ከካብ ቐጥዒ ክትወፅእ;</string>
     <string name="refresh">አሐድሶ</string>
     <string name="replace_location">ቦታ ተክእ</string>
@@ -671,7 +671,7 @@
     <string name="connect_opportunity_max_earnings_label">ዝለዓለ ኣታዊ</string>
     <string name="connect_opportunity_learn_section_title">ትምህርቲ</string>
     <string name="connect_opportunity_learn_section_subtitle">ምብጻሕ ንምጅማር ስልጠና ወድእ</string>
-    <plurals name="connect_opportunity_learn_modules_label">
+    <plurals name="connect_opportunity_learn_modules_label" tools:ignore="ImpliedQuantity">
         <item quantity="one">ናይ ትምህርቲ ሞጁል</item>
         <item quantity="other">ናይ ትምህርቲ ሞጁላት</item>
     </plurals>

@@ -10,7 +10,7 @@ CONDITIONS OF ANY KIND, either express or implied. See the License for
 the specific language governing permissions and limitations under the
 License.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="your_comment">आपकी टिप्पणी</string>
     <string name="support_email_address_default">commcarehq-support@dimagi.com</string>
     <string name="manager_activity_name">एप्लिकेशन प्रबंधक</string>
@@ -679,7 +679,7 @@ License.
     <string name="connect_opportunity_max_earnings_label">अधिकतम कमाई</string>
     <string name="connect_opportunity_learn_section_title">लर्न</string>
     <string name="connect_opportunity_learn_section_subtitle">विज़िट शुरू करने के लिए प्रशिक्षण पूरा करें</string>
-    <plurals name="connect_opportunity_learn_modules_label">
+    <plurals name="connect_opportunity_learn_modules_label" tools:ignore="ImpliedQuantity">
         <item quantity="one">लर्न मॉड्यूल</item>
         <item quantity="other">लर्न मॉड्यूल</item>
     </plurals>

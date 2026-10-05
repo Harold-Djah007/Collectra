@@ -180,9 +180,7 @@ public class CommCareWiFiDirectActivity
         }
         uiController.setupUI();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            checkMissingNearbyWifiPermission();
-        }
+        checkMissingNearbyWifiPermission();
     }
 
     @Override
@@ -261,7 +259,11 @@ public class CommCareWiFiDirectActivity
             return;
         }
 
-        mManager.createGroup(mChannel, fragment);
+        try {
+            mManager.createGroup(mChannel, fragment);
+        } catch (SecurityException e) {
+            handleWifiPermissionFailure(e);
+        }
     }
 
     private void changeState() {
@@ -577,32 +579,36 @@ public class CommCareWiFiDirectActivity
                 .findFragmentById(R.id.frag_list);
         dlFragment.onInitiateDiscovery();
 
-        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-
-            @Override
-            public void onSuccess() {
-                Toast.makeText(CommCareWiFiDirectActivity.this,
-                        localize("wifi.direct.discovery.start"),
-                        Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onFailure(int reasonCode) {
-
-                Logger.log(TAG, "Discovery of Wi-fi peers failed");
-
-                if (reasonCode == 0 || reasonCode == 2) {
+        try {
+            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+    
+                @Override
+                public void onSuccess() {
                     Toast.makeText(CommCareWiFiDirectActivity.this,
-                            localize("wifi.direct.discovery.failed.generic"),
-                            Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(CommCareWiFiDirectActivity.this,
-                            localize("wifi.direct.discovery.failed.specific", "" + reasonCode),
+                            localize("wifi.direct.discovery.start"),
                             Toast.LENGTH_SHORT).show();
                 }
-
-            }
-        });
+    
+                @Override
+                public void onFailure(int reasonCode) {
+    
+                    Logger.log(TAG, "Discovery of Wi-fi peers failed");
+    
+                    if (reasonCode == 0 || reasonCode == 2) {
+                        Toast.makeText(CommCareWiFiDirectActivity.this,
+                                localize("wifi.direct.discovery.failed.generic"),
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(CommCareWiFiDirectActivity.this,
+                                localize("wifi.direct.discovery.failed.specific", "" + reasonCode),
+                                Toast.LENGTH_SHORT).show();
+                    }
+    
+                }
+            });
+        } catch (SecurityException e) {
+            handleWifiPermissionFailure(e);
+        }
     }
 
     @Override
@@ -623,21 +629,25 @@ public class CommCareWiFiDirectActivity
     public void connect(WifiP2pConfig config) {
         Logger.log(TAG, "connecting to wi-fi peer");
 
-        mManager.connect(mChannel, config, new ActionListener() {
-
-            @Override
-            public void onSuccess() {
-                myStatusText.setText(localize("wifi.direct.connect.success"));
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                Logger.log(TAG, "Connection to peer failed");
-                Toast.makeText(CommCareWiFiDirectActivity.this,
-                        localize("wifi.direct.connect.failed"),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+        try {
+            mManager.connect(mChannel, config, new ActionListener() {
+    
+                @Override
+                public void onSuccess() {
+                    myStatusText.setText(localize("wifi.direct.connect.success"));
+                }
+    
+                @Override
+                public void onFailure(int reason) {
+                    Logger.log(TAG, "Connection to peer failed");
+                    Toast.makeText(CommCareWiFiDirectActivity.this,
+                            localize("wifi.direct.connect.failed"),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (SecurityException e) {
+            handleWifiPermissionFailure(e);
+        }
     }
 
     private static void deleteIfExists(String filePath) {
@@ -901,8 +911,12 @@ public class CommCareWiFiDirectActivity
     @Override
     public void updatePeers() {
         Logger.log(TAG, "Wi-Fi direct peers updating");
-        mManager.requestPeers(mChannel, (PeerListListener)this.getSupportFragmentManager()
-                .findFragmentById(R.id.frag_list));
+        try {
+            mManager.requestPeers(mChannel, (PeerListListener)this.getSupportFragmentManager()
+                    .findFragmentById(R.id.frag_list));
+        } catch (SecurityException e) {
+            handleWifiPermissionFailure(e);
+        }
 
     }
 
@@ -964,10 +978,20 @@ public class CommCareWiFiDirectActivity
         return mState;
     }
 
+    public void handleWifiPermissionFailure(SecurityException failure) {
+        Logger.exception("Wi-Fi Direct permission is unavailable", failure);
+        checkMissingNearbyWifiPermission();
+    }
+
+    private String getWifiDirectPermission() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                ? Manifest.permission.NEARBY_WIFI_DEVICES : Manifest.permission.ACCESS_FINE_LOCATION;
+    }
+
     private void checkMissingNearbyWifiPermission() {
         if (isMissingNearbyWifiPermission()) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.NEARBY_WIFI_DEVICES)) {
+                    getWifiDirectPermission())) {
                 showingPermissionDialog.setValue(SHOW_PERMISSION_RATIONALE);
             } else {
                 showingPermissionDialog.setValue(REQUEST_PERMISSION);
@@ -981,7 +1005,7 @@ public class CommCareWiFiDirectActivity
         switch (requestCode) {
             case NEARBY_WIFI_PERM_REQUEST:
                 for (int i = 0; i < permissions.length; i++) {
-                    if (permissions[i].equals(Manifest.permission.NEARBY_WIFI_DEVICES) &&
+                    if (permissions[i].equals(getWifiDirectPermission()) &&
                             grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                         // inform user and end activity
                         showingPermissionDialog.setValue(INFORM_FEATURE_DEGRADATION);
@@ -992,7 +1016,7 @@ public class CommCareWiFiDirectActivity
 
     private boolean isMissingNearbyWifiPermission() {
         return ContextCompat.checkSelfPermission(this,
-                Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED;
+                getWifiDirectPermission()) != PackageManager.PERMISSION_GRANTED;
     }
 
     private void showNearbyWiFiPermissionRationale() {
@@ -1008,8 +1032,11 @@ public class CommCareWiFiDirectActivity
     }
 
     private void requestNearbyWifiPermission() {
+        String[] permissions = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                ? new String[]{Manifest.permission.NEARBY_WIFI_DEVICES}
+                : new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
         ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.NEARBY_WIFI_DEVICES},
+                permissions,
                 NEARBY_WIFI_PERM_REQUEST);
     }
 

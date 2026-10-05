@@ -80,6 +80,7 @@ public class SingleAppManagerActivity extends CommCareActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_LAUNCH_UPDATE_AFTER_SEATING, launchUpdateAfterSeating);
     }
 

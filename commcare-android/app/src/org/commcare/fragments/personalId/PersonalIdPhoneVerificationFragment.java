@@ -297,12 +297,8 @@ public class PersonalIdPhoneVerificationFragment extends BasePersonalIdFragment 
     private void registerSmsReceiver() {
         IntentFilter filter = new IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION);
         smsBroadcastReceiver = new SMSBroadcastReceiver(smsConsentLauncher);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireActivity().registerReceiver(smsBroadcastReceiver, filter, Context.RECEIVER_EXPORTED);
-        } else {
-            requireActivity().registerReceiver(smsBroadcastReceiver, filter);
-
-        }
+        androidx.core.content.ContextCompat.registerReceiver(requireActivity(), smsBroadcastReceiver,
+                filter, androidx.core.content.ContextCompat.RECEIVER_EXPORTED);
     }
 
     private String extractOtp(String message) {

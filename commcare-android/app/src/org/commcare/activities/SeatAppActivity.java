@@ -39,6 +39,7 @@ public class SeatAppActivity extends CommonBaseActivity {
         finish();
     }
 
+    @android.annotation.SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
         // Make it impossible to quit in the middle of this activity

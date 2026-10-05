@@ -388,10 +388,10 @@ public class CommCareEntityStorageCache implements EntityStorageCache {
                                           Hashtable<String, AsyncEntity> entitySet) {
         Cursor walker = db.rawQuery(sqlStatement, args);
         while (walker.moveToNext()) {
-            String entityKey = walker.getString(walker.getColumnIndex("entity_key"));
+            String entityKey = walker.getString(walker.getColumnIndexOrThrow("entity_key"));
             if (entitySet.containsKey(entityKey)) {
-                String cacheKey = walker.getString(walker.getColumnIndex("cache_key"));
-                String value = walker.getString(walker.getColumnIndex("value"));
+                String cacheKey = walker.getString(walker.getColumnIndexOrThrow("cache_key"));
+                String value = walker.getString(walker.getColumnIndexOrThrow("value"));
                 if (cacheKey.startsWith(TYPE_NORMAL_FIELD.toString())) {
                     entitySet.get(entityKey).setFieldData(cacheKey, value);
                 } else {

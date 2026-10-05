@@ -593,7 +593,10 @@ public class FileUtil {
             try (Cursor cursor = context.getContentResolver().query(
                     uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
-                    fileName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (columnIndex >= 0) {
+                        fileName = cursor.getString(columnIndex);
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -632,7 +635,10 @@ public class FileUtil {
             try (Cursor cursor = context.getContentResolver().query(
                     uri, new String[]{MediaStore.MediaColumns.MIME_TYPE}, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
-                    mimeType = cursor.getString(cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE));
+                    int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE);
+                    if (columnIndex >= 0) {
+                        mimeType = cursor.getString(columnIndex);
+                    }
                 }
             }
         }

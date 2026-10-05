@@ -86,6 +86,23 @@ class FileUtilTest {
         FileUtil.getFileName(mockContext, Uri.parse("any"))
     }
 
+    @Test
+    fun getFileName_whenDisplayNameColumnIsMissing_usesUriAndResolverType() {
+        mediaCursor.setColumnNames(listOf(MediaStore.MediaColumns.MIME_TYPE))
+        mediaCursor.setResults(arrayOf(arrayOf("image/jpeg")))
+        every { mockContext.contentResolver.getType(any()) } returns "image/jpeg"
+
+        Assert.assertEquals("any.jpg", FileUtil.getFileName(mockContext, Uri.parse("any")))
+    }
+
+    @Test(expected = FileExtensionNotFoundException::class)
+    fun getFileName_whenMimeTypeColumnIsMissing_reportsUnknownExtension() {
+        mediaCursor.setColumnNames(listOf(OpenableColumns.DISPLAY_NAME))
+        mediaCursor.setResults(arrayOf(arrayOf("file_without_extension")))
+
+        FileUtil.getFileName(mockContext, Uri.parse("any"))
+    }
+
     companion object MockMediaData {
         private val MEDIA_COLUMN = listOf(
                 OpenableColumns.DISPLAY_NAME,

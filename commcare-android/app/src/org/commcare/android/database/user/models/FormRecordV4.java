@@ -79,6 +79,7 @@ public class FormRecordV4 extends Persisted {
         return aesKey;
     }
 
+    @FormRecord.FormRecordStatus
     public String getStatus() {
         return status;
     }

@@ -103,7 +103,11 @@ public class WiFiDirectManagementFragment extends Fragment
         if (status == WifiP2pDevice.AVAILABLE && isHost) {
             Logger.log(TAG, "Relaunching Wi-fi direct group as host");
             setStatusText("Host relaunching group...");
-            mManager.createGroup(mChannel, this);
+            try {
+                mManager.createGroup(mChannel, this);
+            } catch (SecurityException e) {
+                mActivity.handleWifiPermissionFailure(e);
+            }
         }
 
         mActivity.updateDeviceStatus(mDevice);

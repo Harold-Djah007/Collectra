@@ -192,6 +192,7 @@ public class LoginActivity extends BaseDrawerActivity<LoginActivity>
             @NonNull String[] permissions,
             @NonNull int[] grantResults
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         String[] requiredPerms = Permissions.getRequiredPerms();
 
         if (requestCode == Permissions.ALL_PERMISSIONS_REQUEST) {

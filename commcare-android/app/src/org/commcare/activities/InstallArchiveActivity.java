@@ -106,6 +106,7 @@ public class InstallArchiveActivity extends CommCareActivity<InstallArchiveActiv
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == REQUEST_FILE_LOCATION && resultCode == AppCompatActivity.RESULT_OK) {
             FileUtil.updateFileLocationFromIntent(this, intent, editFileLocation);
             selectedFileUri = intent.getData();
