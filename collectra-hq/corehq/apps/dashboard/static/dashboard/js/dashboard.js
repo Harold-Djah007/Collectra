@@ -266,34 +266,61 @@ $(function () {
                         request.suggestionsLoaded = ko.observable(false);
                         request.suggestionsError = ko.observable(false);
                         request.caseId = ko.observable("");
+                        request.searchName = ko.observable(request.name || "");
+                        request.searchGeneration = 0;
+                        request.verifyGeneration = 0;
                         request.checking = ko.observable(false);
                         request.reviewError = ko.observable("");
                         request.candidate = ko.observable(null);
-                        request.caseId.subscribe(function () { request.candidate(null); });
+                        request.caseId.subscribe(function () {
+                            ++request.verifyGeneration;
+                            request.candidate(null);
+                            request.checking(false);
+                            request.reviewError("");
+                        });
                         request.toggleReview = function () {
                             request.reviewOpen(!request.reviewOpen());
-                            if (request.reviewOpen() && request.name && !request.suggestionsLoaded()) {
+                            if (request.reviewOpen() && !request.suggestionsLoaded()) {
+                                request.findCases();
+                            }
+                        };
+                        request.findCases = function () {
+                                var generation = ++request.searchGeneration;
+                                request.caseId("");
+                                request.suggestions([]);
+                                request.suggestionsLoaded(false);
+                                request.suggestionsError(false);
                                 request.suggestionsLoading(true);
                                 dashboardJSON(initialPageData.reverse("dashboard_reopen_candidates"), {
                                     request_id: request.form_id,
+                                    name: request.searchName().trim(),
                                 }).done(function (result) {
+                                    if (generation !== request.searchGeneration) { return; }
                                     request.suggestions(_.map(result.candidates, function (item) {
                                         item.openedLabel = item.opened_on
                                             ? "Opened " + new Date(item.opened_on).toLocaleDateString() : "";
+                                        item.closedLabel = item.closed_on
+                                            ? "Closed " + new Date(item.closed_on).toLocaleDateString() : "";
                                         return item;
                                     }));
                                     request.suggestionsLoaded(true);
                                 }).fail(function () {
+                                    if (generation !== request.searchGeneration) { return; }
                                     request.suggestionsError(true);
-                                }).always(function () { request.suggestionsLoading(false); });
-                            }
+                                }).always(function () {
+                                    if (generation === request.searchGeneration) { request.suggestionsLoading(false); }
+                                });
                         };
-                        request.chooseCase = function (item) { request.caseId(item.case_id); };
+                        request.chooseCase = function (item) {
+                            request.caseId(item.case_id);
+                            request.verify();
+                        };
                         request.verify = function () {
+                            var generation = ++request.verifyGeneration;
                             request.candidate(null);
                             request.reviewError("");
                             if (!request.caseId().trim()) {
-                                request.reviewError("Enter the original case ID from Case List.");
+                                request.reviewError("Search by bed or batch name and select a result.");
                                 return;
                             }
                             request.checking(true);
@@ -301,13 +328,17 @@ $(function () {
                                 request_id: request.form_id,
                                 case_id: request.caseId().trim(),
                             }).done(function (candidate) {
+                                if (generation !== request.verifyGeneration) { return; }
                                 if (request.caseId().trim() === candidate.case_id) {
                                     request.candidate(candidate);
                                 }
                             }).fail(function (xhr) {
+                                if (generation !== request.verifyGeneration) { return; }
                                 request.reviewError(xhr.responseJSON && xhr.responseJSON.error
                                     ? xhr.responseJSON.error : "Could not check that case. Try again.");
-                            }).always(function () { request.checking(false); });
+                            }).always(function () {
+                                if (generation === request.verifyGeneration) { request.checking(false); }
+                            });
                         };
                         return request;
                     });

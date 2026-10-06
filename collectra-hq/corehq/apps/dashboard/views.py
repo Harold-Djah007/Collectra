@@ -176,7 +176,7 @@ def dashboard_reopen_candidates(request, domain):
         return HttpResponseForbidden()
     try:
         form = XFormInstance.objects.get_form(request.GET.get('request_id'), domain)
-        candidates = closed_case_suggestions(domain, form)
+        candidates = closed_case_suggestions(domain, form, request.GET.get('name'))
     except (XFormNotFound, ValueError) as error:
         return JsonResponse({'error': str(error)}, status=400)
     return JsonResponse({'candidates': candidates})

@@ -195,29 +195,29 @@
               Review and reopen case
             </button>
             <div class="collectra-reopen-review" data-bind="visible: reviewOpen">
-              <div data-bind="visible: name">
-                <p>Closed cases named <strong data-bind="text: name"></strong>. Choose the original case, then check its history.</p>
+              <label>Bed or batch name
+                <input type="text" maxlength="120" autocomplete="off" data-bind="textInput: searchName" placeholder="Enter all or part of the name" />
+              </label>
+              <button type="button" class="collectra-refresh" data-bind="click: findCases, disable: suggestionsLoading">Find bed or batch</button>
+              <div>
+                <p>Select the original closed bed or batch, then review its history.</p>
                 <p data-bind="visible: suggestionsLoading">Looking for closed cases…</p>
-                <p data-bind="visible: suggestionsError" role="alert">Could not load suggestions. Use Case List and enter the ID below.</p>
+                <p data-bind="visible: suggestionsError" role="alert">Could not load matching beds or batches. Try searching again.</p>
                 <ul class="collectra-reopen-suggestions" data-bind="foreach: suggestions">
                   <li><button type="button" data-bind="click: $parent.chooseCase">
                     <strong data-bind="text: name"></strong>
-                    <span data-bind="text: case_id"></span>
                     <small data-bind="text: openedLabel"></small>
+                    <small data-bind="text: closedLabel"></small>
                   </button></li>
                 </ul>
                 <p data-bind="visible: suggestionsLoaded() &amp;&amp; !suggestions().length">
-                  No exact-name match. Use Case List to find the original case.
+                  No closed bed or batch matches this name. Try another part of the name.
                 </p>
               </div>
-              <label>Original closed case ID
-                <input type="text" maxlength="80" autocomplete="off" data-bind="textInput: caseId" placeholder="Copy from Case List" />
-              </label>
-              <button type="button" class="collectra-refresh" data-bind="click: verify, disable: checking">Check case</button>
+              <p data-bind="visible: checking">Checking the selected bed or batch…</p>
               <p role="alert" data-bind="visible: reviewError, text: reviewError"></p>
               <div data-bind="with: candidate">
-                <p><strong>Original case:</strong> <span data-bind="text: case_name"></span>
-                  (<span data-bind="text: case_id"></span>)</p>
+                <p><strong>Selected bed or batch:</strong> <span data-bind="text: case_name"></span></p>
                 <p><a data-bind="attr: {href: case_url}" target="_blank" rel="noopener">Check case history</a>
                    · <a data-bind="attr: {href: form_url}" target="_blank" rel="noopener">Inspect closing submission and readings</a></p>
                 <form method="post" action="{% url 'dashboard_reopen_approved' domain %}">

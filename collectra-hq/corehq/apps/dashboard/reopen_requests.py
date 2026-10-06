@@ -128,10 +128,12 @@ def archive_closing_form_and_refresh(case, closing_form, supervisor_id):
     invalidate_restore_cache(case.domain)
 
 
-def closed_case_suggestions(domain, worker_request):
-    """Suggest exact-name matches; the supervisor must still verify a case."""
+def closed_case_suggestions(domain, worker_request, search_name=None):
+    """Find closed cases by name; the supervisor must still verify a case."""
     validate_reopen_request(worker_request)
-    name = request_from_form(worker_request)['name'].strip()
+    name = (request_from_form(worker_request)['name'] if search_name is None else search_name).strip()
+    if len(name) > 120:
+        raise ValueError('Bed or batch name must be 120 characters or fewer.')
     if not name:
         return []
     cases = []
@@ -139,7 +141,7 @@ def closed_case_suggestions(domain, worker_request):
         cases.extend(CommCareCase.objects.using(database).filter(
             domain=domain, type='dryingbed', closed=True, deleted=False,
             closed_on__isnull=False,
-            name__iexact=name,
+            **{('name__iexact' if search_name is None else 'name__icontains'): name},
         ).order_by('-closed_on')[:MAX_CANDIDATES])
     cases.sort(key=lambda case: case.closed_on, reverse=True)
     return [{

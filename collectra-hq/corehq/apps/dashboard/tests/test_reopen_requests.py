@@ -195,6 +195,35 @@ def test_closed_case_lookup_requires_valid_request_and_exact_name():
     with patch('corehq.apps.dashboard.reopen_requests.get_db_aliases_for_partitioned_query') as shards:
         assert closed_case_suggestions('safisana', request) == []
         shards.assert_not_called()
+
+
+def test_closed_case_search_uses_partial_name_and_retains_duplicate_matches():
+    request = form({'bed_number': 'dry_bed_1', 'reason': 'Closed by mistake',
+                    'existing_batch_name': 'old name'})
+    request.domain, request.app_id, request.xmlns = 'safisana', APP_ID, REQUEST_XMLNS
+    request.state = XFormInstance.NORMAL
+    module = 'corehq.apps.dashboard.reopen_requests'
+    with patch(module + '.get_db_aliases_for_partitioned_query', return_value=['shard']), \
+            patch(module + '.CommCareCase.objects.using') as using:
+        using.return_value.filter.return_value.order_by.return_value.__getitem__.return_value = [
+            SimpleNamespace(case_id=identifier, name='Batch 2026', opened_on=None,
+                            closed_on=datetime(2026, 9, 28, tzinfo=UTC))
+            for identifier in ('first', 'second')
+        ]
+        assert [row['case_id'] for row in closed_case_suggestions('safisana', request, '  2026  ')] == [
+            'first', 'second']
+        using.return_value.filter.assert_called_once_with(
+            domain='safisana', type='dryingbed', closed=True, deleted=False,
+            closed_on__isnull=False, name__icontains='2026')
+
+
+def test_closed_case_search_refuses_oversized_name():
+    request = form({'bed_number': 'dry_bed_1', 'reason': 'Closed by mistake',
+                    'existing_batch_name': '2026'})
+    request.domain, request.app_id, request.xmlns = 'safisana', APP_ID, REQUEST_XMLNS
+    request.state = XFormInstance.NORMAL
+    with pytest.raises(ValueError, match='120 characters'):
+        closed_case_suggestions('safisana', request, 'a' * 121)
     request.state = XFormInstance.ARCHIVED
     with pytest.raises(ValueError, match='active Safisana'):
         closed_case_suggestions('safisana', request)
