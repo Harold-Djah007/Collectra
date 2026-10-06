@@ -4,28 +4,10 @@
   overflow: hidden;
   min-height: calc(100vh - 72px);
   padding: 32px 28px 72px;
-  background: linear-gradient(125deg, #f2f8fa, #edf9f5 50%, #f4f7fc 100%);
-  background-size: 220% 220%;
-  animation: collectra-background-flow 22s ease-in-out infinite alternate;
+  background: linear-gradient(180deg, #edf4f5 0, #f4f6f8 240px, #f4f6f8 100%);
+  border-top: 1px solid #dce5e9;
 }
-.collectra-dashboard-page::before, .collectra-dashboard-page::after {
-  content: ""; position: absolute; z-index: -1; width: 52vw; height: 52vw;
-  min-width: 430px; min-height: 430px; border-radius: 50%; pointer-events: none;
-  filter: blur(45px); opacity: .56;
-}
-.collectra-dashboard-page::before { top: 180px; left: -19vw; background: radial-gradient(circle, #b6e9de, transparent 68%); animation: collectra-background-drift 18s ease-in-out infinite alternate; }
-.collectra-dashboard-page::after { top: 520px; right: -24vw; background: radial-gradient(circle, #c3d4f5, transparent 69%); animation: collectra-background-drift 22s ease-in-out -8s infinite alternate-reverse; }
 .collectra-dashboard-inner { position: relative; z-index: 1; max-width: 1360px; margin: 0 auto; }
-.collectra-data-flow { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.collectra-data-flow svg { width: 100%; height: 100%; min-height: 1050px; }
-.collectra-flow-line { fill: none; stroke: #23a99c; stroke-width: 3; stroke-dasharray: 10 25; opacity: .44; animation: collectra-flow-travel 12s linear infinite; }
-.collectra-flow-line-secondary { stroke: #526fcb; stroke-width: 2; opacity: .35; animation-duration: 17s; animation-direction: reverse; }
-.collectra-flow-line-third { stroke: #36b79b; stroke-width: 2; opacity: .30; animation-duration: 21s; }
-.collectra-flow-node { fill: #19a897; opacity: .55; transform-box: fill-box; transform-origin: center; animation: collectra-flow-pulse 3s ease-in-out infinite; }
-.collectra-flow-node-late { fill: #5774cd; animation-delay: -1.5s; }
-.collectra-flow-form { fill: rgba(255,255,255,.67); stroke: #28a99a; stroke-width: 2; opacity: .65; animation: collectra-flow-pulse 5s ease-in-out infinite; }
-.collectra-flow-form-late { stroke: #5774cd; animation-delay: -2s; }
-.collectra-flow-detail { fill: none; stroke: #31a99d; stroke-width: 3; stroke-linecap: round; opacity: .58; }
 .collectra-hero {
   position: relative; isolation: isolate;
   display: flex; justify-content: space-between; align-items: center;
@@ -252,12 +234,9 @@
 .collectra-card-loading, .collectra-card-error { margin: auto 0; color: #6e7f8f; }
 .collectra-spinner { display: inline-block; width: 18px; height: 18px; margin-right: 8px; border: 2px solid #cce9e7; border-top-color: #08a6a0; border-radius: 50%; animation: collectra-spin .8s linear infinite; }
 @keyframes collectra-spin { to { transform: rotate(360deg); } }
-@keyframes collectra-background-flow { to { background-position: 100% 80%; } }
-@keyframes collectra-background-drift { to { transform: translate(11vw, -60px) scale(1.22); } }
 @keyframes collectra-card-float { 50% { transform: translateY(-10px) rotate(-5deg); } }
 @keyframes collectra-glow { 50% { box-shadow: 0 0 0 9px rgba(169,241,204,.05); opacity: .7; } }
 @keyframes collectra-appear { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes collectra-flow-travel { to { stroke-dashoffset: -280; } }
 @keyframes collectra-flow-pulse { 50% { opacity: .85; scale: 1.15; } }
 @keyframes collectra-form-write { 50% { width: 12px; opacity: .5; } }
 @keyframes collectra-bar-rise { 50% { scale: 1 .55; transform-origin: bottom; } }
@@ -271,5 +250,4 @@
 @media (max-width: 767px) { .collectra-hero { padding: 18px 4px 22px; } .collectra-hero-art { display: none; } .collectra-status-grid { gap: 18px; margin: 28px 0 30px; } .collectra-alerts-summary { grid-template-columns: repeat(3, minmax(0,1fr)); } .collectra-summary-item { padding: 12px; gap: 7px; } .collectra-summary-icon { display: none; } }
 @media (max-width: 575px) { .collectra-dashboard-page { padding: 15px 12px 36px; } .collectra-dashboard-grid { grid-template-columns: 1fr; } .collectra-hero { padding: 12px 2px 20px; min-height: 0; } .collectra-hero-art { display: none; } .collectra-dashboard-mark { width: 50px; height: 50px; border-radius: 12px; } .collectra-dashboard-mark img { width: 34px; height: 34px; } .collectra-brand-title { font-size: 1.52rem; } .collectra-quick-actions { margin-left: 0; } .collectra-alerts { padding: 20px 16px; } .collectra-alerts-header { flex-direction: column; } .collectra-alerts-controls { justify-content: flex-start; } .collectra-alerts-summary { gap: 6px; } .collectra-summary-item { min-height: 68px; } .collectra-summary-item strong { font-size: 1.2rem; } .collectra-summary-item small { font-size: .68rem; } .collectra-section-heading > span { display: none; } }
 @media (max-width: 575px) { .collectra-status-grid .collectra-alerts { padding: 16px; } .collectra-status-grid .collectra-alerts-summary { gap: 5px; } .collectra-status-grid .collectra-summary-item { padding: 8px 5px; } .collectra-status-grid .collectra-alerts-header { gap: 6px; } }
-.collectra-dashboard-page { background-size: 300% 300%; animation-duration: 11s; }
 @media (prefers-reduced-motion: reduce) { .collectra-dashboard-page, .collectra-dashboard-page::before, .collectra-dashboard-page::after, .collectra-dashboard-page *, .collectra-dashboard-page *::before, .collectra-dashboard-page *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
