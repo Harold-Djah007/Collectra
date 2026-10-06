@@ -164,6 +164,25 @@ exit 0''')
         self.assertIn("Kafka stopped during startup", result.stderr)
         self.assertNotIn("did not become ready", result.stderr)
 
+    def test_stale_kafka_session_retries_are_bounded(self):
+        self.stub("fuser", "exit 1")
+        self.stub("curl", 'echo \'{"status":"ok"}\'')
+        self.stub("sleep", "exit 0")
+        self.stub("docker", '''
+if [[ "$1" == inspect && "$2" == hqservice-kafka-1 ]]; then
+    if [[ "$4" == '{{.State.Status}}' ]]; then echo exited; fi
+    if [[ "$4" == '{{.State.StartedAt}}' ]]; then echo 2026-10-06T08:38:08Z; fi
+elif [[ "$1" == logs ]]; then
+    echo 'KeeperErrorCode = NodeExists'
+fi
+exit 0''')
+        result = self.run_launcher("collectra-hq/local-bin/start-collectra")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("retry 2/2", result.stdout)
+        self.assertIn("Kafka stopped during startup", result.stderr)
+        self.assertEqual(self.commands().count("docker start hqservice-kafka-1"), 2)
+        self.assertIn("docker logs --since 2026-10-06T08:38:08Z", self.commands())
+
     def test_termination_stops_only_owned_proxy(self):
         # Build an isolated repo so the HQ child never starts real services.
         script_dir = self.root / "deploy" / "local-testing"

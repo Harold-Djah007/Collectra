@@ -130,11 +130,23 @@ kafka_ready() {
 
 wait_for_service() {
     local name="$1" container="$2" probe="$3" deadline=$((SECONDS + service_ready_timeout))
-    local container_state
+    local container_state started_at kafka_retries=0
     echo "Waiting for $name..."
     until "$probe"; do
         container_state="$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || true)"
         if [[ "$container_state" == exited || "$container_state" == dead ]]; then
+            if [[ "$container" == hqservice-kafka-1 && "$container_state" == exited && $kafka_retries -lt 2 ]]; then
+                started_at="$(docker inspect "$container" --format '{{.State.StartedAt}}' 2>/dev/null || true)"
+                if [[ -n "$started_at" ]] && docker logs --since "$started_at" "$container" 2>&1 | grep 'KeeperErrorCode = NodeExists' >/dev/null; then
+                    if (( SECONDS + 10 < deadline )); then
+                        kafka_retries=$((kafka_retries + 1))
+                        echo "Kafka is waiting for a previous ZooKeeper session to expire; retry ${kafka_retries}/2..."
+                        sleep 10
+                        docker start "$container" >/dev/null || return 1
+                        continue
+                    fi
+                fi
+            fi
             echo "$name stopped during startup ($container_state)." >&2
             echo "Inspect details with: docker logs --tail 100 $container" >&2
             return 1
