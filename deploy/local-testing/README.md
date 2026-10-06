@@ -96,6 +96,18 @@ Quick Tunnels have no uptime guarantee. The permanent production deployment in
 compression, and TLS. That is the field deployment path; this script is only
 for temporary phone testing.
 
+## Group form questions and add conditional Other answers
+
+Preview editable forms with `python manage.py update_form_pages safisana
+--output-dir /path/to/new-backup-directory`; add `--apply` to save the drafts.
+Use a new backup directory for each run. The command keeps existing question
+paths, choice values and case mappings, adds conditional required text answers
+for static Other choices, and groups adjacent controls into pages of up to four.
+Repeats and section boundaries remain separate. Empty drafts are reported.
+Existing mobile versions remain unchanged until new application versions are
+built and published. The backup directory contains original application JSON,
+form XML and a change report.
+
 ## Audit and repair migrated application menu images
 
 The audit checks every application draft in a project, including whether each
