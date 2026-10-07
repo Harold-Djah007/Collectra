@@ -96,6 +96,17 @@ Quick Tunnels have no uptime guarantee. The permanent production deployment in
 compression, and TLS. That is the field deployment path; this script is only
 for temporary phone testing.
 
+## Run focused readiness checks
+
+With the existing Redis and CouchDB services running, run
+`bash deploy/local-testing/check-readiness.sh` from the repository root.
+It checks launcher failure handling, dashboard selection, exports, readable
+reports, static user roles, permissions, alerts, XLSForm import and form layouts.
+The HQ virtual environment must include development/test dependencies. Set
+`COLLECTRA_PROJECT_ROOT` to use a refreshed Linux runtime instead of the checkout.
+These checks do not replace phone offline/sync tests or full database integration
+tests and do not publish application versions.
+
 ## Group form questions and add conditional Other answers
 
 Preview editable forms with `python manage.py update_form_pages safisana
