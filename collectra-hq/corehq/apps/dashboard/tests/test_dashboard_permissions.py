@@ -1,10 +1,26 @@
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+from django.test import RequestFactory
 
 import pytest
 
 from corehq.apps.dashboard.views import _can_reopen_from_dashboard, _can_view_dashboard_submissions
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION
+
+
+@pytest.mark.parametrize('query', [{}, {'request_id': ''}, {'request_id': 'a' * 81}])
+def test_reopen_candidates_rejects_invalid_request_before_database_lookup(query):
+    from corehq.apps.dashboard.views import dashboard_reopen_candidates
+
+    view = dashboard_reopen_candidates
+    while hasattr(view, '__wrapped__'):
+        view = view.__wrapped__
+    request = RequestFactory().get('/reopen-candidates/', query)
+    with patch('corehq.apps.dashboard.views._can_reopen_from_dashboard', return_value=True), \
+            patch('corehq.apps.dashboard.views.XFormInstance.objects.get_form') as get_form:
+        response = view(request, 'safisana')
+    assert response.status_code == 400
+    get_form.assert_not_called()
 
 
 @pytest.mark.parametrize('can_view_submissions', [False, True])

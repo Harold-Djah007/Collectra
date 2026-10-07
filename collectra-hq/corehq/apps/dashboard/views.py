@@ -175,7 +175,10 @@ def dashboard_reopen_candidates(request, domain):
     if not _can_reopen_from_dashboard(request, domain):
         return HttpResponseForbidden()
     try:
-        form = XFormInstance.objects.get_form(request.GET.get('request_id'), domain)
+        request_id = request.GET.get('request_id')
+        if not request_id or len(request_id) > 80:
+            raise ValueError('Select a valid reopening request.')
+        form = XFormInstance.objects.get_form(request_id, domain)
         candidates = closed_case_suggestions(domain, form, request.GET.get('name'))
     except (XFormNotFound, ValueError) as error:
         return JsonResponse({'error': str(error)}, status=400)

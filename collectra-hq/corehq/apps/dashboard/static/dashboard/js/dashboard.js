@@ -298,9 +298,9 @@ $(function () {
                                     if (generation !== request.searchGeneration) { return; }
                                     request.suggestions(_.map(result.candidates, function (item) {
                                         item.openedLabel = item.opened_on
-                                            ? "Opened " + new Date(item.opened_on).toLocaleDateString() : "";
+                                            ? "Opened " + new Date(item.opened_on).toLocaleString() : "";
                                         item.closedLabel = item.closed_on
-                                            ? "Closed " + new Date(item.closed_on).toLocaleDateString() : "";
+                                            ? "Closed " + new Date(item.closed_on).toLocaleString() : "";
                                         return item;
                                     }));
                                     request.suggestionsLoaded(true);
