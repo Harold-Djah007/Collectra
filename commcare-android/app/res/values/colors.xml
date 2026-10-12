@@ -51,23 +51,23 @@
     <color name="cc_core_text">#0B1F1D</color>
 
     <!-- Brand: Collectra Signal -->
-    <color name="cc_brand_color">#0C6B63</color>
+    <color name="cc_brand_color">#087E7C</color>
     <color name="cc_brand_bg">#DCEEEA</color>
     <color name="cc_brand_text">#0C6B63</color>
-    <color name="collectra_ink">#062A28</color>
-    <color name="collectra_signal">#C9F56A</color>
-    <color name="collectra_signal_ink">#24350A</color>
-    <color name="collectra_surface">#FAFCFB</color>
-    <color name="collectra_surface_muted">#E8F2EF</color>
-    <color name="collectra_outline">#C5DDD7</color>
-    <color name="collectra_text_primary">#0B1F1D</color>
-    <color name="collectra_text_secondary">#4A635F</color>
+    <color name="collectra_ink">#173B5F</color>
+    <color name="collectra_signal">#D9F2ED</color>
+    <color name="collectra_signal_ink">#075F65</color>
+    <color name="collectra_surface">#FFFFFF</color>
+    <color name="collectra_surface_muted">#EDF4F5</color>
+    <color name="collectra_outline">#DCE5E9</color>
+    <color name="collectra_text_primary">#17384C</color>
+    <color name="collectra_text_secondary">#526776</color>
     <color name="collectra_brand_dark">#0C6B63</color>
     <color name="collectra_brand_deep">#094F49</color>
-    <color name="collectra_brand_bright">#C9F56A</color>
-    <color name="collectra_bg_start">#EEF4F1</color>
-    <color name="collectra_bg_mid">#E3EEEA</color>
-    <color name="collectra_bg_end">#F7FAF8</color>
+    <color name="collectra_brand_bright">#0AA6A6</color>
+    <color name="collectra_bg_start">#F4F6F8</color>
+    <color name="collectra_bg_mid">#F4F6F8</color>
+    <color name="collectra_bg_end">#F4F6F8</color>
     <color name="collectra_panel_shadow">#1A062A28</color>
     <color name="collectra_action_start">#0C6B63</color>
     <color name="collectra_action_saved">#127A70</color>

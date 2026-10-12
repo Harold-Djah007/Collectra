@@ -39,7 +39,7 @@
                 android:fontFamily="@font/outfit_semibold"
                 android:letterSpacing="-0.02"
                 android:text="@string/collectra_brand_name"
-                android:textColor="@color/collectra_signal"
+                android:textColor="@color/collectra_ink"
                 android:textSize="30sp"
                 android:textStyle="bold" />
         </LinearLayout>

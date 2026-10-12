@@ -64,8 +64,7 @@
                     <LinearLayout
                         android:id="@+id/LinearLayout01"
                         android:layout_width="match_parent"
-                        android:layout_height="0px"
-                        android:layout_weight=".8"
+                        android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="vertical">
 

@@ -30,7 +30,7 @@
             android:fontFamily="@font/outfit_semibold"
             android:letterSpacing="-0.03"
             android:text="@string/collectra_brand_name"
-            android:textColor="@color/collectra_signal"
+            android:textColor="@color/collectra_ink"
             android:textSize="36sp"
             android:textStyle="bold" />
 
@@ -43,7 +43,7 @@
             android:letterSpacing="0.08"
             android:text="@string/collectra_home_tagline"
             android:textAllCaps="true"
-            android:textColor="@color/white"
+            android:textColor="@color/collectra_text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
 </FrameLayout>

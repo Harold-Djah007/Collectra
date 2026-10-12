@@ -3,8 +3,8 @@
     android:shape="rectangle">
     <gradient
         android:angle="135"
-        android:startColor="@color/collectra_ink"
-        android:centerColor="@color/collectra_brand_deep"
-        android:endColor="@color/collectra_brand_dark"
+        android:startColor="@color/white"
+        android:centerColor="@color/collectra_surface"
+        android:endColor="@color/collectra_surface_muted"
         android:type="linear" />
 </shape>

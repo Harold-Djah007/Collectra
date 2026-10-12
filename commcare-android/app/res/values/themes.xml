@@ -4,7 +4,7 @@
     <style name="CommonTheme" parent="Theme.MaterialComponents.Light.DarkActionBar.Bridge">
         <item name="colorPrimary">@color/cc_brand_color</item>
         <item name="colorPrimaryDark">@color/collectra_ink</item>
-        <item name="colorAccent">@color/collectra_signal</item>
+        <item name="colorAccent">@color/cc_brand_color</item>
         <item name="colorControlActivated">@color/cc_brand_color</item>
         <item name="android:textColorSecondary">@color/collectra_text_secondary</item>
         <item name="android:textColorPrimary">@color/collectra_text_primary</item>
@@ -55,9 +55,9 @@
     -->
     <style name="CollectraLaunchTheme" parent="CommonTheme.NoActionBar">
         <item name="android:windowBackground">@drawable/collectra_launch_window</item>
-        <item name="android:statusBarColor">@color/collectra_ink</item>
+        <item name="android:statusBarColor">@color/white</item>
         <item name="android:navigationBarColor">@color/collectra_ink</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <!--
