@@ -19,14 +19,14 @@
     <string name="support_email_address_default">commcarehq-support@dimagi.com</string>
     <string name="manager_activity_name">App Manager</string>
     <string name="install_app">Install an App</string>
-    <string name="collectra_login_title">Your workspace awaits</string>
+    <string name="collectra_login_title">Sign in to your workspace</string>
     <string name="collectra_login_subtitle">Sign in with your field account to continue.</string>
     <string name="collectra_offline_ready">Offline-ready after your first successful sign-in.</string>
     <string name="collectra_username_hint">Username</string>
     <string name="collectra_password_hint">Password</string>
     <string name="collectra_install_title">Set up workspace</string>
     <string name="collectra_install_subtitle">Scan a Collectra HQ code or enter your workspace link.</string>
-    <string name="collectra_home_greeting">Your field workspace</string>
+    <string name="collectra_home_greeting">Your workspace</string>
     <string name="collectra_home_tagline">Forms, cases and field work</string>
     <string name="collectra_today_title">My work today</string>
     <string name="collectra_today_start">Collect data</string>

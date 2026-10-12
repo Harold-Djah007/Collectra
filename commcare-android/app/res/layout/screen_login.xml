@@ -94,7 +94,7 @@
                                 android:letterSpacing="-0.02"
                                 android:text="@string/collectra_login_title"
                                 android:textColor="@color/collectra_ink"
-                                android:textSize="32sp"
+                                android:textSize="24sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -245,7 +245,7 @@
                                 android:layout_gravity="bottom"
                                 android:layout_marginTop="@dimen/content_start"
                                 android:minHeight="52dp"
-                                android:backgroundTint="@color/cc_brand_color"
+                                app:backgroundTint="@color/cc_brand_color"
                                 app:cornerRadius="16dp"
                                 android:textAllCaps="false"
                                 android:textStyle="bold"

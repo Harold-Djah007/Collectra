@@ -25,6 +25,36 @@ import org.robolectric.shadows.ShadowToast
  * [StandardHomePresentationTest] and [HomeConnectJobProgressTest].
  */
 class HomeButtonsTest : BaseHomeScreenActivityTest() {
+    @Test
+    fun `home has a single start action and readable secondary labels`() {
+        val home = buildVisibleHome()
+        val saved = home.findViewById<android.widget.Button>(org.commcare.dalvik.R.id.collectra_today_saved)
+        assertTrue(saved.text.contains("Saved forms"))
+        assertTrue(saved.currentTextColor != saved.backgroundTintList!!.defaultColor)
+        assertEquals(0, home.supportActionBar!!.displayOptions and androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE)
+        assertFalse(homeButtonLabels(home).contains(Localization.get("home.start")))
+    }
+
+    @Test
+    fun `form search preserves item identity after filtering and clearing`() {
+        val home = buildVisibleHome()
+        val adapter = org.commcare.adapters.MenuAdapter(
+            home,
+            org.commcare.CommCareApplication.instance().commCarePlatform,
+            org.commcare.suite.model.Menu.ROOT_MENU_ID,
+        )
+        val original = (0 until adapter.count).map { adapter.getItem(it) }
+        val originalIds = (0 until adapter.count).map { adapter.getItemId(it) }
+        assertTrue(original.isNotEmpty())
+        adapter.search("a search that cannot match any form 7c8f4")
+        assertEquals(0, adapter.count)
+        adapter.search("")
+        assertEquals(original.size, adapter.count)
+        for (index in original.indices) {
+            assertTrue(original[index] === adapter.getItem(index))
+            assertEquals(originalIds[index], adapter.getItemId(index))
+        }
+    }
     // region where each button goes
 
     @Test
@@ -47,8 +77,12 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
         home.updateUiAfterDataPullOrSend("Sync complete", true)
 
         assertTrue(changedPositions.contains(0))
-        assertTrue(changedPositions.any { it > 0 })
         assertFalse(changedPositions.any { it < 0 })
+        val holder = grid.findViewHolderForAdapterPosition(0)!!
+        (grid.adapter as org.commcare.adapters.HomeScreenAdapter).onBindViewHolder(holder, 0)
+        assertEquals("Sync complete", home.findViewById<android.widget.TextView>(
+            org.commcare.dalvik.R.id.collectra_today_sync_status,
+        ).text.toString())
     }
 
     @Test

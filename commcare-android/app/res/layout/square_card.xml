@@ -6,12 +6,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="14dp"
-    android:layout_marginEnd="14dp"
-    android:layout_marginBottom="14dp"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/collectra_surface"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="2dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
     app:cardPreventCornerOverlap="true"
     app:cardUseCompatPadding="true"
     tools:viewBindingIgnore="true">
@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
         android:clipToPadding="false"
-        android:minHeight="96dp">
+        android:minHeight="64dp">
 
         <View
             android:id="@+id/card_accent_rail"
@@ -32,17 +32,17 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentBottom="true"
             android:background="@drawable/collectra_home_accent_rail"
-            android:minHeight="96dp" />
+            android:minHeight="64dp" />
 
         <FrameLayout
             android:id="@+id/card_icon_chip"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_centerVertical="true"
-            android:layout_marginStart="18dp"
+            android:layout_marginStart="12dp"
             android:layout_toEndOf="@id/card_accent_rail"
             android:background="@drawable/collectra_home_icon_chip"
-            android:padding="11dp">
+            android:padding="8dp">
 
             <ImageView
                 android:id="@+id/card_image"
@@ -58,11 +58,11 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="18dp"
+            android:layout_marginEnd="12dp"
             android:layout_toEndOf="@id/card_icon_chip"
             android:orientation="vertical"
-            android:paddingTop="18dp"
-            android:paddingBottom="18dp">
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
 
             <org.commcare.views.ResizingTextView
                 android:id="@+id/card_text"
@@ -73,9 +73,9 @@
                 android:letterSpacing="-0.02"
                 android:lineSpacingMultiplier="0.98"
                 android:textColor="@color/collectra_text_primary"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                app:text_size_small="18sp" />
+                app:text_size_small="16sp" />
 
             <TextView
                 android:id="@+id/card_subtext"

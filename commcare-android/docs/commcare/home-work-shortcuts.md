@@ -16,3 +16,5 @@ The Processing application includes a worker request to reopen a drying-bed case
 It is an offline-capable form that syncs to the HQ supervisor queue; approval and
 reopening by batch name happen in HQ. Installing a new APK does not add that form
 to an old application version; workers must update the Processing application.
+
+The compact home presents each work action once, with application-scoped saved and draft counts. Home scrolls to the top, Forms opens the existing root menu, and Account opens the existing drawer. Sync result messages and notification taps remain available in the summary. Form search filters only the current menu; selected entries keep their original command, case selection and relevance checks.

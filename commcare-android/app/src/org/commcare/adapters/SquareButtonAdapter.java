@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import org.commcare.dalvik.R;
-import org.commcare.views.CollectraMotion;
 
 import java.util.List;
 
@@ -118,20 +117,6 @@ abstract class SquareButtonAdapter
                     ContextCompat.getColor(context, cardDisplayData.bgColor));
         }
 
-        Object animated = squareButtonViewHolder.iconChip.getTag(
-                R.id.collectra_motion_complete_tag
-        );
-        if (!Boolean.TRUE.equals(animated)) {
-            squareButtonViewHolder.iconChip.setTag(
-                    R.id.collectra_motion_complete_tag,
-                    Boolean.TRUE
-            );
-            long delay = Math.max(0, position) * 90L;
-            CollectraMotion.startChipPulse(
-                    squareButtonViewHolder.iconChip,
-                    delay
-            );
-        }
     }
 
     private static GradientDrawable accentChipDrawable(Context context, int bgColorResource) {

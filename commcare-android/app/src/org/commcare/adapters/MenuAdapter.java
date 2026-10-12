@@ -58,6 +58,7 @@ public class MenuAdapter extends BaseAdapter {
     private String errorMessage = "";
     final CommCareActivity context;
     private final MenuDisplayable[] displayableData;
+    private int[] visiblePositions;
     private SparseArray<String> badgeCache = new SparseArray<>();
 
     private class MenuLogger implements LoggerInterface {
@@ -87,6 +88,10 @@ public class MenuAdapter extends BaseAdapter {
         MenuLoader menuLoader = new MenuLoader(platform, asw, menuID, new MenuLogger(),
                 DeveloperPreferences.collectAndDisplayEntityTraces(), true);
         this.displayableData = menuLoader.getMenus();
+        visiblePositions = new int[displayableData.length];
+        for (int i = 0; i < visiblePositions.length; i++) {
+            visiblePositions[i] = i;
+        }
         this.errorMessage = menuLoader.getErrorMessage();
         this.loadError = menuLoader.getLoadException();
     }
@@ -109,17 +114,17 @@ public class MenuAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return displayableData.length;
+        return visiblePositions.length;
     }
 
     @Override
     public Object getItem(int i) {
-        return displayableData[i];
+        return displayableData[visiblePositions[i]];
     }
 
     @Override
     public long getItemId(int i) {
-        Object tempItem = displayableData[i];
+        Object tempItem = getItem(i);
 
         if (tempItem instanceof Menu) {
             return ((Menu)tempItem).getId().hashCode();
@@ -139,6 +144,7 @@ public class MenuAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View menuListItem, ViewGroup vg) {
+        i = visiblePositions[i];
         MenuViewHolder menuViewHolder;
 
         if (menuListItem == null) {
@@ -159,6 +165,29 @@ public class MenuAdapter extends BaseAdapter {
 
         menuListItem.setTag(menuViewHolder);
         return menuListItem;
+    }
+
+    public void search(String query) {
+        String normalized = query.trim().toLowerCase(java.util.Locale.ROOT);
+        java.util.ArrayList<Integer> matches = new java.util.ArrayList<>();
+        for (int i = 0; i < displayableData.length; i++) {
+            MenuDisplayable item = displayableData[i];
+            try {
+                String title = item.getDisplayText(asw.getEvaluationContextWithAccumulatedInstances(
+                        item.getCommandID(), item.getRawText()));
+                if (normalized.isEmpty() || (title != null
+                        && title.toLowerCase(java.util.Locale.ROOT).contains(normalized))) {
+                    matches.add(i);
+                }
+            } catch (XPathException exception) {
+                matches.add(i);
+            }
+        }
+        visiblePositions = new int[matches.size()];
+        for (int i = 0; i < matches.size(); i++) {
+            visiblePositions[i] = matches.get(i);
+        }
+        notifyDataSetChanged();
     }
 
     private void setupAudioButton(int rowId, AudioPlaybackButton audioPlaybackButton, MenuDisplayable menuDisplayable) {

@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/collectra_home_masthead_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/collectra_mobile_panel"
+    android:background="@android:color/transparent"
     android:paddingStart="20dp"
-    android:paddingTop="20dp"
+    android:paddingTop="16dp"
     android:paddingEnd="20dp"
     android:paddingBottom="20dp"
     tools:viewBindingIgnore="true">
 
     <LinearLayout
         android:id="@+id/collectra_home_brand_row"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
@@ -52,6 +54,15 @@
         android:visibility="gone" />
 
     <TextView
+        android:id="@+id/collectra_workspace_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/collectra_home_subtext_chip"
+        android:padding="12dp"
+        android:textColor="@color/collectra_ink"
+        android:textSize="15sp" />
+
+    <TextView
         android:id="@+id/collectra_home_greeting"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -61,11 +72,12 @@
         android:lineSpacingMultiplier="0.95"
         android:text="@string/collectra_home_greeting"
         android:textColor="@color/collectra_text_primary"
-        android:textSize="28sp"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/collectra_home_tagline"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
@@ -78,6 +90,7 @@
 
     <View
         android:id="@+id/collectra_home_accent"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="16dp"
@@ -86,6 +99,7 @@
 
     <TextView
         android:id="@+id/collectra_today_title"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -106,43 +120,31 @@
         android:textColor="@color/collectra_text_secondary"
         android:textSize="14sp" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/collectra_today_start"
+        style="@style/Collectra.Workspace.Primary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="56dp"
-        android:layout_marginTop="14dp"
-        android:backgroundTint="@color/cc_brand_color"
-        android:text="@string/collectra_today_start"
-        android:textAllCaps="false"
-        android:textColor="@color/white" />
+        android:layout_marginTop="16dp"
+        android:text="@string/collectra_today_start" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" android:orientation="horizontal">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/collectra_today_saved"
+            style="@style/Collectra.Workspace.Secondary"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:text="@string/collectra_saved_label" />
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/collectra_today_resume"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:minHeight="56dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/collectra_surface_muted"
-            android:text="@string/collectra_today_resume"
-            android:textAllCaps="false"
-            android:textColor="@color/collectra_ink" />
-
-        <Button
-            android:id="@+id/collectra_today_sync"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:minHeight="56dp"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/collectra_surface_muted"
-            android:text="@string/collectra_today_sync"
-            android:textAllCaps="false"
-            android:textColor="@color/collectra_ink" />
+            style="@style/Collectra.Workspace.Secondary"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:layout_marginStart="12dp"
+            android:text="@string/collectra_drafts_label" />
     </LinearLayout>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/collectra_today_sync"
+        style="@style/Collectra.Workspace.Secondary"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" android:text="@string/collectra_today_sync" />
 </LinearLayout>

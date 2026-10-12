@@ -67,6 +67,23 @@ public class MenuList implements AdapterView.OnItemClickListener {
         adapter.showAnyLoadErrors(activity);
         adapterView.setOnItemClickListener(this);
         adapterView.setAdapter(adapter);
+        android.widget.EditText search = activity.findViewById(R.id.collectra_form_search);
+        if (search != null) {
+            search.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence text, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence text, int start, int before, int count) {
+                    adapter.search(text.toString());
+                }
+
+                @Override
+                public void afterTextChanged(android.text.Editable text) {
+                }
+            });
+        }
     }
 
     public void refreshItems() {

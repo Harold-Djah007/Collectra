@@ -19,7 +19,7 @@ public class CommonBaseActivity extends AppCompatActivity {
     public void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         androidx.appcompat.widget.Toolbar toolbar = findViewById(org.commcare.dalvik.R.id.toolbar);
-        if (toolbar != null) {
+        if (toolbar != null && getSupportActionBar() == null) {
             setSupportActionBar(toolbar);
             ActionBar actionBar = getSupportActionBar();
             actionBar.setDisplayHomeAsUpEnabled(true);

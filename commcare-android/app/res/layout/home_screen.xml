@@ -6,16 +6,17 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:openDrawer="start">
+    tools:openDrawer="start"
+    tools:viewBindingIgnore="true">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
         <include
             android:id="@+id/include_tool_bar"
-            layout="@layout/appbar_layout" />
+            layout="@layout/collectra_workspace_appbar" />
 
         <FrameLayout
             android:id="@+id/nav_drawer_frame"
@@ -32,12 +33,13 @@
                 android:paddingStart="4dp"
                 android:paddingTop="2dp"
                 android:paddingEnd="4dp"
-                android:paddingBottom="20dp"
+                android:paddingBottom="0dp"
                 tools:viewBindingIgnore="true">
                 <androidx.core.widget.NestedScrollView
                     android:id="@+id/nsv_home_screen"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -109,11 +111,25 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_below="@id/cvConnectMessage"
-                            android:layoutAnimation="@anim/collectra_list_cascade"
                             android:nestedScrollingEnabled="false"
                             android:scrollbars="vertical" />
                     </RelativeLayout>
                 </androidx.core.widget.NestedScrollView>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:background="@color/white" android:orientation="horizontal" android:padding="8dp">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/collectra_nav_home" style="@style/Collectra.Workspace.Secondary"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp" android:text="@string/collectra_nav_home" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/collectra_nav_forms" style="@style/Collectra.Workspace.Secondary"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp" android:text="@string/collectra_nav_forms" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/collectra_nav_account" style="@style/Collectra.Workspace.Secondary"
+                        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp" android:text="@string/collectra_nav_account" />
+                </LinearLayout>
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>

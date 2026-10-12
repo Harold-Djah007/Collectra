@@ -13,7 +13,9 @@ import android.widget.TextView;
 import org.commcare.activities.StandardHomeActivity;
 import org.commcare.activities.HomeButtons;
 import org.commcare.dalvik.R;
-import org.commcare.views.CollectraMotion;
+import org.commcare.CommCareApplication;
+import org.commcare.android.database.user.models.FormRecord;
+import org.commcare.utils.StorageUtils;
 import org.commcare.views.CustomBanner;
 import org.commcare.tasks.LatestTaskExecutor;
 import org.commcare.utils.SyncDetailCalculations;
@@ -34,13 +36,13 @@ public class HomeScreenAdapter
 
     private final HomeCardDisplayData[] buttonData;
     private final StandardHomeActivity activity;
-    private final LatestTaskExecutor<Integer> syncStatusExecutor = new LatestTaskExecutor<>();
+    private final LatestTaskExecutor<int[]> syncStatusExecutor = new LatestTaskExecutor<>();
 
     private static final int TYPE_HEADER = 1;
     private final int screenHeight, screenWidth;
     private final int syncButtonPosition;
     private final HashMap<Integer, String> messagePayload = new HashMap<>();
-    private boolean mastheadAnimated;
+    private final List<HomeCardDisplayData> remainingButtons = new ArrayList<>();
 
     public HomeScreenAdapter(StandardHomeActivity activity,
                              Vector<String> buttonsToHide,
@@ -49,7 +51,15 @@ public class HomeScreenAdapter
 
         this.activity = activity;
         buttonData = HomeButtons.buildButtonData(activity, buttonsToHide, isDemoUser);
-        syncButtonPosition = calcSyncButtonPos();
+        for (HomeCardDisplayData button : buttonData) {
+            if (button.imageResource != R.drawable.home_start
+                    && button.imageResource != R.drawable.home_saved
+                    && button.imageResource != R.drawable.home_incomplete
+                    && button.imageResource != R.drawable.home_sync) {
+                remainingButtons.add(button);
+            }
+        }
+        syncButtonPosition = -1;
 
         DisplayMetrics displaymetrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
@@ -57,14 +67,6 @@ public class HomeScreenAdapter
         screenWidth = displaymetrics.widthPixels;
     }
 
-    private int calcSyncButtonPos() {
-        for (int i = 0; i < buttonData.length; i++) {
-            if (buttonData[i].imageResource == R.drawable.home_sync) {
-                return i + 1;
-            }
-        }
-        return -1;
-    }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -105,7 +107,7 @@ public class HomeScreenAdapter
 
     @Override
     protected HomeCardDisplayData getItem(int position) {
-        return buttonData[position - 1];
+        return remainingButtons.get(position - 1);
     }
 
     private void bindHeader(HeaderViewHolder headerHolder) {
@@ -124,22 +126,50 @@ public class HomeScreenAdapter
                 usedCustom ? View.VISIBLE : View.GONE
         );
         headerHolder.headerImage.setImageResource(R.drawable.collectra_mark);
+        ((TextView)headerHolder.itemView.findViewById(R.id.collectra_workspace_name)).setText(
+                CommCareApplication.instance().getCurrentApp().getAppRecord().getDisplayName());
 
         bindQuickAction(headerHolder.start, R.drawable.home_start);
+        bindQuickAction(headerHolder.saved, R.drawable.home_saved);
         bindQuickAction(headerHolder.resume, R.drawable.home_incomplete);
         bindQuickAction(headerHolder.sync, R.drawable.home_sync);
-        headerHolder.syncStatus.setText(R.string.collectra_today_checking_sync);
+        for (HomeCardDisplayData button : buttonData) {
+            if (button.imageResource == R.drawable.home_sync) {
+                headerHolder.syncStatus.setOnClickListener(button.subTextListener);
+            }
+        }
+        bindQuickAction(activity.findViewById(R.id.collectra_nav_forms), R.drawable.home_start);
+        activity.findViewById(R.id.collectra_nav_home).setOnClickListener(v ->
+                activity.findViewById(R.id.nsv_home_screen).scrollTo(0, 0));
+        activity.findViewById(R.id.collectra_nav_account).setOnClickListener(v ->
+                ((androidx.drawerlayout.widget.DrawerLayout)activity.findViewById(R.id.drawer_layout))
+                        .openDrawer(androidx.core.view.GravityCompat.START));
+        String currentMessage = messagePayload.get(0);
+        if (currentMessage == null) {
+            headerHolder.syncStatus.setText(R.string.collectra_today_checking_sync);
+        } else {
+            headerHolder.syncStatus.setText(currentMessage);
+        }
         syncStatusExecutor.submit(
                 LifecycleOwnerKt.getLifecycleScope(activity),
-                SyncDetailCalculations::getNumUnsentForms,
+                () -> new int[]{SyncDetailCalculations.getNumUnsentForms(),
+                        StorageUtils.getNumIncompleteForms(),
+                        StorageUtils.getUnsentCompleteOrSavedFormIdsForCurrentApp(
+                                CommCareApplication.instance().getUserStorage(FormRecord.class)).size()},
                 new LatestTaskExecutor.Callback<>() {
                     @Override
-                    public void onResult(Integer count) {
+                    public void onResult(int[] counts) {
+                        int count = counts[0];
                         if (activity.isFinishing() || activity.isDestroyed()) {
                             return;
                         }
+                        ((TextView)headerHolder.resume).setText(activity.getString(
+                                R.string.collectra_drafts_count, counts[1]));
+                        ((TextView)headerHolder.saved).setText(activity.getString(
+                                R.string.collectra_saved_count, counts[2]));
                         String lastSync = SyncDetailCalculations.getLastSyncTimeAndMessage().second;
-                        headerHolder.syncStatus.setText(count > 0
+                        String message = messagePayload.get(0);
+                        headerHolder.syncStatus.setText(message != null ? message : count > 0
                                 ? activity.getResources().getQuantityString(
                                         R.plurals.collectra_today_waiting_sync, count, count, lastSync)
                                 : lastSync);
@@ -148,27 +178,13 @@ public class HomeScreenAdapter
                     @Override
                     public void onError(@NonNull Exception exception) {
                         Logger.exception("Could not load home sync status", exception);
-                        if (!activity.isFinishing() && !activity.isDestroyed()) {
+                        if (!activity.isFinishing() && !activity.isDestroyed()
+                                && messagePayload.get(0) == null) {
                             headerHolder.syncStatus.setText(R.string.collectra_today_sync_unavailable);
                         }
                     }
                 });
 
-        if (!mastheadAnimated) {
-            mastheadAnimated = true;
-            CollectraMotion.startLogoPulse(headerHolder.headerImage);
-            CollectraMotion.playWordmarkEnter(headerHolder.wordmark);
-            CollectraMotion.startTitleLiveliness(headerHolder.greeting);
-            CollectraMotion.playAccentReveal(headerHolder.accent);
-            if (headerHolder.tagline != null) {
-                headerHolder.tagline.setAlpha(0f);
-                headerHolder.tagline.animate()
-                        .alpha(1f)
-                        .setStartDelay(220)
-                        .setDuration(360)
-                        .start();
-            }
-        }
     }
 
     private void bindQuickAction(View action, int imageResource) {
@@ -185,7 +201,7 @@ public class HomeScreenAdapter
 
     @Override
     public int getItemCount() {
-        return buttonData.length + 1;
+        return remainingButtons.size() + 1;
     }
 
     @Override
@@ -218,6 +234,7 @@ public class HomeScreenAdapter
         public final View accent;
         public final TextView syncStatus;
         public final View start;
+        public final View saved;
         public final View resume;
         public final View sync;
 
@@ -233,6 +250,7 @@ public class HomeScreenAdapter
             accent = itemView.findViewById(R.id.collectra_home_accent);
             syncStatus = itemView.findViewById(R.id.collectra_today_sync_status);
             start = itemView.findViewById(R.id.collectra_today_start);
+            saved = itemView.findViewById(R.id.collectra_today_saved);
             resume = itemView.findViewById(R.id.collectra_today_resume);
             sync = itemView.findViewById(R.id.collectra_today_sync);
         }

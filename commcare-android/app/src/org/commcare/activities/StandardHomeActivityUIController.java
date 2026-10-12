@@ -71,7 +71,6 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
         activity.toggleDrawerSetUp(true);
         activity.checkForDrawerSetUp();
         setUpToolBar();
-        CollectraMotion.playScreenEnter(activity.findViewById(R.id.nav_drawer_frame));
     }
 
     private void setUpToolBar() {
@@ -86,8 +85,6 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
                 View titleView = activity.getLayoutInflater()
                         .inflate(R.layout.collectra_toolbar_title, toolbar, false);
                 actionBar.setCustomView(titleView);
-                CollectraMotion.startTitleLiveliness(
-                        titleView.findViewById(R.id.collectra_toolbar_title_text));
             }
         }
     }
@@ -298,6 +295,7 @@ public class StandardHomeActivityUIController implements CommCareActivityUIContr
     }
 
     protected void updateSyncButtonMessage(String message) {
+        adapter.setMessagePayload(0, message);
         // Manually route message payloads since RecyclerView payloads are a pain in the ass
         int syncButtonPosition = adapter.getSyncButtonPosition();
         if (syncButtonPosition >= 0) {

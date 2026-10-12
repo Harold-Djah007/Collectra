@@ -38,16 +38,24 @@
                 android:progressDrawable="@drawable/submission_progressbar_drawable"
                 android:visibility="gone"/>
 
-            <include layout="@layout/component_drop_shadow"/>
+            <EditText android:id="@+id/collectra_form_search"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:minHeight="56dp" android:layout_margin="12dp"
+                android:padding="12dp" android:inputType="text"
+                android:singleLine="true" android:hint="@string/collectra_search_forms"
+                android:background="@drawable/collectra_home_subtext_chip"
+                android:textColor="@color/collectra_ink" android:textSize="16sp" />
 
             <GridView
                 android:id="@+id/grid_menu_grid"
+                android:layout_below="@id/collectra_form_search"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:verticalSpacing="0dp"
+                android:verticalSpacing="8dp"
+                android:paddingHorizontal="12dp"
                 android:horizontalSpacing="0dp"
                 android:stretchMode="columnWidth"
-                android:numColumns="2"
+                android:numColumns="1"
                 style="@style/ListViewV2"/>
 
         </RelativeLayout>

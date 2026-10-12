@@ -4,10 +4,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:textAppearance="@style/EntityItemText"
     app:shrinkable_view="@+id/row_txt"
     android:gravity="center_vertical"
+    android:minHeight="64dp"
+    android:padding="12dp"
+    android:background="@drawable/collectra_mobile_panel"
     tools:viewBindingIgnore="true">
 
     <RelativeLayout
@@ -50,7 +53,10 @@
     <TextView
         android:id="@+id/row_txt"
         style="@style/ListContentWithoutBadge"
-        android:layout_height="@dimen/list_text_height"
+        android:layout_height="wrap_content"
+        android:textColor="@color/collectra_ink"
+        android:fontFamily="@font/manrope_regular"
+        android:textSize="16sp"
         android:layout_width="0dp"
         android:gravity="start"
         android:textAlignment="viewStart"

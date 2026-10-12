@@ -23,14 +23,20 @@
         android:layout_alignParentBottom="true">
     </FrameLayout>
 
-    <FrameLayout
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_alignParentBottom="true"
         android:layout_above="@id/ad_container"
         android:layout_below="@id/universal_frame_tile">
 
-        <include layout="@layout/component_drop_shadow"/>
+        <EditText android:id="@+id/collectra_form_search"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:layout_margin="12dp"
+            android:padding="12dp" android:inputType="text"
+            android:singleLine="true" android:hint="@string/collectra_search_forms"
+            android:background="@drawable/collectra_home_subtext_chip"
+            android:textColor="@color/collectra_ink" android:textSize="16sp" />
 
         <ListView
             android:id="@+id/screen_suite_menu_list"
@@ -38,8 +44,9 @@
             android:clipChildren="false"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_below="@id/collectra_form_search"
             android:divider="@null"
             android:listSelector="@drawable/selector"/>
-    </FrameLayout>
+    </RelativeLayout>
 
 </RelativeLayout>
