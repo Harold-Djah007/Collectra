@@ -98,6 +98,11 @@ public class StandardHomeActivity
         return false;
     }
 
+    @Override
+    protected boolean shouldShowBreadcrumbBar() {
+        return false;
+    }
+
     /**
      * Triggered by a user manually clicking the sync button
      */

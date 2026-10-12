@@ -5,11 +5,11 @@
     android:id="@+id/collectra_brand_masthead_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/collectra_hero_banner_bg"
+    android:background="@color/white"
     android:paddingStart="24dp"
-    android:paddingTop="32dp"
+    android:paddingTop="16dp"
     android:paddingEnd="24dp"
-    android:paddingBottom="32dp"
+    android:paddingBottom="16dp"
     tools:viewBindingIgnore="true">
 
     <LinearLayout
@@ -26,8 +26,8 @@
 
             <ImageView
                 android:id="@+id/collectra_brand_mark"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:contentDescription="@null"
                 android:src="@drawable/collectra_mark" />
 
@@ -40,7 +40,7 @@
                 android:letterSpacing="-0.02"
                 android:text="@string/collectra_brand_name"
                 android:textColor="@color/collectra_ink"
-                android:textSize="30sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
