@@ -3,10 +3,15 @@ package org.commcare.activities
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import io.mockk.every
+import org.commcare.CommCareApplication
+import org.commcare.adapters.HomeScreenAdapter
+import org.commcare.adapters.MenuAdapter
 import org.commcare.android.database.user.models.FormRecord
 import org.commcare.android.util.ActivityAssertions.assertStarted
 import org.commcare.android.util.ActivityAssertions.assertStartedForResult
 import org.commcare.android.util.ActivityAssertions.assertStartedNothing
+import org.commcare.dalvik.R
+import org.commcare.suite.model.Menu
 import org.commcare.utils.ConnectivityStatus
 import org.commcare.views.notifications.NotificationMessage
 import org.javarosa.core.services.locale.Localization
@@ -28,7 +33,7 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
     @Test
     fun `home has a single start action and readable secondary labels`() {
         val home = buildVisibleHome()
-        val saved = home.findViewById<android.widget.Button>(org.commcare.dalvik.R.id.collectra_today_saved)
+        val saved = home.findViewById<android.widget.Button>(R.id.collectra_today_saved)
         assertTrue(saved.text.contains("Saved forms"))
         assertTrue(saved.currentTextColor != saved.backgroundTintList!!.defaultColor)
         assertEquals(0, home.supportActionBar!!.displayOptions and androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE)
@@ -38,11 +43,12 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
     @Test
     fun `form search preserves item identity after filtering and clearing`() {
         val home = buildVisibleHome()
-        val adapter = org.commcare.adapters.MenuAdapter(
-            home,
-            org.commcare.CommCareApplication.instance().commCarePlatform,
-            org.commcare.suite.model.Menu.ROOT_MENU_ID,
-        )
+        val adapter =
+            MenuAdapter(
+                home,
+                CommCareApplication.instance().commCarePlatform,
+                Menu.ROOT_MENU_ID,
+            )
         val original = (0 until adapter.count).map { adapter.getItem(it) }
         val originalIds = (0 until adapter.count).map { adapter.getItemId(it) }
         assertTrue(original.isNotEmpty())
@@ -60,7 +66,7 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
     @Test
     fun `sync completion refreshes the home summary as well as the sync card`() {
         val home = buildVisibleHome()
-        val grid = home.findViewById<RecyclerView>(org.commcare.dalvik.R.id.home_gridview_buttons)
+        val grid = home.findViewById<RecyclerView>(R.id.home_gridview_buttons)
         val changedPositions = mutableListOf<Int>()
         grid.adapter!!.registerAdapterDataObserver(
             object : RecyclerView.AdapterDataObserver() {
@@ -79,17 +85,16 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
         assertTrue(changedPositions.contains(0))
         assertFalse(changedPositions.any { it < 0 })
         val holder = grid.findViewHolderForAdapterPosition(0)!!
-        (grid.adapter as org.commcare.adapters.HomeScreenAdapter).onBindViewHolder(holder, 0)
-        assertEquals("Sync complete", home.findViewById<android.widget.TextView>(
-            org.commcare.dalvik.R.id.collectra_today_sync_status,
-        ).text.toString())
+        (grid.adapter as HomeScreenAdapter).onBindViewHolder(holder, 0)
+        val status = home.findViewById<android.widget.TextView>(R.id.collectra_today_sync_status)
+        assertEquals("Sync complete", status.text.toString())
     }
 
     @Test
     fun `today start shortcut opens the app menu`() {
         val home = buildVisibleHome()
 
-        home.findViewById<View>(org.commcare.dalvik.R.id.collectra_today_start).performClick()
+        home.findViewById<View>(R.id.collectra_today_start).performClick()
         assertStartedForResult(home, MenuActivity::class.java)
     }
 
@@ -97,7 +102,7 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
     fun `today resume shortcut only opens unfinished forms`() {
         val home = buildVisibleHome()
 
-        home.findViewById<View>(org.commcare.dalvik.R.id.collectra_today_resume).performClick()
+        home.findViewById<View>(R.id.collectra_today_resume).performClick()
         val started = assertStartedForResult(home, FormRecordListActivity::class.java)
         assertEquals(FormRecord.STATUS_INCOMPLETE, started.getStringExtra(FormRecord.META_STATUS))
     }
@@ -108,7 +113,7 @@ class HomeButtonsTest : BaseHomeScreenActivityTest() {
         every { ConnectivityStatus.isAirplaneModeOn(any()) } returns true
         val home = buildVisibleHome()
 
-        home.findViewById<View>(org.commcare.dalvik.R.id.collectra_today_sync).performClick()
+        home.findViewById<View>(R.id.collectra_today_sync).performClick()
 
         assertEquals(
             Localization.get("notification.sync.airplane.action"),

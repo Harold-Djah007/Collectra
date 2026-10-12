@@ -1,8 +1,5 @@
 package org.commcare.adapters;
 
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.lifecycle.LifecycleOwnerKt;
-import androidx.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,15 +7,19 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.commcare.activities.StandardHomeActivity;
-import org.commcare.activities.HomeButtons;
-import org.commcare.dalvik.R;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LifecycleOwnerKt;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.commcare.CommCareApplication;
+import org.commcare.activities.HomeButtons;
+import org.commcare.activities.StandardHomeActivity;
 import org.commcare.android.database.user.models.FormRecord;
-import org.commcare.utils.StorageUtils;
-import org.commcare.views.CustomBanner;
+import org.commcare.dalvik.R;
 import org.commcare.tasks.LatestTaskExecutor;
+import org.commcare.utils.StorageUtils;
 import org.commcare.utils.SyncDetailCalculations;
+import org.commcare.views.CustomBanner;
 import org.javarosa.core.services.Logger;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Shows Collectra home actions with a lively brand masthead.
+ * Shows Collectra home actions.
  *
  * @author Phillip Mates (pmates@dimagi.com)
  */
@@ -39,7 +40,8 @@ public class HomeScreenAdapter
     private final LatestTaskExecutor<int[]> syncStatusExecutor = new LatestTaskExecutor<>();
 
     private static final int TYPE_HEADER = 1;
-    private final int screenHeight, screenWidth;
+    private final int screenHeight;
+    private final int screenWidth;
     private final int syncButtonPosition;
     private final HashMap<Integer, String> messagePayload = new HashMap<>();
     private final List<HomeCardDisplayData> remainingButtons = new ArrayList<>();
@@ -159,7 +161,7 @@ public class HomeScreenAdapter
                 new LatestTaskExecutor.Callback<>() {
                     @Override
                     public void onResult(int[] counts) {
-                        int count = counts[0];
+                        final int count = counts[0];
                         if (activity.isFinishing() || activity.isDestroyed()) {
                             return;
                         }
@@ -228,10 +230,6 @@ public class HomeScreenAdapter
     private static class HeaderViewHolder extends RecyclerView.ViewHolder {
         public final ImageView headerImage;
         public final ImageView customBanner;
-        public final TextView wordmark;
-        public final TextView greeting;
-        public final TextView tagline;
-        public final View accent;
         public final TextView syncStatus;
         public final View start;
         public final View saved;
@@ -244,10 +242,6 @@ public class HomeScreenAdapter
             customBanner = itemView.findViewById(
                     R.id.collectra_custom_home_banner
             );
-            wordmark = itemView.findViewById(R.id.collectra_home_wordmark);
-            greeting = itemView.findViewById(R.id.collectra_home_greeting);
-            tagline = itemView.findViewById(R.id.collectra_home_tagline);
-            accent = itemView.findViewById(R.id.collectra_home_accent);
             syncStatus = itemView.findViewById(R.id.collectra_today_sync_status);
             start = itemView.findViewById(R.id.collectra_today_start);
             saved = itemView.findViewById(R.id.collectra_today_saved);

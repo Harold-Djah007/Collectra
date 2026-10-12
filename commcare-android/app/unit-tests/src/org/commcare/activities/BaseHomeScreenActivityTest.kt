@@ -26,9 +26,10 @@ import org.commcare.preferences.PrefValues
 import org.commcare.utils.ConnectivityStatus
 import org.commcare.views.notifications.NotificationMessage
 import org.commcare.views.notifications.NotificationMessageFactory
+import org.javarosa.core.services.locale.Localization
 import org.junit.After
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -141,13 +142,14 @@ abstract class BaseHomeScreenActivityTest {
         home: StandardHomeActivity,
         label: String,
     ) {
-        val shortcut = when (label) {
-            org.javarosa.core.services.locale.Localization.get("home.start") -> R.id.collectra_today_start
-            org.javarosa.core.services.locale.Localization.get("home.forms.saved") -> R.id.collectra_today_saved
-            org.javarosa.core.services.locale.Localization.get("home.forms.incomplete") -> R.id.collectra_today_resume
-            org.javarosa.core.services.locale.Localization.get("home.sync") -> R.id.collectra_today_sync
-            else -> null
-        }
+        val shortcut =
+            when (label) {
+                Localization.get("home.start") -> R.id.collectra_today_start
+                Localization.get("home.forms.saved") -> R.id.collectra_today_saved
+                Localization.get("home.forms.incomplete") -> R.id.collectra_today_resume
+                Localization.get("home.sync") -> R.id.collectra_today_sync
+                else -> null
+            }
         if (shortcut != null) {
             val action = home.findViewById<View>(shortcut)
             assertEquals(View.VISIBLE, action.visibility)
@@ -168,7 +170,7 @@ abstract class BaseHomeScreenActivityTest {
         home: StandardHomeActivity,
         label: String,
     ) {
-        if (label == org.javarosa.core.services.locale.Localization.get("home.sync")) {
+        if (label == Localization.get("home.sync")) {
             click(home, home.findViewById(R.id.collectra_today_sync_status))
             return
         }
