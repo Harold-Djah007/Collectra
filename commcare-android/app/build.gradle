@@ -358,7 +358,7 @@ android {
                 googlePlayMapsApiKey: "${project.ext.GOOGLE_PLAY_MAPS_API_KEY}"
         ]
 
-        versionCode 1
+        versionCode computeVersionCode()
         versionName (project.findProperty('versionName') ?: "2.65").toString()
 
         // when set, app won't show install screen and try to install
