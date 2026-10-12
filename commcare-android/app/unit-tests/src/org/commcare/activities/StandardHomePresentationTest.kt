@@ -1,6 +1,8 @@
 package org.commcare.activities
 
+import android.view.View
 import org.commcare.CommCareApplication
+import org.commcare.dalvik.R
 import org.commcare.preferences.PrefValues
 import org.javarosa.core.services.locale.Localization
 import org.junit.Assert.assertEquals
@@ -12,8 +14,8 @@ import org.junit.Test
  * progress-bar capabilities and title it answers for its base activity, plus which buttons its grid
  * renders.
  *
- * Every row is a point where the two `HomeScreenBaseActivity` hosts disagree — [RootMenuHomeActivity]
- * answers differently or has no button grid at all — which is why the host is in the class name.
+ * Every row is a point where the two `HomeScreenBaseActivity` hosts disagree â€” [RootMenuHomeActivity]
+ * answers differently or has no button grid at all â€” which is why the host is in the class name.
  *
  * This host's Connect behaviour is pinned in [HomeConnectJobProgressTest] and [HomeConnectTileTest].
  */
@@ -57,6 +59,7 @@ class StandardHomePresentationTest : BaseHomeScreenActivityTest() {
         val home = buildVisibleHome()
 
         assertFalse(homeButtonLabels(home).contains(Localization.get("home.forms.incomplete")))
+        assertEquals(View.GONE, home.findViewById<View>(R.id.collectra_today_resume).visibility)
     }
 
     @Test
@@ -75,14 +78,13 @@ class StandardHomePresentationTest : BaseHomeScreenActivityTest() {
 
         assertEquals(
             listOf(
-                Localization.get("home.start"),
-                Localization.get("home.forms.saved"),
-                Localization.get("home.forms.incomplete"),
-                Localization.get("home.sync"),
                 Localization.get("home.logout"),
             ),
             homeButtonLabels(home),
         )
+        for (id in listOf(R.id.collectra_today_start, R.id.collectra_today_saved, R.id.collectra_today_resume, R.id.collectra_today_sync)) {
+            assertEquals(View.VISIBLE, home.findViewById<View>(id).visibility)
+        }
     }
 
     // endregion
