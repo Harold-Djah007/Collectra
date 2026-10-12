@@ -16,6 +16,12 @@ def test_profile_and_suite_links_follow_current_testing_origin_only_for_same_pro
     assert retarget_local_mobile_xml(result, 'safisana', 'https://new.example') == result
 
 
+def test_local_hq_media_downloads_follow_current_origin():
+    source = b'<location>http://localhost:8000/hq/multimedia/file/CommCareImage/id/image.png</location>'
+    assert retarget_local_mobile_xml(source, 'safisana', 'https://new.example') == (
+        b'<location>https://new.example/hq/multimedia/file/CommCareImage/id/image.png</location>')
+
+
 def test_disabled_testing_mode_preserves_original_build_bytes():
     source = b'http://localhost:8000/a/safisana/suite.xml'
     assert retarget_local_mobile_xml(source, 'safisana', None) is source
