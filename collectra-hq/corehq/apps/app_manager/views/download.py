@@ -4,6 +4,7 @@ from collections import OrderedDict, defaultdict
 
 from django.urls import re_path as url, include
 from django.contrib import messages
+from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -18,6 +19,7 @@ from dimagi.utils.web import json_response
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.local_mobile_urls import retarget_local_mobile_xml
 from corehq.apps.app_manager.decorators import (
     check_access_and_redirect,
     safe_cached_download,
@@ -240,6 +242,11 @@ def download_file(request, domain, app_id, path):
             else:
                 raise
             payload = request.app.fetch_attachment(full_path)
+        if path.rsplit('/', 1)[-1] in (
+                'profile.ccpr', 'media_profile.ccpr', 'profile.xml', 'media_profile.xml',
+                'suite.xml', 'media_suite.xml'):
+            payload = retarget_local_mobile_xml(
+                payload, domain, getattr(settings, 'COLLECTRA_LOCAL_MOBILE_ORIGIN', None))
         response.write(payload)
         if path in ['profile.ccpr', 'media_profile.ccpr'] and request.app.last_released:
             last_released = request.app.last_released.replace(microsecond=0)    # mobile doesn't want microseconds

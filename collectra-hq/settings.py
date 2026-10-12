@@ -1255,6 +1255,12 @@ _collectra_default_protocol = os.environ.get('COLLECTRA_DEFAULT_PROTOCOL')
 if _collectra_default_protocol:
     DEFAULT_PROTOCOL = _collectra_default_protocol
 
+COLLECTRA_LOCAL_MOBILE_ORIGIN = (
+    f'https://{BASE_ADDRESS}'
+    if os.environ.get('COLLECTRA_FAST_LOCAL') == '1' and DEFAULT_PROTOCOL == 'https'
+    else None
+)
+
 # Collectra is self-hosted. Grant the full software-plan feature set unless
 # tests are running or the operator explicitly disables this with
 # COLLECTRA_ENTERPRISE_MODE=0.

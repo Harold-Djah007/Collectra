@@ -27,5 +27,6 @@ paths = [
     'corehq/apps/app_manager/tests/test_stage_safisana_incident_google_form.py',
     'corehq/apps/hqwebapp/tests/test_collectra_translation_fallback.py',
     'corehq/apps/app_manager/tests/test_form_pages.py',
+    'corehq/apps/app_manager/tests/test_local_mobile_urls.py',
 ]
 raise SystemExit(pytest.main(['-c', str(root / 'deploy/local-testing/pytest-unit.ini'), '-q', *paths]))
