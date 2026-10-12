@@ -7,7 +7,7 @@
         <item name="android:navigationBarColor">@color/collectra_ink</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowSplashScreenBackground">@color/white</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/collectra_mark</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/collectra_launcher_foreground</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/white</item>
     </style>
 </resources>
