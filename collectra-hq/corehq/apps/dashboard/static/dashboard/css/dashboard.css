@@ -1,7 +1,7 @@
 #hq-content.collectra-dashboard-page {
   min-height: calc(100vh - 72px);
   padding: 32px 32px 64px;
-  background: #f5f6f8;
+  background: #f2f6f7;
   border-top: 1px solid #e2e6ea;
   color: #253340;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -9,10 +9,10 @@
   line-height: 1.5;
 }
 .collectra-dashboard-inner { max-width: 1280px; margin: 0 auto; }
-.collectra-project-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 24px; border-bottom: 1px solid #dde3e8; }
-.collectra-project-context { margin: 0 0 8px; color: #596775; font-size: 13px; }
+.collectra-project-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 26px 28px; border: 1px solid #cce5e3; border-left: 4px solid #087e7c; border-radius: 8px; background: #eaf5f3; }
+.collectra-project-context { margin: 0 0 8px; color: #386963; font-size: 13px; font-weight: 500; }
 .collectra-project-context span { margin: 0 8px; color: #a1acb5; }
-#hq-content .collectra-project-header h1 { margin: 0; color: #172b3a; font-size: 28px; font-weight: 600; line-height: 1.25; letter-spacing: -.02em; }
+#hq-content .collectra-project-header h1 { margin: 0; color: #172b3a; font-size: 30px; font-weight: 650; line-height: 1.25; letter-spacing: -.02em; }
 .collectra-project-description { margin: 8px 0 0; color: #596775; }
 .collectra-dashboard-page .collectra-quick-actions { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .collectra-dashboard-page .collectra-quick-action, .collectra-refresh, .collectra-reopen-action, .collectra-tool-filter button, .collectra-reopen-more, .collectra-reopen-confirm {
@@ -27,13 +27,14 @@
 .collectra-dashboard-page button:disabled { opacity: .6; cursor: wait; }
 .collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; align-items: start; margin: 24px 0 32px; }
 .collectra-status-grid > :only-child { grid-column: 1 / -1; }
-.collectra-alerts { min-width: 0; margin: 24px 0; padding: 20px; border: 1px solid #dce2e7; border-radius: 6px; background: #fff; }
+.collectra-alerts { min-width: 0; margin: 24px 0; padding: 20px; border: 1px solid #dce2e7; border-radius: 8px; background: #fff; box-shadow: 0 3px 12px rgba(23, 43, 58, .06); border-top: 3px solid #087e7c; }
 .collectra-status-grid .collectra-alerts { margin: 0; }
+#reopen-requests.collectra-alerts { border-top-color: #b5822c; }
 .collectra-alerts-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .collectra-alerts-header > div:first-child { min-width: 0; }
 .collectra-alerts-header h2 { margin: 3px 0 6px; color: #172b3a; font-size: 18px; font-weight: 600; line-height: 1.35; }
 .collectra-alerts-header p { margin: 0; color: #63717e; font-size: 12px; }
-.collectra-alerts-eyebrow { color: #596775; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.collectra-alerts-eyebrow { color: #087e7c; font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: none; }
 .collectra-alerts-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .collectra-last-updated { color: #697784; font-size: 12px; }
 .collectra-refresh .fa { margin-right: 2px; }
@@ -45,9 +46,9 @@
 .collectra-summary-item { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 64px; padding: 12px; border: 1px solid #e0e5e9; border-radius: 5px; background: #fafbfc; color: #253340; text-align: left; cursor: pointer; }
 .collectra-summary-item:hover { background: #f3f6f8; border-color: #a9b8c4; }
 .collectra-summary-item.is-selected { background: #eef7f6; border-color: #087e7c; }
-.collectra-summary-icon { display: grid; place-items: center; width: 24px; flex: 0 0 24px; color: #596775; }
-.collectra-summary-urgent .collectra-summary-icon { color: #b73d33; }
-.collectra-summary-followup .collectra-summary-icon { color: #89641d; }
+.collectra-summary-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 6px; background: #e0f1ee; color: #087e7c; }
+.collectra-summary-urgent .collectra-summary-icon { background: #fcebe8; color: #b73d33; }
+.collectra-summary-followup .collectra-summary-icon { background: #fff1d9; color: #89641d; }
 .collectra-summary-item strong { display: block; color: #172b3a; font-size: 23px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .collectra-summary-item small { display: block; margin-top: 4px; color: #63717e; font-size: 12px; }
 .collectra-summary-arrow { display: none; }
@@ -63,7 +64,7 @@
 .collectra-alert-note { margin: 8px 0; color: #465867; overflow-wrap: anywhere; }
 .collectra-alert a, .collectra-reopen-cases-link, .collectra-card-open { color: #087e7c; text-decoration: none; font-weight: 500; }
 .collectra-alert a:hover, .collectra-reopen-cases-link:hover, .collectra-card-open:hover { color: #075f5e; text-decoration: underline; }
-.collectra-alerts-message, .collectra-alerts-empty { margin: 16px 0 0; padding: 12px; border-radius: 4px; background: #f5f7f8; color: #596775; font-size: 13px; }
+.collectra-alerts-message, .collectra-alerts-empty { margin: 16px 0 0; padding: 12px; border-radius: 4px; background: #f0f7f5; color: #45655e; font-size: 13px; }
 .collectra-alerts-empty { display: flex; align-items: center; gap: 10px; }
 .collectra-alerts-empty strong { display: block; font-weight: 500; }
 .collectra-alerts-empty small { display: block; color: #697784; font-size: 12px; }
@@ -97,16 +98,17 @@
 .collectra-reopen-confirm:hover { background: #882e27; border-color: #882e27; }
 .collectra-reopen-more { margin-top: 12px; }
 .collectra-section-heading { margin-bottom: 12px; }
-.collectra-section-heading h2 { margin: 0; color: #172b3a; font-size: 18px; font-weight: 600; }
+.collectra-section-heading h2 { margin: 0; color: #172b3a; font-size: 20px; font-weight: 650; }
 .collectra-tool-filter { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0 20px; }
 .collectra-tool-filter label { font-size: 13px; color: #596775; }
 .collectra-tool-filter input { flex: 1 1 240px; max-width: 380px; width: auto; }
 .collectra-tool-empty { margin: 12px 0; color: #697784; }
 .collectra-dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; }
 .collectra-dashboard-col { width: auto; max-width: none; padding: 0; }
-.collectra-dashboard-card { display: flex; flex-direction: column; height: 100%; border: 1px solid #dce2e7; border-radius: 6px; background: #fff; box-shadow: none; }
+.collectra-dashboard-card { display: flex; flex-direction: column; height: 100%; border: 1px solid #dce2e7; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(23, 43, 58, .045); }
+.collectra-dashboard-card:hover { border-color: #91bbb5; box-shadow: 0 4px 14px rgba(23, 43, 58, .09); }
 .collectra-card-header { display: flex; align-items: flex-start; gap: 12px; padding: 18px 18px 12px; background: transparent; }
-.collectra-tile-icon { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; color: #596775; font-size: 18px; }
+.collectra-tile-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 7px; background: #e7f3f1; color: #087e7c; font-size: 18px; }
 .collectra-tile-brand { width: 24px; height: 24px; }
 .collectra-card-heading { min-width: 0; }
 .collectra-card-title { display: block; color: #172b3a; font-size: 16px; font-weight: 600; text-decoration: none; }
@@ -127,7 +129,7 @@ a.collectra-card-title:hover { color: #087e7c; text-decoration: underline; }
 }
 @media (max-width: 640px) {
   #hq-content.collectra-dashboard-page { padding: 20px 16px 40px; }
-  .collectra-project-header { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .collectra-project-header { align-items: flex-start; flex-direction: column; gap: 16px; padding: 20px; }
   #hq-content .collectra-project-header h1 { font-size: 24px; }
   .collectra-alerts { padding: 16px; }
   .collectra-alerts-header { flex-direction: column; gap: 10px; }
