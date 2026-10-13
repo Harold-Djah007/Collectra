@@ -2,7 +2,13 @@
 
 For a local demonstration, run `bash deploy/local-testing/start-fast-local.sh`
 from the repository root and open `http://localhost:8000` after the ready message.
-Keep that terminal open. Cold Docker startup can take several minutes; the
+Keep that terminal open. The launcher runs both case and form Elasticsearch workers,
+so received submissions
+continue into Submission History as well as Case List. Their logs are
+`~/.local/state/collectra/pillowtop.log` and `form-pillowtop.log`; startup fails if
+either worker exits, and shutdown stops both managed workers.
+
+Cold Docker startup can take several minutes; the
 launcher waits for the existing Collectra Formplayer container rather than
 rejecting its port while it starts. Each service has a five-minute readiness
 deadline (`COLLECTRA_SERVICE_READY_TIMEOUT`), and stopped containers report an

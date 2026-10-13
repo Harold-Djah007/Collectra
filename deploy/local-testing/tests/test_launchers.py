@@ -183,6 +183,26 @@ exit 0''')
         self.assertEqual(self.commands().count("docker start hqservice-kafka-1"), 2)
         self.assertIn("docker logs --since 2026-10-06T08:38:08Z", self.commands())
 
+    def test_form_index_worker_failure_blocks_web_start(self):
+        self.stub("fuser", "exit 1")
+        self.stub("curl", """echo '{"status":"ok"}'""")
+        self.stub("sleep", "/bin/sleep 0.1")
+        self.stub("docker", '''
+if [[ "$1" == inspect && "$2" == hqservice-kafka-1 ]]; then echo healthy; fi
+exit 0''')
+        self.stub("uv", '''
+case "$*" in
+    *XFormToElasticsearchPillow*) echo 'simulated form worker failure'; exit 7 ;;
+    *CaseToElasticsearchPillow*|*celery*) exec tail -f /dev/null ;;
+    *) exit 0 ;;
+esac''')
+        result = self.run_launcher("collectra-hq/local-bin/start-collectra")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("XFormToElasticsearchPillow failed to start", result.stderr)
+        self.assertIn("simulated form worker failure", result.stderr)
+        self.assertNotIn("gunicorn", self.commands())
+        self.assertFalse((self.root / "state/collectra/form-pillowtop.pid").exists())
+
     def test_termination_stops_only_owned_proxy(self):
         # Build an isolated repo so the HQ child never starts real services.
         script_dir = self.root / "deploy" / "local-testing"

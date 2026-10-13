@@ -23,6 +23,7 @@ cd "$project_root"
 
 celery_pid=""
 pillowtop_pid=""
+form_pillowtop_pid=""
 web_pid=""
 
 exec 9>"$state_root/launcher.lock"
@@ -72,12 +73,12 @@ stop_managed_process() {
 cleanup() {
     echo
     echo "Stopping Collectra background workers..."
-    for pid in "$web_pid" "$pillowtop_pid" "$celery_pid"; do
+    for pid in "$web_pid" "$pillowtop_pid" "$form_pillowtop_pid" "$celery_pid"; do
         if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" >/dev/null 2>&1; then
             kill "$pid" >/dev/null 2>&1 || true
         fi
     done
-    rm -f "$state_root/pillowtop.pid" "$state_root/celery.pid"
+    rm -f "$state_root/pillowtop.pid" "$state_root/form-pillowtop.pid" "$state_root/celery.pid"
 }
 trap cleanup EXIT
 trap 'exit 130' INT
@@ -196,6 +197,7 @@ fi
 # Stop legacy Docker workers. The managed workers below use the current checkout.
 docker stop hqservice-pillowtop-1 hqservice-celery-1 >/dev/null 2>&1 || true
 stop_managed_process "$state_root/pillowtop.pid" "manage.py run_ptop"
+stop_managed_process "$state_root/form-pillowtop.pid" "manage.py run_ptop --pillow-name XFormToElasticsearchPillow"
 stop_managed_process "$state_root/celery.pid" "celery -A corehq worker"
 
 echo "Checking Collectra configuration..."
@@ -219,6 +221,13 @@ uv run python manage.py run_ptop \
 pillowtop_pid=$!
 echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
 
+echo "Starting XFormToElasticsearchPillow..."
+uv run python manage.py run_ptop \
+    --pillow-name XFormToElasticsearchPillow \
+    >"$state_root/form-pillowtop.log" 2>&1 8>&- 9>&- &
+form_pillowtop_pid=$!
+echo "$form_pillowtop_pid" >"$state_root/form-pillowtop.pid"
+
 sleep 5
 if ! kill -0 "$celery_pid" >/dev/null 2>&1; then
     echo "Celery failed to start. Recent log output:" >&2
@@ -228,6 +237,11 @@ fi
 if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
     echo "CaseToElasticsearchPillow failed to start. Recent log output:" >&2
     tail -50 "$state_root/pillowtop.log" >&2 || true
+    exit 1
+fi
+if ! kill -0 "$form_pillowtop_pid" >/dev/null 2>&1; then
+    echo "XFormToElasticsearchPillow failed to start. Recent log output:" >&2
+    tail -50 "$state_root/form-pillowtop.log" >&2 || true
     exit 1
 fi
 
