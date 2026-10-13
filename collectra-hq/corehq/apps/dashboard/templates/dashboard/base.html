@@ -9,7 +9,7 @@
 <link type="text/css"
       rel="stylesheet"
       media="all"
-      href="{% static 'dashboard/css/dashboard.css' %}" />
+      href="{% static 'dashboard/css/dashboard.css' %}?v=20261013c" />
 {% endblock stylesheets %}
 
 {% block content %}
@@ -25,51 +25,23 @@
 
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
   <div class="collectra-dashboard-inner">
-    <div class="collectra-hero">
-      <div class="collectra-hero-content">
-        <p class="collectra-hero-eyebrow">{{ domain }} <span aria-hidden="true">/</span> {% trans "Collectra HQ" %}</p>
-        <header class="collectra-dashboard-header">
-          <div class="collectra-dashboard-mark" aria-hidden="true">
-            <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
-          </div>
-          <div>
-            <p class="collectra-welcome">
-              {% blocktrans with name=welcome_name %}Welcome back, {{ name }}{% endblocktrans %}
-            </p>
-            <h1 class="collectra-brand-title">{% trans "Welcome to Collectra" %}</h1>
-            <p class="collectra-tagline">{% trans "Build forms. Collect data. Make an impact." %}</p>
-          </div>
-        </header>
-        {% if show_create_form %}
-          <div class="collectra-quick-actions">
-            <a class="collectra-quick-action collectra-quick-action-primary" href="{% url 'form_builder_choice' domain %}">
-              <i class="fa fa-plus" aria-hidden="true"></i> {% trans "Create form" %}
-            </a>
-            <a class="collectra-quick-action" href="{% url 'excel_form_builder' domain %}">
-              <i class="fa fa-upload" aria-hidden="true"></i> {% trans "Import XLSForm" %}
-            </a>
-          </div>
-        {% endif %}
+    <header class="collectra-project-header">
+      <div>
+        <p class="collectra-project-context">{{ domain }} <span aria-hidden="true">/</span> {% trans "Dashboard" %}</p>
+        <h1>{% trans "Project overview" %}</h1>
+        <p class="collectra-project-description">{% trans "Recent activity and items requiring review." %}</p>
       </div>
-      <div class="collectra-hero-art" aria-hidden="true">
-        <p class="collectra-hero-flow-heading">{% trans "ONE CONNECTED WORKFLOW" %}</p>
-        <div class="collectra-hero-flow">
-          <span class="collectra-hero-step">
-            <i class="fa fa-pencil" aria-hidden="true"></i>
-            <strong>{% trans "Build" %}</strong>
-          </span>
-          <span class="collectra-hero-step">
-            <i class="fa fa-mobile" aria-hidden="true"></i>
-            <strong>{% trans "Collect" %}</strong>
-          </span>
-          <span class="collectra-hero-step">
-            <i class="fa fa-line-chart" aria-hidden="true"></i>
-            <strong>{% trans "Act" %}</strong>
-          </span>
+      {% if show_create_form %}
+        <div class="collectra-quick-actions">
+          <a class="collectra-quick-action collectra-quick-action-primary" href="{% url 'form_builder_choice' domain %}">
+            <i class="fa fa-plus" aria-hidden="true"></i> {% trans "Create form" %}
+          </a>
+          <a class="collectra-quick-action" href="{% url 'excel_form_builder' domain %}">
+            {% trans "Import XLSForm" %}
+          </a>
         </div>
-        <span class="collectra-hero-flow-track"></span>
-      </div>
-    </div>
+      {% endif %}
+    </header>
 
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
@@ -84,7 +56,7 @@
       <section id="operational-alerts" class="collectra-alerts" aria-label="Operations needing attention">
         <div class="collectra-alerts-header">
           <div>
-            <p class="collectra-alerts-eyebrow"><span class="collectra-live-dot" aria-hidden="true"></span> Safisana operations</p>
+            <p class="collectra-alerts-eyebrow">Safisana operations</p>
             <h2>Operational overview</h2>
             <p>Morning Checks, Metering Round and Incident Reports · recent submissions within 14 days</p>
           </div>
@@ -95,7 +67,10 @@
             </button>
           </div>
         </div>
-        <p class="collectra-last-updated">Shows up to 20 alerts from the latest 150 submissions per database. Counts describe this list; form reports contain the full history.</p>
+        <details class="collectra-data-scope">
+          <summary>About this overview</summary>
+          <p>Shows up to 20 alerts from the latest 150 submissions per database. Counts describe this list; form reports contain the full history.</p>
+        </details>
         <div class="collectra-alerts-summary" data-bind="visible: !loading() &amp;&amp; !error()">
           <button type="button" class="collectra-summary-item collectra-summary-reported" data-bind="click: showAll, css: {'is-selected': selectedSeverity() === 'all'}, attr: {'aria-pressed': selectedSeverity() === 'all'}">
             <span class="collectra-summary-icon"><i class="fa fa-list-alt" aria-hidden="true"></i></span>
@@ -143,7 +118,7 @@
                aria-label="Drying-bed reopening requests">
         <div class="collectra-alerts-header">
           <div>
-            <p class="collectra-alerts-eyebrow">DRYING BED / SUPERVISOR REVIEW</p>
+            <p class="collectra-alerts-eyebrow">Supervisor review</p>
             <h2>Reopening requests <span class="collectra-request-count" data-bind="text: pendingCountLabel"></span></h2>
             <p>Drying-bed cases awaiting review, with handled requests in History</p>
           </div>
@@ -247,11 +222,11 @@
     {% endif %}
 
     <section id="dashboard-tiles" aria-label="Collectra dashboard">
-      <div class="collectra-section-heading"><div><p class="collectra-section-eyebrow">EXPLORE COLLECTRA</p><h2>Choose your next step</h2></div></div>
+      <div class="collectra-section-heading"><h2>{% trans "Workspace tools" %}</h2></div>
       <div class="collectra-tool-filter">
-        <label for="collectra-tool-search">Find a tool or recent application</label>
+        <label for="collectra-tool-search">Search tools and applications</label>
         <input id="collectra-tool-search" type="search" autocomplete="off"
-               placeholder="Try forms, reports, data or a recent application"
+               placeholder="Search by name"
                data-bind="textInput: query" />
         <button type="button" data-bind="visible: query, click: clearSearch">Clear</button>
       </div>
@@ -271,24 +246,10 @@
                 <!-- /ko -->
               </div>
               <div class="collectra-card-heading">
-                <span class="collectra-card-kicker" data-bind="text: kicker"></span>
                 <a class="collectra-card-title" data-bind="visible:url, text:title, attr:{href:url}"></a>
                 <span class="collectra-card-title" data-bind="text:title, visible:!url"></span>
                 <p class="collectra-card-description" data-bind="text:helpText"></p>
               </div>
-              <span class="collectra-card-art" aria-hidden="true">
-                <!-- ko if: slug === 'applications' --><span class="collectra-art-form"><i></i><i></i><i></i></span><!-- /ko -->
-                <!-- ko if: slug === 'reports' --><span class="collectra-art-chart"><i></i><i></i><i></i><i></i></span><!-- /ko -->
-                <!-- ko if: slug === 'data' --><span class="collectra-art-data"><i></i><i></i><i></i></span><!-- /ko -->
-                <!-- ko if: slug === 'users' --><span class="collectra-art-people"><i></i><i></i><i></i></span><!-- /ko -->
-                <!-- ko if: slug === 'messaging' --><span class="collectra-art-messages"><i></i><i></i></span><!-- /ko -->
-                <!-- ko if: slug === 'settings' --><i class="fa fa-cog collectra-art-gear"></i><!-- /ko -->
-                <!-- ko if: slug === 'help' --><span class="collectra-art-help">?</span><!-- /ko -->
-                <!-- ko if: ['applications', 'reports', 'data', 'users', 'messaging', 'settings', 'help'].indexOf(slug) === -1 -->
-                <i data-bind="css: icon"></i>
-                <!-- /ko -->
-              </span>
-              <span class="collectra-card-header-arrow" aria-hidden="true">↗</span>
             </div>
 
             <div class="collectra-card-body">
