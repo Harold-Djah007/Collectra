@@ -8,7 +8,8 @@ Formplayer, Celery, and Pillowtop remain private.
 Formplayer and MinIO are pinned by image digest so a later upstream `latest` image cannot silently
 change the field stack. Update either digest only through a tested release-candidate change.
 
-This is the recommended baseline for approximately 50 mobile workers. It is a
+This is a planning baseline; capacity for 50 mobile workers must be demonstrated
+with representative sync, reporting, and import workloads. It is a
 single-host deployment, not a high-availability cluster. Use provider snapshots,
 off-host backups, monitoring, and a documented recovery procedure.
 
@@ -23,6 +24,72 @@ off-host backups, monitoring, and a documented recovery procedure.
 
 Render Free is not supported for this stack because its database and filesystem
 limits cannot safely retain Collectra production data.
+
+## Azure hosting and compact configuration
+
+Azure SQL is not a drop-in replacement for this stack's PostgreSQL databases.
+HQ uses Django's PostgreSQL backend and Formplayer uses PostgreSQL too. Do not
+remove the `postgres` service because an Azure SQL subscription already exists.
+This deployment keeps PostgreSQL on the application VM, so the estimate needs
+no additional Azure SQL or managed PostgreSQL service. Existing Azure SQL is
+untouched. CouchDB, Elasticsearch, Kafka, Redis, and MinIO also remain required.
+
+The example environment selects one Gunicorn worker and one Celery worker
+process for a small pilot. Existing deployments without these variables retain
+the previous two-worker defaults. Set `COLLECTRA_WEB_WORKERS=2` and
+`COLLECTRA_CELERY_CONCURRENCY=2` when concurrency or queue latency requires it.
+All task queues and core Pillowtop consumers are retained; lowering process
+counts does not remove features, but it reduces simultaneous processing.
+
+A light-load snapshot on 2026-10-13 measured approximately 4.5 GiB across local
+Collectra containers and Python services, excluding unrelated applications.
+This is not a production peak measurement: the production configuration runs
+additional core consumers and beat, and imports/builds/reports can use more RAM.
+An 8 GiB VM is a pilot candidate only. Prefer 16 GiB for initial field hosting
+until representative peak usage has been measured. Build the image in CI or
+on a separate build machine rather than on the smallest application VM.
+
+Public Azure Linux pay-as-you-go rates checked on 2026-10-13, using 730 hours:
+
+- East US: D2as v5 (2 vCPU / 8 GiB) compute $62.78/month; D4as v5
+  (4 vCPU / 16 GiB) compute $125.56/month.
+- West Europe: the same sizes cost $75.92 and $151.84/month for compute.
+- South Africa North: the same sizes cost $83.95 and $167.17/month for compute.
+
+With one 64 GiB Standard SSD LRS OS disk (E6), one 128 GiB Standard SSD LRS data
+disk (E10), and one Standard static IPv4 address, the corresponding base costs
+are approximately $80.83 / $143.61 in East US, $93.97 / $169.89 in West Europe,
+and $108.62 / $191.84 in South Africa North (8 / 16 GiB respectively).
+These are illustrative regions, not a selected deployment region. They exclude
+outbound transfer, disk transactions, snapshots/off-host backup storage,
+monitoring ingestion, SMTP, domain registration, taxes, and your existing Azure
+SQL bill. Price and SKU availability must be rechecked before purchase.
+
+B-series costs less in some cases but consumes CPU credits; do not assume it
+is suitable for sustained indexing or simultaneous sync. For example East US
+B2ms compute is $60.74/month, only $2.04 less than D2as v5. Avoid Spot for the
+only application/data host and avoid reservations until usage is established.
+Keep the VM, disks, and any future compatible managed database in an appropriate
+region for latency and data residency. The original $182 estimate cannot be
+reconciled without its selected resources and region.
+
+The HQ Dockerfile builds dependencies/assets in a separate builder stage and
+retains Python, Node, Java, Chrome, runtime libraries, and compiled assets in
+the final stage. Compiler packages and builder caches are not copied into it.
+The Docker context excludes host virtual environments, node_modules, caches,
+and environment files. Container logs rotate at three 10 MB files per service;
+Django/application file logs still need separate retention management. None of
+these changes deletes application data or changes the running local stack.
+
+Before field deployment, build and smoke-test the final image, measure its
+actual size, perform the field acceptance checks, verify backup restoration,
+and measure CPU/RAM/queue lag during simultaneous worker sync and reports.
+Dockerfile static validation alone does not establish image runtime correctness.
+
+Sources:
+- [Azure cost optimization](https://learn.microsoft.com/en-us/azure/virtual-machines/cost-optimization-best-practices)
+- [Azure retail price API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices)
+- [B-series CPU credit model](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/b-family)
 
 ## First deployment
 

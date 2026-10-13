@@ -1,5 +1,11 @@
 name: collectra
 
+x-service-logging: &service-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 x-hq-environment: &hq-environment
   CUSTOMSETTINGS: deployment.production.localsettings
   COLLECTRA_HOST: ${COLLECTRA_HOST:?COLLECTRA_HOST is required}
@@ -40,6 +46,7 @@ x-hq-service: &hq-service
     dockerfile: Dockerfile_incl
   environment: *hq-environment
   restart: unless-stopped
+  logging: *service-logging
   volumes:
     - shared-files:/sharedfiles
     - ${COLLECTRA_BACKUP_DIR:-./backups}:/backups
@@ -61,6 +68,7 @@ services:
   caddy:
     image: caddy:2.8.4-alpine
     restart: unless-stopped
+    logging: *service-logging
     environment:
       COLLECTRA_HOST: ${COLLECTRA_HOST}
       CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL:?CADDY_ACME_EMAIL is required}
@@ -87,7 +95,7 @@ services:
         mkdir -p /sharedfiles/log /sharedfiles/restore /sharedfiles/temp &&
         uv run gunicorn
         --bind 0.0.0.0:8000
-        --workers 2
+        --workers ${COLLECTRA_WEB_WORKERS:-2}
         --worker-class gevent
         --timeout 900
         --access-logfile -
@@ -116,7 +124,7 @@ services:
       - corehq
       - worker
       - --loglevel=INFO
-      - --concurrency=2
+      - --concurrency=${COLLECTRA_CELERY_CONCURRENCY:-2}
       - --queues=analytics_queue,async_restore_queue,background_queue,case_import_queue,case_rule_queue,celery,celery_periodic,email_queue,export_download_queue,geospatial_queue,icds_aggregation_queue,icds_dashboard_reports_queue,linked_domain_queue,logistics_background_queue,logistics_reminder_queue,malt_generation_queue,reminder_case_update_queue,reminder_queue,reminder_rule_queue,repeat_record_queue,saved_exports_queue,send_report_throttled,sms_queue,submission_reprocessing_queue,sumologic_logs_queue,ucr_indicator_queue,ucr_queue,ush_background_tasks
 
   celery-beat:
@@ -149,6 +157,7 @@ services:
     image: dimagi/formplayer@sha256:b5e9a96c77160dd74c426c606b2712075021558da5d4a3db4d8ce622e4905319
     command: ["java", "org.springframework.boot.loader.launch.JarLauncher"]
     restart: unless-stopped
+    logging: *service-logging
     environment:
       COMMCARE_HOST: http://web:8000
       COMMCARE_ALTERNATE_ORIGINS: https://${COLLECTRA_HOST}
@@ -184,6 +193,7 @@ services:
   postgres:
     image: dimagi/docker-postgresql:14
     restart: unless-stopped
+    logging: *service-logging
     shm_size: 1gb
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-commcarehq}
@@ -204,6 +214,7 @@ services:
       context: ../../collectra-hq/docker/files
       dockerfile: Dockerfile.couch
     restart: unless-stopped
+    logging: *service-logging
     command: ["--with-haproxy"]
     environment:
       COUCHDB_USER: ${COUCHDB_USER:-collectra}
@@ -219,6 +230,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    logging: *service-logging
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
     volumes:
       - redis-data:/data
@@ -233,6 +245,7 @@ services:
       context: ../../collectra-hq/docker
       dockerfile: files/Dockerfile.es.6
     restart: unless-stopped
+    logging: *service-logging
     environment:
       ES_JAVA_OPTS: -Xms750m -Xmx750m
       discovery.type: single-node
@@ -249,6 +262,7 @@ services:
   zookeeper:
     image: zookeeper:3.7
     restart: unless-stopped
+    logging: *service-logging
     environment:
       ZOO_4LW_COMMANDS_WHITELIST: ruok
       JVMFLAGS: -Xms128m -Xmx256m
@@ -264,6 +278,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.2.14
     restart: unless-stopped
+    logging: *service-logging
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_BROKER_ID: "1"
@@ -290,6 +305,7 @@ services:
   minio:
     image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     restart: unless-stopped
+    logging: *service-logging
     command: server --address :9980 --console-address :9981 /data
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}

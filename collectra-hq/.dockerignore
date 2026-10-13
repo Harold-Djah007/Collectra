@@ -5,3 +5,21 @@ staticfiles/
 application.properties
 formplayer.jar
 localsettings.py
+
+# Host-only dependencies and caches must never enter the production image.
+.git/
+.venv/
+venv/
+node_modules/
+.pytest_cache/
+.ruff_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+.env
+.env.*
+coverage/
+htmlcov/
+.coverage
+*.apk
+*.aab
+*.hprof
