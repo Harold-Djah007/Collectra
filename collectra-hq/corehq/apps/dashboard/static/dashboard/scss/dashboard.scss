@@ -9,11 +9,11 @@
   line-height: 1.5;
 }
 .collectra-dashboard-inner { max-width: 1280px; margin: 0 auto; }
-.collectra-project-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 26px 28px; border: 1px solid #cce5e3; border-left: 4px solid #087e7c; border-radius: 8px; background: #eaf5f3; }
-.collectra-project-context { margin: 0 0 8px; color: #386963; font-size: 13px; font-weight: 500; }
+.collectra-project-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 36px 34px; border: 1px solid #183f50; border-radius: 12px; background: #123344; box-shadow: 0 8px 24px rgba(18, 51, 68, .12); }
+.collectra-project-context { margin: 0 0 8px; color: #9cdbd2; font-size: 13px; font-weight: 600; }
 .collectra-project-context span { margin: 0 8px; color: #a1acb5; }
-#hq-content .collectra-project-header h1 { margin: 0; color: #172b3a; font-size: 30px; font-weight: 650; line-height: 1.25; letter-spacing: -.02em; }
-.collectra-project-description { margin: 8px 0 0; color: #596775; }
+#hq-content .collectra-project-header h1 { margin: 0; color: #fff; font-size: 36px; font-weight: 650; line-height: 1.25; letter-spacing: -.02em; }
+.collectra-project-description { margin: 10px 0 0; color: #c1d4db; font-size: 15px; max-width: 480px; }
 .collectra-dashboard-page .collectra-quick-actions { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .collectra-dashboard-page .collectra-quick-action, .collectra-refresh, .collectra-reopen-action, .collectra-tool-filter button, .collectra-reopen-more, .collectra-reopen-confirm {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px;
@@ -23,9 +23,15 @@
 .collectra-dashboard-page .collectra-quick-action:hover, .collectra-refresh:hover, .collectra-tool-filter button:hover, .collectra-reopen-more:hover { background: #f1f4f6; color: #172b3a; border-color: #a9b8c4; }
 .collectra-dashboard-page .collectra-quick-action-primary, .collectra-reopen-action { background: #087e7c; border-color: #087e7c; color: #fff; }
 .collectra-dashboard-page .collectra-quick-action-primary:hover, .collectra-reopen-action:hover { background: #076967; border-color: #076967; color: #fff; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action { min-height: 42px; padding: 10px 16px; border-radius: 6px; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary { background: #9ee6d5; border-color: #9ee6d5; color: #123344; font-weight: 650; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary:hover { background: #bbf2e5; border-color: #bbf2e5; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary) { background: transparent; border-color: #668b98; color: #fff; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary):hover { background: #25495a; border-color: #9cbdc7; }
+.collectra-dashboard-page .collectra-project-header a:focus-visible { outline-color: #9ee6d5; }
 .collectra-dashboard-page a:focus-visible, .collectra-dashboard-page button:focus-visible, .collectra-dashboard-page input:focus-visible, .collectra-dashboard-page summary:focus-visible { outline: 2px solid #087e7c; outline-offset: 3px; }
 .collectra-dashboard-page button:disabled { opacity: .6; cursor: wait; }
-.collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; align-items: start; margin: 24px 0 32px; }
+.collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; align-items: start; margin: 28px 0 36px; }
 .collectra-status-grid > :only-child { grid-column: 1 / -1; }
 .collectra-alerts { min-width: 0; margin: 24px 0; padding: 20px; border: 1px solid #dce2e7; border-radius: 8px; background: #fff; box-shadow: 0 3px 12px rgba(23, 43, 58, .06); border-top: 3px solid #087e7c; }
 .collectra-status-grid .collectra-alerts { margin: 0; }
@@ -105,16 +111,16 @@
 .collectra-tool-empty { margin: 12px 0; color: #697784; }
 .collectra-dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; }
 .collectra-dashboard-col { width: auto; max-width: none; padding: 0; }
-.collectra-dashboard-card { display: flex; flex-direction: column; height: 100%; border: 1px solid #dce2e7; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(23, 43, 58, .045); }
+.collectra-dashboard-card { display: flex; flex-direction: column; height: 100%; border: 1px solid #dce2e7; border-radius: 10px; background: #fff; box-shadow: 0 3px 12px rgba(23, 43, 58, .055); }
 .collectra-dashboard-card:hover { border-color: #91bbb5; box-shadow: 0 4px 14px rgba(23, 43, 58, .09); }
-.collectra-card-header { display: flex; align-items: flex-start; gap: 12px; padding: 18px 18px 12px; background: transparent; }
-.collectra-tile-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 7px; background: #e7f3f1; color: #087e7c; font-size: 18px; }
+.collectra-card-header { display: flex; align-items: flex-start; gap: 12px; padding: 22px 22px 16px; background: transparent; }
+.collectra-tile-icon { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 42px; border-radius: 7px; background: #e7f3f1; color: #087e7c; font-size: 18px; }
 .collectra-tile-brand { width: 24px; height: 24px; }
 .collectra-card-heading { min-width: 0; }
-.collectra-card-title { display: block; color: #172b3a; font-size: 16px; font-weight: 600; text-decoration: none; }
+.collectra-card-title { display: block; color: #172b3a; font-size: 18px; font-weight: 600; text-decoration: none; }
 a.collectra-card-title:hover { color: #087e7c; text-decoration: underline; }
 .collectra-card-description { margin: 5px 0 0; color: #697784; font-size: 12px; line-height: 1.5; }
-.collectra-card-body { display: flex; flex: 1; flex-direction: column; gap: 10px; padding: 0 18px 18px; }
+.collectra-card-body { display: flex; flex: 1; flex-direction: column; gap: 10px; padding: 0 22px 22px; }
 .collectra-card-items { border: 0; gap: 0; }
 .collectra-card-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 36px; padding: 7px 0; border-bottom: 1px solid #edf0f3; color: #465867; font-size: 13px; text-decoration: none; }
 .collectra-card-item:last-child { border-bottom: 0; }
