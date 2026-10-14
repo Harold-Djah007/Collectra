@@ -28,7 +28,7 @@ set +a
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_root="${COLLECTRA_BACKUP_DIR}/${domain}-${stamp}"
 container_root="/backups/${domain}-${stamp}"
-install -d -m 0700 "$backup_root"
+mkdir -m 0700 "$backup_root"
 
 echo "Creating logical domain backup for ${domain}..."
 docker compose exec -T --user root web \
@@ -55,14 +55,16 @@ if [[ -z "$blob_archive" ]]; then
     exit 1
 fi
 
+gzip -t "$backup_root/postgres-all.sql.gz"
 unzip -t "$archive_path"
 tar -tzf "$blob_archive" >/dev/null
 (
     cd "$backup_root"
-    find . -type f ! -name SHA256SUMS -print0 \
+    find . -type f ! -name SHA256SUMS ! -name SHA256SUMS.tmp -print0 \
         | sort -z \
-        | xargs -0 sha256sum >SHA256SUMS
-    sha256sum -c SHA256SUMS
+        | xargs -0 sha256sum >SHA256SUMS.tmp
+    sha256sum -c SHA256SUMS.tmp
+    mv SHA256SUMS.tmp SHA256SUMS
 )
 chmod -R go-rwx "$backup_root"
 

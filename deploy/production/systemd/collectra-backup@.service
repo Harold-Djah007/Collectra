@@ -1,0 +1,11 @@
+[Unit]
+Description=Collectra verified logical backup for %i
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/collectra/deploy/production
+ExecStart=/usr/bin/bash /srv/collectra/deploy/production/backup-domain.sh %i
+TimeoutStartSec=3600
+UMask=0077

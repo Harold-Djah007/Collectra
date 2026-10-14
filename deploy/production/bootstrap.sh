@@ -22,12 +22,27 @@ for command in docker curl; do
     fi
 done
 
+declare -A seen_secrets=()
+
 for secret_name in \
     DJANGO_SECRET_KEY POSTGRES_PASSWORD COUCHDB_PASSWORD \
     MINIO_ROOT_PASSWORD FORMPLAYER_AUTH_KEY; do
     secret_value="${!secret_name:-}"
     if [[ ${#secret_value} -lt 24 || "$secret_value" == *replace-with* ]]; then
         echo "${secret_name} must be replaced with an independent random secret."
+        exit 1
+    fi
+    if [[ -n "${seen_secrets[$secret_value]:-}" ]]; then
+        echo "${secret_name} must not reuse another service's secret."
+        exit 1
+    fi
+    seen_secrets[$secret_value]=1
+done
+
+for setting_name in COLLECTRA_WEB_WORKERS COLLECTRA_CELERY_CONCURRENCY; do
+    setting_value="${!setting_name:-2}"
+    if [[ ! "$setting_value" =~ ^[1-9][0-9]*$ ]]; then
+        echo "${setting_name} must be a positive integer."
         exit 1
     fi
 done

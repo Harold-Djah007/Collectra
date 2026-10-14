@@ -1,0 +1,10 @@
+[Unit]
+Description=Check Collectra and %i backups every five minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+Unit=collectra-monitor@%i.service
+
+[Install]
+WantedBy=timers.target

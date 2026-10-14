@@ -9,6 +9,7 @@ x-service-logging: &service-logging
 x-hq-environment: &hq-environment
   CUSTOMSETTINGS: deployment.production.localsettings
   COLLECTRA_HOST: ${COLLECTRA_HOST:?COLLECTRA_HOST is required}
+  COLLECTRA_MIN_FREE_DISK_GB: ${COLLECTRA_MIN_FREE_DISK_GB:-10}
   COLLECTRA_ADMIN_EMAIL: ${COLLECTRA_ADMIN_EMAIL:?COLLECTRA_ADMIN_EMAIL is required}
   DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
   POSTGRES_HOST: postgres

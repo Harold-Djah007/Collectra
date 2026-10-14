@@ -216,3 +216,69 @@ of inactivity. Adjust `COLLECTRA_SESSION_AGE_SECONDS` and
 `COLLECTRA_MIN_FREE_DISK_GB` available and rejects containers that report an unhealthy or
 still-starting health state. Run the check from monitoring after every deployment and at least every
 five minutes. Alert an operator on the first failure.
+
+## Scheduled backups and monitoring
+
+`runtime-check.py` performs read-only checks for every configured service,
+Celery worker heartbeat, public HQ/Formplayer HTTPS, free space on the backup and Docker data filesystems,
+available host memory, and completed backups for each requested project. It emits a JSON result and
+exits nonzero on failure. It never prints the Compose environment or secrets.
+Run before DNS/TLS setup with `--skip-public`; that skips only public endpoint
+checks, not services, space, or backup freshness:
+
+```bash
+python3 runtime-check.py --domains safisana test-1 --skip-public
+```
+
+After deployment under `/srv/collectra`, copy the supplied systemd units and
+activate only the actual project instances:
+
+```bash
+sudo cp systemd/collectra-*.service systemd/collectra-*.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now collectra-backup@safisana.timer collectra-monitor@safisana.timer
+```
+
+Repeat for `test-1` if hosted. Backups run daily around 02:00 UTC; checks run
+every five minutes. Create the first verified backup before enabling monitoring.
+An overdue/missing backup or unhealthy service marks the monitor unit failed:
+
+```bash
+journalctl -u collectra-monitor@safisana.service --since today
+```
+
+These templates assume the repository is at `/srv/collectra`; change both unit
+paths if it is elsewhere. An external monitoring system must still watch the
+exit status/journal and notify an administrator, including when this VM is down.
+Local systemd checks alone cannot report a complete host outage. Off-host backup
+copying, encryption, retention, and administrator notification destinations
+must be configured for the final hosting environment. No external notification
+or systemd installation is performed by repository tests.
+
+The backup script validates ZIP, BlobDB tar, and PostgreSQL gzip integrity and
+only publishes `SHA256SUMS` after checksum verification succeeds. In-progress
+or failed backups therefore cannot count as completed backups.
+
+Production CI now builds the complete image and runs `image_smoke.py` to check
+non-root execution, native Python libraries, Java/Chrome/Node, and every compiled
+Webpack asset. Runtime `uv run` does not sync/install dependencies at startup.
+CI jobs are configured locally; passing checks must be observed after publishing.
+
+A local PostgreSQL restore rehearsal on 2026-10-14 restored the custom-format
+snapshot into a disposable, network-isolated PostgreSQL 14 container. Ordered
+row fingerprints matched 84,309 form records, 6,032 case records, and 1,335
+migration records; both SQL attachment tables were empty. The original database
+was not modified. This validates PostgreSQL recovery, not off-host disaster
+recovery or restoration of CouchDB/BlobDB media. The logical domain and blob
+restore drill remains a separate acceptance requirement.
+
+## Bounded HTTP performance check
+
+Run `python3 load-check.py http://127.0.0.1:8000` against the local stack, or
+use the permanent HTTPS origin after deployment. The default makes 40 login
+page GETs with four concurrent requests and fails if any request fails or p95
+exceeds 3,000 ms. Requests, concurrency, and the p95 threshold are configurable,
+with explicit bounds to prevent accidental unbounded load. No credentials,
+forms, cases, or submissions are sent. Response bodies are bounded at 1 MiB.
+This is a basic HTTP baseline; it does not substitute for authenticated reports
+and simultaneous mobile sync acceptance tests on the final VM.
