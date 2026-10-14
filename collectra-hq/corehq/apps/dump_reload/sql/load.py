@@ -38,6 +38,26 @@ class SqlDataLoader(DataLoader):
                     dry_run_stats[obj['model']] += 1
             return dry_run_stats
 
+        if len(settings.DATABASES) == 1:
+            # A single database needs no process pool or interprocess queue.
+            # Keep its transaction in this process so startup/thread state
+            # cannot strand a restore waiting for a worker to receive data.
+            db_alias = next(iter(settings.DATABASES))
+            coro = load_data_for_db(db_alias)
+            next(coro)
+            try:
+                for line in object_strings:
+                    obj = self.line_to_object(line)
+                    if obj is not None:
+                        if get_db_alias(obj) != db_alias:
+                            raise DataLoadException('Object routed outside the configured database')
+                        coro.send(obj)
+                stat = coro.send(None)
+            finally:
+                coro.close()
+            _reset_sequences([stat])
+            return Counter(get_model_label(model) for model in stat.model_counter.elements())
+
         def enqueue_object(dbalias_to_workerqueue, obj):
             db_alias = get_db_alias(obj)
             worker, queue = dbalias_to_workerqueue[db_alias]

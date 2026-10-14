@@ -39,11 +39,45 @@ def make_blob_export(filename):
     with tarfile.open(filename, 'w:gz') as tgzfile:
         for i in range(NUM_WORKERS):
             tarinfo = tarfile.TarInfo(name=f'key-{i}')
+            tarinfo.size = len(b'spam')
             fileobj = BytesIO(b'spam')
             tgzfile.addfile(tarinfo, fileobj)
 
 
 class BlobImportTests(SimpleTestCase):
+
+    def test_all_blob_bytes_are_copied_once(self):
+        copied = {}
+
+        class RecordingBlobDB:
+            def copy_blob(self, content, key):
+                assert key not in copied
+                copied[key] = content.read()
+
+        with NamedTemporaryFile() as tempfile:
+            make_blob_export(tempfile.name)
+            with patch('corehq.blobs.management.commands.run_blob_import.get_blob_db', return_value=RecordingBlobDB()):
+                import_blobs_from_tgz(tempfile.name)
+        assert copied == {f'key-{i}': b'spam' for i in range(NUM_WORKERS)}
+
+    def test_archive_members_are_not_cached(self):
+        original_open = tarfile.open
+        opened = []
+
+        def tracked_open(*args, **kwargs):
+            archive = original_open(*args, **kwargs)
+            if kwargs.get('stream'):
+                opened.append(archive)
+            return archive
+
+        with NamedTemporaryFile(suffix=" with spaces.tar.gz") as tempfile:
+            make_blob_export(tempfile.name)
+            with patch('corehq.blobs.management.commands.run_blob_import.tarfile.open', tracked_open), \
+                    patch('corehq.blobs.management.commands.run_blob_import.get_blob_db', return_value=SleeperBlobDB()):
+                import_blobs_from_tgz(tempfile.name)
+
+        assert len(opened) == NUM_WORKERS + 1
+        assert all(not archive.members for archive in opened)
 
     def test_concurrency(self):
         duration = Timer(

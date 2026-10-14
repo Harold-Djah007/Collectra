@@ -39,7 +39,15 @@ case "$archive_path" in
         ;;
 esac
 
-unzip -t "$archive_path"
+python3 - "$archive_path" <<'PY'
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    damaged = archive.testzip()
+    if damaged is not None:
+        raise SystemExit(f"Corrupt ZIP member: {damaged}")
+PY
 container_path="/backups/${archive_path#"$backup_root"/}"
 backup_directory="$(dirname "$archive_path")"
 blob_archive="$(

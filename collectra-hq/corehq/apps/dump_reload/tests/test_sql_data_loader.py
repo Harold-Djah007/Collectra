@@ -1,7 +1,9 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.db import IntegrityError
 
 from corehq.apps.dump_reload.sql.load import SqlDataLoader
 from corehq.apps.users.models import SQLUserData
@@ -13,6 +15,29 @@ from corehq.form_processor.tests.utils import create_case, create_form_for_test
 
 
 class TestSqlDataLoader(TestCase):
+
+    def test_single_database_restore_does_not_start_process_workers(self):
+        from django.conf import settings
+        if len(settings.DATABASES) != 1:
+            self.skipTest('Single-database configuration required')
+        model = {'model': 'auth.user', 'fields': {'username': 'restored-user'}}
+        with patch('corehq.apps.dump_reload.sql.load.get_worker_queue') as start_worker:
+            counts = SqlDataLoader().load_objects([json.dumps(model)])
+        start_worker.assert_not_called()
+        assert User.objects.filter(username='restored-user').exists()
+        assert sum(counts.values()) == 1
+
+    def test_single_database_failure_rolls_back_earlier_records(self):
+        from django.conf import settings
+        if len(settings.DATABASES) != 1:
+            self.skipTest('Single-database configuration required')
+        User.objects.create(username='existing-user')
+        models = [{'model': 'auth.user', 'fields': {'username': name}}
+                  for name in ('must-roll-back', 'existing-user')]
+        with self.assertRaises(IntegrityError):
+            SqlDataLoader().load_objects([json.dumps(model) for model in models])
+        assert not User.objects.filter(username='must-roll-back').exists()
+        assert User.objects.filter(username='existing-user').exists()
 
     def test_loading_foreign_keys_using_iterable_natural_key(self):
         user = User.objects.create(username='testuser')

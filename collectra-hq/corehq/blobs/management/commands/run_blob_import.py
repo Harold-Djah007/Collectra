@@ -1,4 +1,3 @@
-import subprocess
 import tarfile
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -25,7 +24,8 @@ class Command(BaseCommand):
 def import_blobs_from_tgz(filename):
     print(f"Inspecting the size of {filename}.")
     print("This can take ~8 minutes for a 30G file.")
-    total = int(subprocess.getoutput(f"tar --list -f {filename} | wc -l"))
+    with tarfile.open(filename, 'r|gz', stream=True) as archive:
+        total = sum(1 for _ in archive)
 
     with ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
         func = partial(worker, filename, total // NUM_WORKERS)
@@ -49,7 +49,9 @@ def worker(filename, length, worker_number):
     """
     # ^^^ Yeah, not great. Maybe filesystem caching helps.
     blob_db = get_blob_db()
-    with tarfile.open(filename, 'r:gz') as tgzfile:
+    # Do not retain every TarInfo or seek backwards through compressed data.
+    # Each worker reads forward and copies its current member before advancing.
+    with tarfile.open(filename, 'r|gz', stream=True) as tgzfile:
         iterable = (tarinfo for i, tarinfo in enumerate(tgzfile)
                     if i % NUM_WORKERS == worker_number)
         prefix = f"Worker {worker_number}"
