@@ -49,8 +49,8 @@ dependencies = [
     "django-transfer",
     "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
-    "django~=5.2.16",
-    "djangorestframework",
+    "django~=5.2.17",
+    "djangorestframework~=3.17.2",
     "dropbox",
     "elasticsearch6>=6.0.0,<7.0.0",
     "ethiopian-date-converter",
@@ -71,7 +71,7 @@ dependencies = [
     # Upgrade when changes merged upstream
     "jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl",
     "jsonschema",
-    "kafka-python",
+    "kafka-python~=2.3.2",
     "looseversion",
     "lxml",
     "markdown",
@@ -90,7 +90,7 @@ dependencies = [
     "pyphonetics",
     "python-magic",
     "pytz",
-    "pyjwt",
+    "pyjwt~=2.15.1",
     "PyYAML>=6.0.2",
     "hl7apy",
     "pyzxcvbn",
@@ -114,7 +114,7 @@ dependencies = [
     "tropo-webapi-python",
     "turn-python",
     "twilio",
-    "werkzeug",
+    "werkzeug~=3.1.9",
     "xlrd",
     "xlwt",
 ]
@@ -125,6 +125,12 @@ Documentation = "https://commcare-hq.readthedocs.io"
 Repository = "https://github.com/dimagi/commcare-hq"
 
 [tool.uv]
+constraint-dependencies = [
+    "oauthlib~=4.0.0",
+    "sqlparse~=0.6.0",
+    "tornado~=6.5.9",
+    "urllib3>=2.8.0,<3",
+]
 required-version = ">=0.7.0"
 default-groups = ["dev", "sso"]
 
@@ -146,7 +152,7 @@ docs = [
     "Sphinx",
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
-    "urllib3<=2.7.0", # fix doc tests AssertionError: Current app already created
+    "urllib3>=2.8.0,<3",
 ]
 prod = [
     "flower",
