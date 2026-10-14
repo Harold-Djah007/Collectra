@@ -8,6 +8,11 @@ on:
       - "collectra-hq/deployment/production/**"
       - "collectra-hq/Dockerfile_incl"
       - "collectra-hq/.dockerignore"
+      - "collectra-hq/corehq/blobs/**"
+      - "collectra-hq/corehq/ex-submodules/dimagi/utils/gitinfo.py"
+      - "collectra-hq/pyproject.toml"
+      - "collectra-hq/uv.lock"
+      - "collectra-hq/webpack/**"
       - ".github/workflows/production-deployment.yml"
   push:
     branches: [main]
@@ -16,6 +21,11 @@ on:
       - "collectra-hq/deployment/production/**"
       - "collectra-hq/Dockerfile_incl"
       - "collectra-hq/.dockerignore"
+      - "collectra-hq/corehq/blobs/**"
+      - "collectra-hq/corehq/ex-submodules/dimagi/utils/gitinfo.py"
+      - "collectra-hq/pyproject.toml"
+      - "collectra-hq/uv.lock"
+      - "collectra-hq/webpack/**"
       - ".github/workflows/production-deployment.yml"
 
 permissions:

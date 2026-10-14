@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from subprocess import PIPE, Popen
@@ -65,6 +66,14 @@ def sub_get_current_branch(git_dir):
 
 
 def get_project_snapshot(git_dir, submodules=False, log_count=1, submodule_count=1):
+    if not os.path.exists(os.path.join(git_dir, '.git')):
+        metadata = os.path.join(git_dir, '.collectra-build.json')
+        with open(metadata, encoding='utf-8') as source:
+            snapshot = json.load(source)
+        sha = snapshot['commits'][0]['sha']
+        if not re.fullmatch(r'[0-9a-f]{64}', sha):
+            raise ValueError('Invalid container source fingerprint')
+        return snapshot
     root_info = sub_git_info(git_dir, log_count=log_count)
     root_info['current_branch'] = sub_get_current_branch(git_dir)
     if submodules:

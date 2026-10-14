@@ -76,6 +76,7 @@ RUN mkdir /vendor/log
 RUN NODE_OPTIONS=--max-old-space-size=3072 yarn build
 RUN python manage.py compilejsi18n
 RUN python manage.py collectstatic --noinput
+RUN python deployment/production/write_build_metadata.py
 
 # Keep the compiler and build caches outside the runtime image.
 FROM runtime-base AS runtime

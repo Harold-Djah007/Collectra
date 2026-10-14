@@ -1,5 +1,6 @@
 """Verify native imports and compiled assets inside the production image."""
 import importlib
+import importlib.util
 import json
 import os
 import shutil
@@ -19,6 +20,11 @@ def main():
     if shutil.which("gcc") or shutil.which("g++"):
         raise RuntimeError("Compiler binaries should remain in the builder stage")
     root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        'build_gitinfo', root / 'corehq/ex-submodules/dimagi/utils/gitinfo.py')
+    gitinfo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gitinfo)
+    gitinfo.get_project_snapshot(str(root))
     for name, directory in (("manifest.json", "webpack"), ("manifest_b3.json", "webpack_b3")):
         manifest = json.loads((root / "webpack/_build" / name).read_text())
         if not manifest:
