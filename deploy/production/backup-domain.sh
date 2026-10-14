@@ -56,7 +56,15 @@ if [[ -z "$blob_archive" ]]; then
 fi
 
 gzip -t "$backup_root/postgres-all.sql.gz"
-unzip -t "$archive_path"
+python3 - "$archive_path" <<'PY'
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    damaged = archive.testzip()
+    if damaged is not None:
+        raise SystemExit(f"Corrupt ZIP member: {damaged}")
+PY
 tar -tzf "$blob_archive" >/dev/null
 (
     cd "$backup_root"

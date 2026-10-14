@@ -1,5 +1,6 @@
 """Read-only production service, disk, and backup checks for scheduled monitoring."""
 import argparse
+import hashlib
 import json
 import math
 import shutil
@@ -34,6 +35,26 @@ def backup_failure(root, domain, max_age_hours, now=None):
         return "Latest completed backup is overdue"
     if newest.stat().st_mtime > now + 300:
         return "Backup timestamp is in the future; check clock synchronization"
+    try:
+        directory = newest.parent.resolve()
+        lines = newest.read_text().splitlines()
+        if not lines:
+            return "Completed backup has an empty checksum manifest"
+        for line in lines:
+            digest, separator, name = line.partition("  ")
+            if not separator or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest.lower()):
+                return "Completed backup has an invalid checksum manifest"
+            target = (directory / name).resolve()
+            if not target.is_relative_to(directory) or not target.is_file():
+                return "Completed backup has a missing or unsafe archive path"
+            checksum = hashlib.sha256()
+            with target.open("rb") as archive:
+                for block in iter(lambda: archive.read(1024 * 1024), b""):
+                    checksum.update(block)
+            if checksum.hexdigest() != digest.lower():
+                return "Completed backup checksum does not match"
+    except OSError:
+        return "Completed backup could not be verified"
     return None
 
 

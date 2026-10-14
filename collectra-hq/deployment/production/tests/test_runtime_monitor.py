@@ -1,5 +1,6 @@
 """Exercise missing services and stale per-project backup detection."""
 import importlib.util
+import hashlib
 import os
 import tempfile
 import unittest
@@ -31,7 +32,9 @@ class RuntimeMonitorTest(unittest.TestCase):
         directory = root / f"{domain}-20261014T000000Z"
         directory.mkdir(exist_ok=True)
         manifest = directory / name
-        manifest.write_text("verified backup fixture")
+        archive = directory / "fixture.zip"
+        archive.write_bytes(b"verified backup fixture")
+        manifest.write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + "  ./fixture.zip\n")
         os.utime(manifest, (timestamp, timestamp))
 
     def test_fresh_backup_for_another_domain_cannot_mask_missing_backup(self):
@@ -71,3 +74,19 @@ class RuntimeMonitorTest(unittest.TestCase):
         for replies in ({}, [], {"worker": {"error": "unavailable"}}, {"worker": "invalid"}):
             with self.subTest(replies=replies):
                 self.assertFalse(monitor.worker_responded(replies))
+
+    def test_changed_backup_is_not_assumed_healthy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_manifest(root, "safisana", 100000)
+            (root / "safisana-20261014T000000Z/fixture.zip").write_bytes(b"corrupt")
+            self.assertIn("does not match", monitor.backup_failure(root, "safisana", 26, now=100001))
+
+    def test_manifest_cannot_read_files_outside_backup_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_manifest(root, "safisana", 100000)
+            manifest = root / "safisana-20261014T000000Z/SHA256SUMS"
+            manifest.write_text("0" * 64 + "  ../outside.zip\n")
+            os.utime(manifest, (100000, 100000))
+            self.assertIn("unsafe", monitor.backup_failure(root, "safisana", 26, now=100001))

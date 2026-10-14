@@ -264,6 +264,20 @@ non-root execution, native Python libraries, Java/Chrome/Node, and every compile
 Webpack asset. Runtime `uv run` does not sync/install dependencies at startup.
 CI jobs are configured locally; passing checks must be observed after publishing.
 
+On 2026-10-14 the local production image built successfully (982,757,461 bytes)
+and passed the runtime smoke checks. All 25 production unit tests passed in
+that Linux image with the repository mounted read-only. Backup ZIP validation
+uses Python's standard library; no additional `unzip` installation is required.
+
+The production Python lock was updated for Django, Django REST Framework,
+Kafka, OAuthlib, PyJWT, SQLParse, Tornado, urllib3, and Werkzeug security fixes.
+The patched public package set returned no known vulnerabilities in pip-audit.
+This excludes Git-pinned forks, operating-system packages, and JavaScript
+dependencies. The isolated patched environment passed 52 focused
+authentication, scope, dashboard-permission, and JWT regression tests.
+Broader database-backed API tests still require a completed rerun: WSL timed
+out before the test-database initialization attempt could execute.
+
 A local PostgreSQL restore rehearsal on 2026-10-14 restored the custom-format
 snapshot into a disposable, network-isolated PostgreSQL 14 container. Ordered
 row fingerprints matched 84,309 form records, 6,032 case records, and 1,335
