@@ -1,4 +1,5 @@
 const { merge } = require('webpack-merge');
+const TerserPlugin = require('terser-webpack-plugin');
 const common = require('./webpack.common');
 const b3Common = require('./webpack.b3.common');
 const utils = require("./utils");
@@ -12,6 +13,9 @@ module.exports = [
         common, {
             mode: 'production',
             devtool: 'source-map',
+            optimization: {
+                minimizer: [new TerserPlugin({ parallel: false })],
+            },
             performance: {
                 // for now we'll disable bundle size warnings until we
                 // are ready to implement recommended optimizations
@@ -29,6 +33,9 @@ module.exports = [
         b3Common, {
             mode: 'production',
             devtool: 'source-map',
+            optimization: {
+                minimizer: [new TerserPlugin({ parallel: false })],
+            },
             performance: {
                 hints: false,
             },
@@ -39,3 +46,5 @@ module.exports = [
             },
         }),
 ];
+
+module.exports.parallelism = 1;

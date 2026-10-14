@@ -1,11 +1,13 @@
 name: Production deployment validation
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "deploy/production/**"
       - "collectra-hq/deployment/production/**"
       - "collectra-hq/Dockerfile_incl"
+      - "collectra-hq/.dockerignore"
       - ".github/workflows/production-deployment.yml"
   push:
     branches: [main]
@@ -13,6 +15,7 @@ on:
       - "deploy/production/**"
       - "collectra-hq/deployment/production/**"
       - "collectra-hq/Dockerfile_incl"
+      - "collectra-hq/.dockerignore"
       - ".github/workflows/production-deployment.yml"
 
 permissions:
@@ -32,7 +35,10 @@ jobs:
         run: cp deploy/production/.env.example deploy/production/.env
 
       - name: Validate shell scripts
-        run: bash -n deploy/production/*.sh
+        run: |
+          for script in deploy/production/*.sh; do
+            bash -n "$script"
+          done
 
       - name: Validate Python configuration syntax
         run: python -m py_compile collectra-hq/deployment/production/localsettings.py
@@ -53,3 +59,23 @@ jobs:
           -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro"
           caddy:2.8.4-alpine
           caddy validate --config /etc/caddy/Caddyfile
+
+  production-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: collectra-hq
+          file: collectra-hq/Dockerfile_incl
+          tags: collectra-hq:validation
+          load: true
+          cache-from: type=gha,scope=collectra-production
+          cache-to: type=gha,mode=max,scope=collectra-production
+      - name: Smoke-test the non-root runtime and compiled assets
+        run: >-
+          docker run --rm collectra-hq:validation
+          uv run python deployment/production/image_smoke.py

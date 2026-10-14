@@ -19,32 +19,24 @@ ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/vendor
 
-FROM base AS builder
-
-RUN mkdir /vendor
-
+FROM base AS runtime-base
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends curl gnupg \
-  && curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends \
-     # allows uv to build dependencies; increases image size by 240 MB
-     build-essential \
-     bzip2 \
-     default-jre \
-     gettext \
-     git \
-     google-chrome-stable \
-     libmagic1 \
-     libpq5 \
-     # for xmlsec on Python 3.13
-     libxml2 libxmlsec1 libxmlsec1-openssl \
-     make \
-  && rm -rf /var/lib/apt/lists/* /src/*.deb
+    && apt-get install -y --no-install-recommends curl gnupg \
+    && curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       bzip2 default-jre gettext git google-chrome-stable libmagic1 libpq5 \
+       libxml2 libxmlsec1 libxmlsec1-openssl \
+    && rm -rf /var/lib/apt/lists/*
+RUN groupadd -r cchq && useradd -r -m -g cchq cchq
 
-# Deletes all package sources, so don't apt-get install anything after this:
-RUN rm -rf /var/lib/apt/lists/* /src/*.deb
+FROM runtime-base AS builder
+RUN mkdir /vendor /sharedfiles \
+    && chown cchq:cchq /vendor /sharedfiles
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential make \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Node
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" && \
@@ -69,38 +61,28 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --locked --group=prod --no-dev --project=/tmp-project --no-install-project \
   && rm -rf /tmp-project
 
-RUN mkdir /sharedfiles
-RUN groupadd -r cchq && \
-    useradd -r -m -g cchq cchq && \
-    chown cchq:cchq /vendor /sharedfiles
+RUN mkdir -p /home/cchq/.cache && chown cchq:cchq /home/cchq/.cache
 USER cchq:cchq
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
-COPY --chown=cchq:cchq package.json /vendor/
-RUN npm shrinkwrap && \
-    yarn global add phantomjs-prebuilt && \
+COPY --chown=cchq:cchq package.json yarn.lock /vendor/
+RUN --mount=type=cache,target=/home/cchq/.cache/yarn,mode=0777 \
     yarn install --frozen-lockfile
 
 COPY --chown=cchq:cchq . /vendor/
 COPY --chown=cchq:cchq docker/min_settings.py /vendor/localsettings.py
 RUN mkdir /vendor/log
-RUN yarn build
+RUN NODE_OPTIONS=--max-old-space-size=3072 yarn build
 RUN python manage.py compilejsi18n
 RUN python manage.py collectstatic --noinput
 
 # Keep the compiler and build caches outside the runtime image.
-FROM base AS runtime
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl gnupg \
-    && curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-       bzip2 default-jre gettext git google-chrome-stable libmagic1 libpq5 \
-       libxml2 libxmlsec1 libxmlsec1-openssl \
-    && rm -rf /var/lib/apt/lists/*
-RUN groupadd -r cchq && useradd -r -m -g cchq cchq
+FROM runtime-base AS runtime
 COPY --from=builder /usr/local/ /usr/local/
 COPY --from=builder --chown=cchq:cchq /vendor/ /vendor/
 COPY --from=builder --chown=cchq:cchq /sharedfiles/ /sharedfiles/
 WORKDIR /vendor
+ENV UV_NO_SYNC=1 \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 USER cchq:cchq
