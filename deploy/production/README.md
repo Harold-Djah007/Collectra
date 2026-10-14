@@ -265,7 +265,7 @@ Webpack asset. Runtime `uv run` does not sync/install dependencies at startup.
 CI jobs are configured locally; passing checks must be observed after publishing.
 
 On 2026-10-14 the local production image built successfully (982,757,461 bytes)
-and passed the runtime smoke checks. All 25 production unit tests passed in
+and passed the runtime smoke checks. All 28 production unit tests passed in
 that Linux image with the repository mounted read-only. Backup ZIP validation
 uses Python's standard library; no additional `unzip` installation is required.
 
@@ -275,16 +275,38 @@ The patched public package set returned no known vulnerabilities in pip-audit.
 This excludes Git-pinned forks, operating-system packages, and JavaScript
 dependencies. The isolated patched environment passed 52 focused
 authentication, scope, dashboard-permission, and JWT regression tests.
-Broader database-backed API tests still require a completed rerun: WSL timed
-out before the test-database initialization attempt could execute.
+The broader suite subsequently passed all 80 API authentication, receiver,
+integration-authentication, JWT, blob-import, and SQL-loader tests in disposable Docker
+services. Fresh test-database initialization and indexes were rebuilt with the
+patched dependency lock; the current project databases were not used.
+Kafka-backed form fixtures used a separate broker. SQL-loader regressions cover
+natural-key relationships, duplicate-looking transactions, and rollback of
+earlier records after a failed insert.
+
+The image records a deterministic source fingerprint so fresh database
+initialization/preindexing works without a Git checkout. Blob importing uses
+forward-only archive streams without retaining every archive entry in memory.
+Single-database SQL restoration executes directly in one transaction rather than
+waiting on an unnecessary process queue; partitioned installations retain their
+existing parallel path.
 
 A local PostgreSQL restore rehearsal on 2026-10-14 restored the custom-format
 snapshot into a disposable, network-isolated PostgreSQL 14 container. Ordered
 row fingerprints matched 84,309 form records, 6,032 case records, and 1,335
 migration records; both SQL attachment tables were empty. The original database
-was not modified. This validates PostgreSQL recovery, not off-host disaster
-recovery or restoration of CouchDB/BlobDB media. The logical domain and blob
-restore drill remains a separate acceptance requirement.
+was not modified. A subsequent isolated recovery restored the project CouchDB
+documents and BlobDB archive alongside this snapshot: all 178 project documents
+matched the export, and all 87,995 blobs (284,679,705 bytes) matched byte for byte.
+The logical project ZIP was also restored into an empty project schema with
+the normal global permission seed initialized. All 233,245 exported objects
+loaded successfully, including 84,155 Safisana forms and 5,934 cases. A fresh
+export from the restored project matched all 233,067 SQL objects using canonical
+JSON fingerprints, including duplicate multiplicities. All 178 project
+documents and 87,995 blobs were independently compared again. Disposable
+services used an internal network without published ports and were removed
+after validation; the current project data was not modified.
+Off-host disaster recovery and final-host storage configuration must still be
+verified after hosting is available.
 
 ## Bounded HTTP performance check
 

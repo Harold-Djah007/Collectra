@@ -59,6 +59,29 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      zookeeper:
+        image: zookeeper:3.7
+        env:
+          JVMFLAGS: -Xms128m -Xmx256m
+      kafka:
+        image: confluentinc/cp-kafka:7.2.14
+        env:
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_BROKER_ID: "1"
+          KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+          KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+        ports:
+          - 9092:9092
+        options: >-
+          --health-cmd "cub kafka-ready -b 127.0.0.1:9092 1 10"
+          --health-interval 10s
+          --health-timeout 15s
+          --health-retries 15
+          --health-start-period 30s
     defaults:
       run:
         working-directory: collectra-hq
@@ -128,6 +151,9 @@ jobs:
           CCHQ_IS_FRESH_INSTALL: "1"
         run: uv run python manage.py migrate --noinput --no-reindex
 
+      - name: Initialize Kafka topics for form-backed fixtures
+        run: uv run python manage.py create_kafka_topics
+
       - name: Run focused HQ tests
         run: |
           if [ ! -e "$GITHUB_WORKSPACE/collectra-hq/.git" ]; then
@@ -151,7 +177,13 @@ jobs:
             corehq/apps/app_manager/tests/test_reconcile_safisana_reopen_request.py \
             corehq/apps/dashboard/tests/test_dashboard_permissions.py \
             corehq/apps/dashboard/tests/test_operational_alerts.py \
-            corehq/apps/dashboard/tests/test_reopen_requests.py
+            corehq/apps/dashboard/tests/test_reopen_requests.py \
+            corehq/motech/tests/test_auth.py \
+            corehq/apps/receiverwrapper/tests/test_auth.py \
+            corehq/apps/api/tests/test_auth.py \
+            corehq/blobs/tests/test_blob_import.py \
+            corehq/apps/dump_reload/tests/test_sql_data_loader.py \
+            corehq/tests/test_security_dependency_guards.py
 
       - name: Check Django configuration
         run: uv run python manage.py check --deploy
