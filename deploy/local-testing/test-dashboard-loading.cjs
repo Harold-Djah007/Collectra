@@ -69,6 +69,7 @@ assert.equal(requests.length, 0);
 // Initial alert refresh cannot overlap, and a failed request can be retried.
 let initialize;
 let alerts;
+let scheduledRefreshes = 0;
 const pending = [];
 const dom = function (target) {
     if (typeof target === 'function') { initialize = target; return; }
@@ -87,10 +88,11 @@ dom.ajax = options => {
 const page = {$: dom, ko: {observable, observableArray: observable, pureComputed: fn => fn},
     _: {map: (items, fn) => items.map(fn), filter: (items, fn) => items.filter(fn)},
     initialPageData: {get: () => [], reverse: name => name},
-    document: {hidden: false}, window: {setInterval: () => {}}};
+    document: {hidden: false}, window: {setInterval: () => { scheduledRefreshes += 1; }}};
 vm.createContext(page);
 vm.runInContext(source.replace(/^import .*;.*$/gm, ''), page);
 initialize();
+assert.equal(scheduledRefreshes, 0, 'Dashboard alerts must not refresh automatically');
 alerts.refresh();
 assert.equal(pending.length, 1);
 pending[0].callbacks.fail(); pending[0].callbacks.always();

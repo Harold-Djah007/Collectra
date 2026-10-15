@@ -204,9 +204,6 @@ $(function () {
         };
         alertsPanel.koApplyBindings(alertsModel);
         alertsModel.refresh();
-        window.setInterval(function () {
-            if (!document.hidden) { alertsModel.refresh(); }
-        }, 60000);
     }
 
     var reopenPanel = $("#reopen-requests");

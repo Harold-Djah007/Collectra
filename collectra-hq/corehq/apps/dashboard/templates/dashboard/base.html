@@ -9,7 +9,7 @@
 <link type="text/css"
       rel="stylesheet"
       media="all"
-      href="{% static 'dashboard/css/dashboard.css' %}?v=20261013e" />
+      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015a" />
 {% endblock stylesheets %}
 
 {% block content %}
@@ -58,7 +58,7 @@
           <div>
             <p class="collectra-alerts-eyebrow">Safisana operations</p>
             <h2>Operational overview</h2>
-            <p>Morning Checks, Metering Round and Incident Reports · recent submissions within 14 days</p>
+            <p>Checks, metering & incidents · last 14 days</p>
           </div>
           <div class="collectra-alerts-controls">
             <span class="collectra-last-updated" data-bind="visible: lastUpdated, text: lastUpdated"></span>
@@ -69,7 +69,7 @@
         </div>
         <details class="collectra-data-scope">
           <summary>About this overview</summary>
-          <p>Shows up to 20 alerts from the latest 150 submissions per database. Counts describe this list; form reports contain the full history.</p>
+          <p>Updates when you open this dashboard or select Refresh. Shows up to 20 alerts from the latest 150 submissions per database. Counts describe this list; form reports contain the full history.</p>
         </details>
         <div class="collectra-alerts-summary" data-bind="visible: !loading() &amp;&amp; !error()">
           <button type="button" class="collectra-summary-item collectra-summary-reported" data-bind="click: showAll, css: {'is-selected': selectedSeverity() === 'all'}, attr: {'aria-pressed': selectedSeverity() === 'all'}">
@@ -115,12 +115,12 @@
 
     {% if show_reopen_requests %}
       <section id="reopen-requests" class="collectra-alerts collectra-reopen-requests"
-               aria-label="Drying-bed reopening requests">
+               aria-label="Drying-bed reopening requests" data-bind="css: {'is-history': activeView() === 'history'}">
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow">Supervisor review</p>
             <h2>Reopening requests <span class="collectra-request-count" data-bind="text: pendingCountLabel"></span></h2>
-            <p>Drying-bed cases awaiting review, with handled requests in History</p>
+            <p>Review closed beds and batches</p>
           </div>
           <div class="collectra-alerts-controls">
             <a class="collectra-reopen-cases-link" href="{% url 'project_report_dispatcher' domain 'case_list' %}">
@@ -152,61 +152,65 @@
           No handled reopening requests yet.
         </p>
         <div class="collectra-alerts-list" data-bind="foreach: visibleRequests, visible: !error()">
-          <article class="collectra-alert">
-            <div class="collectra-alert-summary">
-              <strong data-bind="text: bedLabel"></strong>
-              <time data-bind="text: when, attr: {datetime: received_on}"></time>
-            </div>
-            <strong class="collectra-reopen-status" data-bind="text: statusLabel, css: status"></strong>
-            <p class="collectra-reopen-meta" data-bind="visible: date">
-              Batch start date: <span data-bind="text: date"></span>
-            </p>
-            <p class="collectra-reopen-meta" data-bind="visible: name">
-              Worker-provided batch name: <span data-bind="text: name"></span>
-            </p>
-            <p class="collectra-alert-note" data-bind="text: reason"></p>
-            <a data-bind="attr: {href: url}">Review request submission <span aria-hidden="true">→</span></a>
-            <button type="button" class="collectra-reopen-action" data-bind="visible: status === 'pending', click: toggleReview, attr: {'aria-expanded': reviewOpen}">
-              Review and reopen case
-            </button>
-            <div class="collectra-reopen-review" data-bind="visible: reviewOpen">
-              <label>Bed or batch name
-                <input type="text" maxlength="120" autocomplete="off" data-bind="textInput: searchName" placeholder="Enter all or part of the name" />
-              </label>
-              <button type="button" class="collectra-refresh" data-bind="click: findCases, disable: suggestionsLoading">Find bed or batch</button>
-              <div>
-                <p>Select the original closed bed or batch, then review its history.</p>
-                <p data-bind="visible: suggestionsLoading">Looking for closed cases…</p>
-                <p data-bind="visible: suggestionsError" role="alert">Could not load matching beds or batches. Try searching again.</p>
-                <ul class="collectra-reopen-suggestions" data-bind="foreach: suggestions">
-                  <li><button type="button" data-bind="click: $parent.chooseCase">
-                    <strong data-bind="text: name"></strong>
-                    <small data-bind="text: openedLabel"></small>
-                    <small data-bind="text: closedLabel"></small>
-                  </button></li>
-                </ul>
-                <p data-bind="visible: suggestionsLoaded() &amp;&amp; !suggestions().length">
-                  No closed bed or batch matches this name. Try another part of the name.
+          <article class="collectra-alert collectra-request-row">
+            <details class="collectra-request-details" data-bind="attr: {open: status === 'pending' ? '' : null}">
+              <summary class="collectra-request-heading">
+                <strong data-bind="text: bedLabel"></strong>
+                <span class="collectra-reopen-status" data-bind="text: statusLabel, css: status"></span>
+                <time data-bind="text: when, attr: {datetime: received_on}"></time>
+              </summary>
+              <div class="collectra-request-body">
+                <p class="collectra-reopen-meta" data-bind="visible: date">
+                  Batch start date: <span data-bind="text: date"></span>
                 </p>
-              </div>
-              <p data-bind="visible: checking">Checking the selected bed or batch…</p>
-              <p role="alert" data-bind="visible: reviewError, text: reviewError"></p>
-              <div data-bind="with: candidate">
-                <p><strong>Selected bed or batch:</strong> <span data-bind="text: case_name"></span></p>
-                <p><a data-bind="attr: {href: case_url}" target="_blank" rel="noopener">Check case history</a>
-                   · <a data-bind="attr: {href: form_url}" target="_blank" rel="noopener">Inspect closing submission and readings</a></p>
-                <form method="post" action="{% url 'dashboard_reopen_approved' domain %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="request_id" data-bind="value: $parent.form_id" />
-                  <input type="hidden" name="case_id" data-bind="value: case_id" />
-                  <input type="hidden" name="closing_form_id" data-bind="value: closing_form_id" />
-                  <label><input type="checkbox" name="acknowledge_archive" value="yes" required />
-                    I checked this is the original case and reviewed the closing form. Archiving that whole form removes its readings from active reports.
+                <p class="collectra-reopen-meta" data-bind="visible: name">
+                  Worker-provided batch name: <span data-bind="text: name"></span>
+                </p>
+                <p class="collectra-alert-note" data-bind="text: reason"></p>
+                <a data-bind="attr: {href: url}">Review request submission <span aria-hidden="true">→</span></a>
+                <button type="button" class="collectra-reopen-action" data-bind="visible: status === 'pending', click: toggleReview, attr: {'aria-expanded': reviewOpen}">
+                  Review and reopen case
+                </button>
+                <div class="collectra-reopen-review" data-bind="visible: reviewOpen">
+                  <label>Bed or batch name
+                    <input type="text" maxlength="120" autocomplete="off" data-bind="textInput: searchName" placeholder="Enter all or part of the name" />
                   </label>
-                  <button type="submit" class="collectra-reopen-confirm">Archive closing form and reopen this case</button>
-                </form>
+                  <button type="button" class="collectra-refresh" data-bind="click: findCases, disable: suggestionsLoading">Find bed or batch</button>
+                  <div>
+                    <p>Select the original closed bed or batch, then review its history.</p>
+                    <p data-bind="visible: suggestionsLoading">Looking for closed cases…</p>
+                    <p data-bind="visible: suggestionsError" role="alert">Could not load matching beds or batches. Try searching again.</p>
+                    <ul class="collectra-reopen-suggestions" data-bind="foreach: suggestions">
+                      <li><button type="button" data-bind="click: $parent.chooseCase">
+                        <strong data-bind="text: name"></strong>
+                        <small data-bind="text: openedLabel"></small>
+                        <small data-bind="text: closedLabel"></small>
+                      </button></li>
+                    </ul>
+                    <p data-bind="visible: suggestionsLoaded() &amp;&amp; !suggestions().length">
+                      No closed bed or batch matches this name. Try another part of the name.
+                    </p>
+                  </div>
+                  <p data-bind="visible: checking">Checking the selected bed or batch…</p>
+                  <p role="alert" data-bind="visible: reviewError, text: reviewError"></p>
+                  <div data-bind="with: candidate">
+                    <p><strong>Selected bed or batch:</strong> <span data-bind="text: case_name"></span></p>
+                    <p><a data-bind="attr: {href: case_url}" target="_blank" rel="noopener">Check case history</a>
+                       · <a data-bind="attr: {href: form_url}" target="_blank" rel="noopener">Inspect closing submission and readings</a></p>
+                    <form method="post" action="{% url 'dashboard_reopen_approved' domain %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="request_id" data-bind="value: $parent.form_id" />
+                      <input type="hidden" name="case_id" data-bind="value: case_id" />
+                      <input type="hidden" name="closing_form_id" data-bind="value: closing_form_id" />
+                      <label><input type="checkbox" name="acknowledge_archive" value="yes" required />
+                        I checked this is the original case and reviewed the closing form. Archiving that whole form removes its readings from active reports.
+                      </label>
+                      <button type="submit" class="collectra-reopen-confirm">Archive closing form and reopen this case</button>
+                    </form>
+                  </div>
+                </div>
               </div>
-            </div>
+            </details>
           </article>
         </div>
         <button type="button" class="collectra-reopen-more" data-bind="visible: activeView() === 'history' &amp;&amp; historyNextCursor(), click: loadOlderHistory, disable: loading">
