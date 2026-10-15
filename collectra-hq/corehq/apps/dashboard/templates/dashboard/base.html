@@ -9,7 +9,7 @@
 <link type="text/css"
       rel="stylesheet"
       media="all"
-      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015b" />
+      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015c" />
 {% endblock stylesheets %}
 
 {% block content %}
@@ -28,10 +28,14 @@
     <header class="collectra-project-header">
       <div class="collectra-project-brand">
         <h1 class="collectra-project-logo">
-          <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" width="52" height="52" />
+          <svg class="collectra-brand-seal" viewBox="0 0 160 145" role="img" aria-labelledby="collectra-seal-title">
+            <title id="collectra-seal-title">{% trans "Build forms. Collect data. Make an impact." %}</title>
+            <defs><path id="collectra-motto-arc" d="M 12,57 A 68,68 0 0,0 148,57" /></defs>
+            <image href="{% static 'hqwebapp/images/collectra-logo.svg' %}" x="43" y="20" width="74" height="74" />
+            <text><textPath href="#collectra-motto-arc" startOffset="50%" text-anchor="middle">{% trans "Build forms. Collect data. Make an impact." %}</textPath></text>
+          </svg>
           <span>Collectra</span>
         </h1>
-        <p class="collectra-project-description">{% trans "Build forms. Collect data. Make an impact." %}</p>
       </div>
       {% if show_create_form %}
         <div class="collectra-quick-actions">

@@ -178,13 +178,19 @@ a.collectra-card-title:hover { color: #087e7c; text-decoration: underline; }
   .collectra-summary-item > span:nth-child(2) { gap: 2px 5px; }
 }
 
-/* Collectra identity and motto anchor the dashboard masthead. */
+/* Open masthead with the motto following the circular brand mark. */
 .collectra-project-brand { min-width: 0; }
-#hq-content .collectra-project-logo { display: flex; align-items: center; gap: 12px; font-weight: 600; }
-.collectra-project-logo img { width: 52px; height: 52px; flex: 0 0 52px; padding: 5px; border-radius: 50%; background: #fff; }
-.collectra-project-brand .collectra-project-description { margin-top: 9px; }
+.collectra-project-header { padding: 0 0 14px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#hq-content .collectra-project-logo { display: flex; align-items: center; gap: 4px; color: #123344; font-weight: 600; }
+.collectra-brand-seal { width: 160px; height: 145px; flex: 0 0 160px; overflow: visible; }
+.collectra-brand-seal text { fill: #38616a; font-family: system-ui, sans-serif; font-size: 9px; font-weight: 500; letter-spacing: .12px; }
 .collectra-project-header .collectra-quick-actions { flex-shrink: 0; margin-left: auto; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary { background: #087e7c; border-color: #087e7c; color: #fff; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary:hover { background: #076967; border-color: #076967; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary) { background: #fff; border-color: #b7cbd0; color: #25495a; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary):hover { background: #e9f3f2; border-color: #087e7c; }
+.collectra-dashboard-page .collectra-project-header a:focus-visible { outline-color: #087e7c; }
 @media (max-width: 640px) {
-  .collectra-project-logo img { width: 42px; height: 42px; flex-basis: 42px; }
+  .collectra-project-header { padding: 0 0 14px; gap: 8px; }
   .collectra-project-header .collectra-quick-actions { margin-left: 0; }
 }
