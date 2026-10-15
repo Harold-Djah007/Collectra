@@ -147,7 +147,7 @@ def check_celery():
                 blockage_duration = heartbeat.get_and_report_blockage_duration()
                 heartbeat_time_to_start = heartbeat.get_and_report_time_to_start()
             except HeartbeatNeverRecorded:
-                bad_queues.append(f"{queue} has been blocked as long as we can see (max allowed is {threshold})")
+                bad_queues.append(f"No heartbeat recorded for {queue}. Check Celery Beat and the worker queue configuration.")
             else:
                 # We get a lot of self-resolving celery "downtime" under 5 minutes
                 # so to make actionable, we never alert on blockage under 5 minutes

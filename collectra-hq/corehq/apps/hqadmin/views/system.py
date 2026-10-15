@@ -1,3 +1,4 @@
+import logging
 import socket
 from collections import defaultdict, namedtuple
 
@@ -7,6 +8,7 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html_join
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
@@ -56,7 +58,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['couch_update'] = self.request.GET.get('couch_update', 5000)
         context['celery_update'] = self.request.GET.get('celery_update', 10000)
         context['db_update'] = self.request.GET.get('db_update', 30000)
-        context['self.request'] = getattr(settings, 'CELERY_FLOWER_URL', None)
+        context['celery_monitoring'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
         context['is_bigcouch'] = is_bigcouch()
         context['hide_filters'] = True
@@ -116,7 +118,12 @@ def system_ajax(request):
     elif type == "_logs":
         pass
     elif type == 'pillowtop':
-        pillow_meta = get_all_pillows_json()
+        try:
+            pillow_meta = get_all_pillows_json(include_errors=True)
+        except Exception:
+            logging.getLogger(__name__).exception("Unable to read background worker status")
+            return JsonResponse({'error': 'Worker status is unavailable. Check Kafka connectivity and server logs.'},
+                                status=503)
         return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()), safe=False)
 
     if celery_monitoring:
@@ -153,13 +160,13 @@ def check_services(request):
         else:
             status = "SUCCESS" if result.success else "FAILURE"
             msg = result.msg
-        return "{} (Took {:6.2f}s) {:15}: {}<br/>".format(status, result.duration, service_name, msg)
+        return (status, f"{result.duration:.2f}", service_name, msg)
 
     statuses = run_checks(list(service_checks.CHECKS))
     results = [
         get_message(name, status) for name, status in statuses
     ]
-    return HttpResponse("<pre>" + "".join(results) + "</pre>")
+    return HttpResponse(format_html_join("", "{} (Took {}s) {}: {}<br/>", results))
 
 
 @require_POST

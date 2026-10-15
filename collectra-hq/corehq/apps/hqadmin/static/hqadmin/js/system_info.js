@@ -120,7 +120,7 @@ function activeTaskModel(data) {
 function designDocModel(data) {
     var self = {};
     self.designDocument = ko.observable(data.design_document);
-    self.detailsId = self.design_document() + '_details';
+    self.detailsId = self.designDocument() + '_details';
     var tasks = _(data.tasks).map(function (task) {
         return activeTaskModel(task);
     });
@@ -175,7 +175,7 @@ function pillowProgress(name, dbOffset, seq) {
     };
 
     self.width = function () {
-        return (self.seq * 100) / self.dbOffset;
+        return self.dbOffset > 0 ? Math.min(100, Math.max(0, (self.seq * 100) / self.dbOffset)) : 100;
     };
 
     self.status = function () {
@@ -199,6 +199,8 @@ function pillowModel(pillow) {
     self.seq = ko.observable();
     self.offsets = ko.observable();
     self.timeSinceLast = ko.observable();
+    self.hoursSinceLast = ko.observable();
+    self.error = ko.observable();
     self.operationInProgress = ko.observable(false);
     self.progress = ko.observableArray();
 
@@ -207,7 +209,9 @@ function pillowModel(pillow) {
         self.seq_format(data.seq_format);
         self.seq(data.seq);
         self.offsets(data.offsets);
-        self.timeSinceLast(data.timeSinceLast);
+        self.timeSinceLast(data.time_since_last || 'No checkpoint recorded');
+        self.hoursSinceLast(data.hours_since_last);
+        self.error(data.error || '');
 
         self.progress([]);
         if (self.seq_format() === 'json') {
@@ -229,7 +233,9 @@ function pillowModel(pillow) {
     self.update(pillow);
 
     self.checkpointStatusCss = ko.computed(function () {
-        var hours = pillow.hours_since_last;
+        var hours = self.hoursSinceLast();
+        if (self.error()) { return 'label-danger'; }
+        if (hours === null || hours === undefined) { return 'label-default'; }
         switch (true) {
             case (hours <= 1):
                 return 'label-success';
@@ -244,7 +250,7 @@ function pillowModel(pillow) {
 
     self.overallStatus = ko.computed(function () {
         var statusCombined = self.checkpointStatusCss();
-        if (statusCombined.indexOf('important') !== -1) {
+        if (statusCombined.indexOf('danger') !== -1) {
             return 'error';
         } else if (statusCombined.indexOf('warning') !== -1) {
             return 'warning';

@@ -18,8 +18,12 @@
       {% with deploy_history|first as last_deploy %}
         <div class="alert alert-info clearfix">
           <a href="{% url 'check_services' %}" target="_blank" class="btn btn-default pull-right">Check services</a>
-          Last deployed on {{ last_deploy.date|date:"d M Y" }}
-          at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}
+          {% if last_deploy %}
+            Last deployed on {{ last_deploy.date|date:"d M Y" }}
+            at {{ last_deploy.date|date:"H:i:s" }} UTC ({{ last_deploy.date|naturaltime }}) by {{ last_deploy.user }}
+          {% else %}
+            No deployment history has been recorded for this environment.
+          {% endif %}
         </div>
       {% endwith %}
     </div>
@@ -35,7 +39,6 @@
         <table class="table table-striped">
           <thead>
           <tr>
-            <th></th>
             <th>Quick Links</th>
             <th>Current Worker</th>
             <th>Redis Status</th>
@@ -45,12 +48,11 @@
           </thead>
           <tbody>
           <tr>
-            <td><img src="{% static 'hqwebapp/images/dm.jpg' %}" alt="dan's legacy"></td>
             <td>
               <ul>
                 <li>
                   <div id="autorefresh">
-                    Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
+                    Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a>
                   </div>
                 </li>
                 <li>
@@ -65,7 +67,9 @@
               {{ redis.msg }}
             </td>
             <td>
-              {{ celery_stats }}<br>
+              {% if celery_stats %}{{ celery_stats }}
+              {% elif celery_monitoring %}Worker monitoring is unavailable.
+              {% else %}Detailed worker monitoring is not configured.{% endif %}
             </td>
             <td>
               <dl class="dl-horizontal">
@@ -134,7 +138,10 @@
           <tbody data-bind="foreach: models">
           <tr data-bind="css: overallStatus, attr: {id: name}">
             <td><code data-bind="text: name"></code></td>
-            <td><label data-bind="text: timeSinceLast, css: checkpointStatusCss" class="label"></label></td>
+            <td>
+              <span data-bind="visible: error, text: error" class="text-danger"></span>
+              <span data-bind="visible: !error(), text: timeSinceLast, css: checkpointStatusCss" class="label"></span>
+            </td>
             <td class="col-md-6" data-bind="foreach: progress">
               <div class="row">
                 <div class="col-sm-4">

@@ -145,7 +145,7 @@ def safe_force_seq_int(seq, default=None):
         return default
 
 
-def get_all_pillows_json(active_only=True):
+def get_all_pillows_json(active_only=True, include_errors=False):
     pillow_configs = get_all_pillow_configs()
     active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
     if active_only and active_pillows:
@@ -153,10 +153,24 @@ def get_all_pillows_json(active_only=True):
 
     consumer = get_kafka_consumer()
     with consumer:
-        return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
+        available_topics = consumer.topics() if include_errors else None
+        results = []
+        for config in pillow_configs:
+            try:
+                results.append(get_pillow_json(config, consumer, available_topics=available_topics))
+            except Exception:
+                if not include_errors:
+                    raise
+                pillow_logging.exception("Unable to read status for pillow %s", config.name)
+                results.append({
+                    'name': config.name, 'seq_format': 'json', 'seq': None, 'offsets': {},
+                    'seconds_since_last': None, 'time_since_last': '', 'hours_since_last': None,
+                    'error': 'Status unavailable. Check this worker configuration and Kafka topics.',
+                })
+        return results
 
 
-def get_pillow_json(pillow_config, consumer=None):
+def get_pillow_json(pillow_config, consumer=None, available_topics=None):
     assert isinstance(pillow_config, PillowConfig)
 
     def _is_kafka(checkpoint):
@@ -185,6 +199,10 @@ def get_pillow_json(pillow_config, consumer=None):
         hours_since_last = None
 
     if _is_kafka(checkpoint):
+        if available_topics is not None:
+            missing = {tp.topic for tp in checkpoint.wrapped_sequence} - available_topics
+            if missing:
+                raise ValueError("Kafka topics unavailable: " + ", ".join(sorted(missing)))
         # breaking composition boundaries so that we can use one Kafka connection
         offsets = {
             "{},{}".format(tp.topic, tp.partition): offset
