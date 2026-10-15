@@ -9,7 +9,7 @@
 <link type="text/css"
       rel="stylesheet"
       media="all"
-      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015a" />
+      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015b" />
 {% endblock stylesheets %}
 
 {% block content %}
@@ -26,10 +26,12 @@
 <div class="container-fluid collectra-dashboard-page" id="hq-content">
   <div class="collectra-dashboard-inner">
     <header class="collectra-project-header">
-      <div>
-        <p class="collectra-project-context">{{ domain }} <span aria-hidden="true">/</span> {% trans "Dashboard" %}</p>
-        <h1>{% trans "Project overview" %}</h1>
-        <p class="collectra-project-description">{% trans "Recent activity and items requiring review." %}</p>
+      <div class="collectra-project-brand">
+        <h1 class="collectra-project-logo">
+          <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" width="52" height="52" />
+          <span>Collectra</span>
+        </h1>
+        <p class="collectra-project-description">{% trans "Build forms. Collect data. Make an impact." %}</p>
       </div>
       {% if show_create_form %}
         <div class="collectra-quick-actions">

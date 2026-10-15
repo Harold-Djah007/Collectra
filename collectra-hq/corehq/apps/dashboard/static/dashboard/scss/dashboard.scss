@@ -9,7 +9,7 @@
   line-height: 1.5;
 }
 .collectra-dashboard-inner { max-width: 1280px; margin: 0 auto; }
-.collectra-project-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 36px 34px; border: 1px solid #183f50; border-radius: 12px; background: #123344; box-shadow: 0 8px 24px rgba(18, 51, 68, .12); }
+.collectra-project-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 28px 34px; border: 1px solid #183f50; border-radius: 12px; background: #123344; box-shadow: 0 8px 24px rgba(18, 51, 68, .12); }
 .collectra-project-context { margin: 0 0 8px; color: #9cdbd2; font-size: 13px; font-weight: 600; }
 .collectra-project-context span { margin: 0 8px; color: #a1acb5; }
 #hq-content .collectra-project-header h1 { margin: 0; color: #fff; font-size: 36px; font-weight: 650; line-height: 1.25; letter-spacing: -.02em; }
@@ -176,4 +176,15 @@ a.collectra-card-title:hover { color: #087e7c; text-decoration: underline; }
   .collectra-alerts-controls { max-width: none; }
   .collectra-last-updated { flex-basis: auto; text-align: left; }
   .collectra-summary-item > span:nth-child(2) { gap: 2px 5px; }
+}
+
+/* Collectra identity and motto anchor the dashboard masthead. */
+.collectra-project-brand { min-width: 0; }
+#hq-content .collectra-project-logo { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.collectra-project-logo img { width: 52px; height: 52px; flex: 0 0 52px; padding: 5px; border-radius: 50%; background: #fff; }
+.collectra-project-brand .collectra-project-description { margin-top: 9px; }
+.collectra-project-header .collectra-quick-actions { flex-shrink: 0; margin-left: auto; }
+@media (max-width: 640px) {
+  .collectra-project-logo img { width: 42px; height: 42px; flex-basis: 42px; }
+  .collectra-project-header .collectra-quick-actions { margin-left: 0; }
 }
