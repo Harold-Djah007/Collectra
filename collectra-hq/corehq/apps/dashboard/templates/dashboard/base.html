@@ -9,7 +9,7 @@
 <link type="text/css"
       rel="stylesheet"
       media="all"
-      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015e" />
+      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015f" />
 {% endblock stylesheets %}
 
 {% block content %}
@@ -47,7 +47,6 @@
     <div class="collectra-overview-heading">
       <p class="collectra-project-context">{{ domain }} <span aria-hidden="true">/</span> {% trans "Workspace" %}</p>
       <h1>{% trans "Project overview" %}</h1>
-      <p>{% trans "Your operations, priorities and tools in one place." %}</p>
     </div>
 
     {% if is_paused %}
@@ -60,7 +59,17 @@
     <div class="collectra-status-grid" aria-label="Safisana activity">
     {% endif %}
     {% if show_operational_alerts %}
-      <section id="operational-alerts" class="collectra-alerts" aria-label="Operations needing attention">
+      <details id="operational-alerts" class="collectra-activity-disclosure collectra-alerts" aria-label="Operations needing attention">
+        <summary class="collectra-activity-heading">
+          <span class="collectra-activity-title">Operational overview</span>
+          <span class="collectra-activity-counts">
+            <span data-bind="visible: loading">Loading…</span>
+            <span data-bind="visible: error" style="display:none">Could not load · expand to retry</span>
+            <span data-bind="visible: !loading() &amp;&amp; !error()" style="display:none"><b data-bind="text: alerts().length"></b> recent issues <span class="collectra-activity-urgent" data-bind="visible: urgentCount()">· <b data-bind="text: urgentCount"></b> urgent</span></span>
+          </span>
+          <span class="collectra-activity-chevron" aria-hidden="true">›</span>
+        </summary>
+        <div class="collectra-activity-body">
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow">Safisana operations</p>
@@ -117,12 +126,23 @@
             <a data-bind="attr: {href: url}">View submission <span aria-hidden="true">→</span></a>
           </article>
         </div>
-      </section>
+        </div>
+      </details>
     {% endif %}
 
     {% if show_reopen_requests %}
-      <section id="reopen-requests" class="collectra-alerts collectra-reopen-requests"
+      <details id="reopen-requests" class="collectra-activity-disclosure collectra-alerts collectra-reopen-requests"
                aria-label="Drying-bed reopening requests" data-bind="css: {'is-history': activeView() === 'history'}">
+        <summary class="collectra-activity-heading">
+          <span class="collectra-activity-title">Reopening requests</span>
+          <span class="collectra-activity-counts">
+            <span data-bind="visible: loading">Loading…</span>
+            <span data-bind="visible: error" style="display:none">Could not load · expand to retry</span>
+            <span data-bind="visible: !loading() &amp;&amp; !error()" style="display:none"><b data-bind="text: pendingCountLabel"></b> awaiting review</span>
+          </span>
+          <span class="collectra-activity-chevron" aria-hidden="true">›</span>
+        </summary>
+        <div class="collectra-activity-body">
         <div class="collectra-alerts-header">
           <div>
             <p class="collectra-alerts-eyebrow">Supervisor review</p>
@@ -226,7 +246,8 @@
         <button type="button" class="collectra-reopen-more" data-bind="visible: activeView() === 'pending' &amp;&amp; pendingNextCursor(), click: loadOlderPending, disable: loading">
           Load more requests
         </button>
-      </section>
+        </div>
+      </details>
     {% endif %}
     {% if show_operational_alerts or show_reopen_requests %}
     </div>
