@@ -178,29 +178,31 @@ a.collectra-card-title:hover { color: #087e7c; text-decoration: underline; }
   .collectra-summary-item > span:nth-child(2) { gap: 2px 5px; }
 }
 
-/* Open masthead with the motto following the circular brand mark. */
-.collectra-project-brand { min-width: 0; }
-.collectra-project-header { padding: 0 0 14px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-#hq-content .collectra-project-header h1.collectra-project-logo { display: flex; align-items: center; gap: 12px; margin: 0; color: #123344; font-size: 42px; font-weight: 650; line-height: 1.15; letter-spacing: -.025em; }
-.collectra-brand-seal { width: 180px; height: 163px; flex: 0 0 180px; overflow: visible; }
-.collectra-brand-seal text { fill: #38616a; font-family: system-ui, sans-serif; font-size: 9px; font-weight: 500; letter-spacing: .12px; }
-.collectra-project-header .collectra-quick-actions { flex-shrink: 0; margin-left: auto; }
-.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary { background: #087e7c; border-color: #087e7c; color: #fff; }
+/* Brand, page title and actions form a clear hierarchy above the work area. */
+.collectra-project-header { padding: 0 0 24px; border: 0; border-bottom: 1px solid #d9e5e7; border-radius: 0; background: transparent; box-shadow: none; }
+.collectra-project-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.collectra-brand-mark { width: 60px; height: 60px; flex: 0 0 60px; }
+.collectra-brand-name { margin: 0; color: #123344; font-size: 30px; font-weight: 650; line-height: 1.2; letter-spacing: -.035em; }
+.collectra-brand-motto { margin: 5px 0 0; color: #536d78; font-size: 12px; line-height: 1.5; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-actions { gap: 10px; margin-left: auto; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action { min-height: 44px; padding: 10px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; box-sizing: border-box; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary { background: #087e7c; border-color: #087e7c; color: #fff; box-shadow: 0 3px 8px rgba(8,126,124,.16); }
 .collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary:hover { background: #076967; border-color: #076967; }
-.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary) { background: #fff; border-color: #b7cbd0; color: #25495a; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary) { background: #fff; border-color: #b7cbd0; color: #25495a; box-shadow: 0 1px 3px rgba(18,51,68,.04); }
 .collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary):hover { background: #e9f3f2; border-color: #087e7c; }
 .collectra-dashboard-page .collectra-project-header a:focus-visible { outline-color: #087e7c; }
+.collectra-overview-heading { margin-top: 26px; }
+.collectra-overview-heading .collectra-project-context { margin: 0 0 6px; color: #087e7c; font-size: 10px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
+#hq-content .collectra-overview-heading h1 { margin: 0; color: #123344; font-size: 28px; line-height: 1.25; font-weight: 650; letter-spacing: -.025em; }
+.collectra-overview-heading > p:last-child { margin: 7px 0 0; color: #607580; font-size: 13px; }
+.collectra-status-grid { margin-top: 20px; }
+.collectra-alerts { border-radius: 10px; box-shadow: 0 4px 16px rgba(23,43,58,.04); }
+#reopen-requests.collectra-alerts { border-top-color: #739c9b; }
 @media (max-width: 640px) {
-  .collectra-project-header { padding: 0 0 14px; gap: 8px; }
-  .collectra-project-header .collectra-quick-actions { margin-left: 0; }
-}
-
-.collectra-dashboard-page .collectra-project-header .collectra-quick-actions { gap: 12px; }
-.collectra-dashboard-page .collectra-project-header .collectra-quick-action { min-height: 48px; padding: 12px 22px; border-radius: 8px; font-size: 14px; font-weight: 650; box-shadow: 0 3px 8px rgba(18,51,68,.08); }
-.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary { box-shadow: 0 4px 12px rgba(8,126,124,.22); }
-.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary) { border-color: #91adb5; }
-@media (max-width: 640px) {
-  #hq-content .collectra-project-header h1.collectra-project-logo { font-size: 32px; gap: 6px; }
-  .collectra-brand-seal { width: 144px; height: 131px; flex-basis: 144px; }
-  .collectra-dashboard-page .collectra-project-header .collectra-quick-action { padding: 11px 16px; }
+  .collectra-project-header { padding: 0 0 20px; gap: 18px; }
+  .collectra-dashboard-page .collectra-project-header .collectra-quick-actions { margin-left: 0; }
+  .collectra-brand-name { font-size: 26px; }
+  .collectra-brand-mark { width: 52px; height: 52px; flex-basis: 52px; }
+  .collectra-overview-heading { margin-top: 22px; }
+  #hq-content .collectra-overview-heading h1 { font-size: 25px; }
 }

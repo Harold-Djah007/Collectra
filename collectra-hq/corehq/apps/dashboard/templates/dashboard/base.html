@@ -9,7 +9,7 @@
 <link type="text/css"
       rel="stylesheet"
       media="all"
-      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015d" />
+      href="{% static 'dashboard/css/dashboard.css' %}?v=20261015e" />
 {% endblock stylesheets %}
 
 {% block content %}
@@ -27,15 +27,11 @@
   <div class="collectra-dashboard-inner">
     <header class="collectra-project-header">
       <div class="collectra-project-brand">
-        <h1 class="collectra-project-logo">
-          <svg class="collectra-brand-seal" viewBox="0 0 160 145" role="img" aria-labelledby="collectra-seal-title">
-            <title id="collectra-seal-title">{% trans "Build forms. Collect data. Make an impact." %}</title>
-            <defs><path id="collectra-motto-arc" d="M 12,57 A 68,68 0 0,0 148,57" /></defs>
-            <image href="{% static 'hqwebapp/images/collectra-logo.svg' %}" x="33" y="10" width="94" height="94" />
-            <text><textPath href="#collectra-motto-arc" startOffset="50%" text-anchor="middle">{% trans "Build forms. Collect data. Make an impact." %}</textPath></text>
-          </svg>
-          <span>Collectra</span>
-        </h1>
+        <img class="collectra-brand-mark" src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" width="60" height="60" />
+        <div>
+          <p class="collectra-brand-name">Collectra</p>
+          <p class="collectra-brand-motto">{% trans "Build forms. Collect data. Make an impact." %}</p>
+        </div>
       </div>
       {% if show_create_form %}
         <div class="collectra-quick-actions">
@@ -48,6 +44,11 @@
         </div>
       {% endif %}
     </header>
+    <div class="collectra-overview-heading">
+      <p class="collectra-project-context">{{ domain }} <span aria-hidden="true">/</span> {% trans "Workspace" %}</p>
+      <h1>{% trans "Project overview" %}</h1>
+      <p>{% trans "Your operations, priorities and tools in one place." %}</p>
+    </div>
 
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
