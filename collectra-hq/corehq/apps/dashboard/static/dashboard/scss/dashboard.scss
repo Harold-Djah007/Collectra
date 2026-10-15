@@ -181,8 +181,8 @@ a.collectra-card-title:hover { color: #087e7c; text-decoration: underline; }
 /* Open masthead with the motto following the circular brand mark. */
 .collectra-project-brand { min-width: 0; }
 .collectra-project-header { padding: 0 0 14px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-#hq-content .collectra-project-logo { display: flex; align-items: center; gap: 4px; color: #123344; font-weight: 600; }
-.collectra-brand-seal { width: 160px; height: 145px; flex: 0 0 160px; overflow: visible; }
+#hq-content .collectra-project-header h1.collectra-project-logo { display: flex; align-items: center; gap: 12px; margin: 0; color: #123344; font-size: 42px; font-weight: 650; line-height: 1.15; letter-spacing: -.025em; }
+.collectra-brand-seal { width: 180px; height: 163px; flex: 0 0 180px; overflow: visible; }
 .collectra-brand-seal text { fill: #38616a; font-family: system-ui, sans-serif; font-size: 9px; font-weight: 500; letter-spacing: .12px; }
 .collectra-project-header .collectra-quick-actions { flex-shrink: 0; margin-left: auto; }
 .collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary { background: #087e7c; border-color: #087e7c; color: #fff; }
@@ -193,4 +193,14 @@ a.collectra-card-title:hover { color: #087e7c; text-decoration: underline; }
 @media (max-width: 640px) {
   .collectra-project-header { padding: 0 0 14px; gap: 8px; }
   .collectra-project-header .collectra-quick-actions { margin-left: 0; }
+}
+
+.collectra-dashboard-page .collectra-project-header .collectra-quick-actions { gap: 12px; }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action { min-height: 48px; padding: 12px 22px; border-radius: 8px; font-size: 14px; font-weight: 650; box-shadow: 0 3px 8px rgba(18,51,68,.08); }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action-primary { box-shadow: 0 4px 12px rgba(8,126,124,.22); }
+.collectra-dashboard-page .collectra-project-header .collectra-quick-action:not(.collectra-quick-action-primary) { border-color: #91adb5; }
+@media (max-width: 640px) {
+  #hq-content .collectra-project-header h1.collectra-project-logo { font-size: 32px; gap: 6px; }
+  .collectra-brand-seal { width: 144px; height: 131px; flex-basis: 144px; }
+  .collectra-dashboard-page .collectra-project-header .collectra-quick-action { padding: 11px 16px; }
 }
