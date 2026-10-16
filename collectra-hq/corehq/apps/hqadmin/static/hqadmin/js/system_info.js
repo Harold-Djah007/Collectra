@@ -179,15 +179,10 @@ function pillowProgress(name, dbOffset, seq) {
     };
 
     self.status = function () {
-        if (self.changesBehind() < 500) {
-            return 'progress-bar-success';
-        } else if (self.changesBehind() < 1000) {
-            return ''; // will be a blue, but not quite info
-        } else if (self.changesBehind() < 5000) {
-            return 'progress-bar-warning';
-        } else {
-            return 'progress-bar-danger';
-        }
+        var lag = self.changesBehind();
+        if (lag < 0 || self.seq < 0) { return 'progress-bar-danger'; }
+        if (lag === 0) { return 'progress-bar-success'; }
+        return lag >= 5000 ? 'progress-bar-danger' : 'progress-bar-warning';
     };
     return self;
 }
@@ -232,32 +227,42 @@ function pillowModel(pillow) {
 
     self.update(pillow);
 
+    self.checkpointState = ko.computed(function () {
+        if (self.error()) { return 'unavailable'; }
+        var progress = self.progress();
+        if (!progress.length) { return 'unknown'; }
+        if (progress.some(function (p) { return p.changesBehind() < 0 || p.seq < 0; })) {
+            return 'ahead';
+        }
+        var pending = progress.some(function (p) { return p.changesBehind() > 0; });
+        if (!pending) { return self.seq() === null ? 'unknown' : 'caught_up'; }
+        if (progress.some(function (p) { return p.changesBehind() >= 5000; }) || self.hoursSinceLast() > 12) {
+            return 'stale';
+        }
+        return 'pending';
+    });
     self.checkpointStatusCss = ko.computed(function () {
-        var hours = self.hoursSinceLast();
-        if (self.error()) { return 'label-danger'; }
-        if (hours === null || hours === undefined) { return 'label-default'; }
-        switch (true) {
-            case (hours <= 1):
-                return 'label-success';
-            case (hours <= 6):
-                return 'label-info';
-            case (hours <= 12):
-                return 'label-warning';
-            default:
-                return 'label-danger';
+        switch (self.checkpointState()) {
+            case 'caught_up': return 'label-success';
+            case 'pending': return 'label-warning';
+            case 'ahead':
+            case 'stale':
+            case 'unavailable': return 'label-danger';
+            default: return 'label-default';
         }
     });
-
+    self.checkpointStatusText = ko.computed(function () {
+        return {
+            caught_up: 'Caught up', pending: 'Pending changes', ahead: 'Checkpoint ahead of source',
+            stale: 'Backlog needs attention', unavailable: 'Status unavailable', unknown: 'Not measured',
+        }[self.checkpointState()];
+    });
     self.overallStatus = ko.computed(function () {
-        var statusCombined = self.checkpointStatusCss();
-        if (statusCombined.indexOf('danger') !== -1) {
-            return 'error';
-        } else if (statusCombined.indexOf('warning') !== -1) {
-            return 'warning';
-        } else if (statusCombined.indexOf('info') !== -1) {
-            return 'info';
-        } else if (statusCombined.indexOf('success') !== -1) {
-            return 'success';
+        switch (self.checkpointStatusCss()) {
+            case 'label-danger': return 'danger';
+            case 'label-warning': return 'warning';
+            case 'label-success': return 'success';
+            default: return '';
         }
     });
 

@@ -125,11 +125,13 @@
     </div>
     <div class="panel-collapse collapse in" id="pillowtop-panel">
       <div class="panel-body">
+        <p class="help-block">These are registered processors, not a list of running processes. Green means the recorded checkpoint is caught up with its source; it does not prove the worker is running. An old checkpoint can be normal when there are no new changes. Red backlogs or checkpoints ahead of their source need investigation.</p>
         <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
         <table class="table table-striped" data-bind="visible: !error()">
           <thead>
           <tr>
             <th>Name</th>
+            <th>Checkpoint progress</th>
             <th>Time since last checkpoint</th>
             <th>Checkpoint Status</th>
             <th>Actions</th>
@@ -138,9 +140,10 @@
           <tbody data-bind="foreach: models">
           <tr data-bind="css: overallStatus, attr: {id: name}">
             <td><code data-bind="text: name"></code></td>
+            <td><span class="label" data-bind="text: checkpointStatusText, css: checkpointStatusCss"></span></td>
             <td>
               <span data-bind="visible: error, text: error" class="text-danger"></span>
-              <span data-bind="visible: !error(), text: timeSinceLast, css: checkpointStatusCss" class="label"></span>
+              <span data-bind="visible: !error(), text: timeSinceLast" class="text-muted"></span>
             </td>
             <td class="col-md-6" data-bind="foreach: progress">
               <div class="row">
@@ -152,7 +155,7 @@
                 <div class="col-sm-4">
                   <span data-bind="text: seq"></span>
                   / <span data-bind="text: dbOffset"></span>
-                  (<span data-bind="text: changesBehind()"></span>)
+                  (<span data-bind="text: changesBehind() &lt; 0 ? 'checkpoint ahead' : changesBehind() + ' pending'"></span>)
                 </div>
                 <div class="col-sm-4" data-bind="text: name">
                 </div>

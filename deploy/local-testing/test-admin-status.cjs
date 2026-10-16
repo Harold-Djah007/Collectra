@@ -8,7 +8,12 @@ function observable(value) {
 }
 const source = fs.readFileSync(path.join(__dirname,
     '../../collectra-hq/corehq/apps/hqadmin/static/hqadmin/js/system_info.js'), 'utf8');
-const context = {$() {}, ko: {observable, observableArray: observable, computed: fn => fn},
+function observableArray(value) {
+    const result = observable(value);
+    result.push = item => result().push(item);
+    return result;
+}
+const context = {$() {}, ko: {observable, observableArray, computed: fn => fn},
     _: {each: (obj, fn) => Object.entries(obj).forEach(([key, value]) => fn(value, key)),
         has: (obj, key) => Object.hasOwn(obj, key), keys: Object.keys}};
 vm.createContext(context);
@@ -22,11 +27,24 @@ assert.equal(model.checkpointStatusCss(), 'label-default');
 assert.equal(model.timeSinceLast(), 'No checkpoint recorded');
 model.update({name: 'worker', seq_format: 'json', seq: {}, offsets: {},
     hours_since_last: 0, time_since_last: '0:01:00'});
+assert.equal(model.checkpointStatusCss(), 'label-default');
+model.update({name: 'worker', seq_format: 'json', seq: {'case,0':10}, offsets: {'case,0':10},
+    hours_since_last: 500, time_since_last: '20 days'});
 assert.equal(model.checkpointStatusCss(), 'label-success');
-assert.equal(model.timeSinceLast(), '0:01:00');
+assert.equal(model.checkpointStatusText(), 'Caught up');
 model.update({name: 'worker', seq_format: 'json', seq: {}, offsets: {},
     hours_since_last: 15, error: 'Missing topic'});
 assert.equal(model.checkpointStatusCss(), 'label-danger');
-assert.equal(model.overallStatus(), 'error');
+assert.equal(model.overallStatus(), 'danger');
 assert.equal(model.error(), 'Missing topic');
 console.log('Admin status: progress boundaries, missing checkpoints and refreshed error states passed.');
+
+assert.equal(context.pillowProgress('ahead', 10, 20).status(), 'progress-bar-danger');
+assert.equal(context.pillowProgress('small backlog', 10, 9).status(), 'progress-bar-warning');
+model.update({name: 'worker', seq_format: 'json', seq: {'case,0':20}, offsets: {'case,0':10}, hours_since_last: 0});
+assert.equal(model.checkpointStatusText(), 'Checkpoint ahead of source');
+assert.equal(model.overallStatus(), 'danger');
+model.update({name: 'worker', seq_format: 'json', seq: {'case,0':9}, offsets: {'case,0':10}, hours_since_last: 0});
+assert.equal(model.checkpointStatusText(), 'Pending changes');
+model.update({name: 'worker', seq_format: 'json', seq: {'case,0':9}, offsets: {'case,0':10}, hours_since_last: 20});
+assert.equal(model.checkpointStatusText(), 'Backlog needs attention');
