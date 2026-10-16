@@ -1,5 +1,6 @@
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+from datetime import datetime
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -11,6 +12,30 @@ from corehq.pillows.collectra import (
 
 
 class RecoveryTests(SimpleTestCase):
+    def test_quiet_feed_saves_recently_processed_tail(self):
+        from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+        from pillowtop.pillow.interface import PillowRuntimeContext
+        from corehq.apps.hqadmin.management.commands.run_collectra_processors import configure_checkpointing
+
+        checkpoint = MagicMock()
+        handler = PillowCheckpointEventHandler(checkpoint, checkpoint_frequency=100)
+        handler.last_update = datetime.utcnow()
+        pillow = SimpleNamespace(_change_processed_event_handler=handler, processor_chunk_size=100)
+        configure_checkpointing(pillow)
+        # Two isolated, completed changes within the five-minute time limit.
+        # Neither can depend on another event arriving to save its position.
+        for sequence in ('first', 'last'):
+            context = PillowRuntimeContext(changes_seen=1)
+            assert handler.update_checkpoint({'seq': sequence}, context)
+        assert checkpoint.update_to.call_args_list == [call('first'), call('last')]
+        assert pillow.processor_chunk_size == 100
+
+    def test_checkpoint_configuration_preserves_custom_handlers(self):
+        from corehq.apps.hqadmin.management.commands.run_collectra_processors import configure_checkpointing
+        handler = SimpleNamespace(checkpoint_frequency=100)
+        configure_checkpointing(SimpleNamespace(_change_processed_event_handler=handler))
+        assert handler.checkpoint_frequency == 100
+
     @patch('corehq.pillows.user.get_checkpoint_for_elasticsearch_pillow')
     def test_user_index_ignores_domain_removal_audit_without_username(self, checkpoint):
         from corehq.pillows.user import get_user_pillow_old

@@ -6,10 +6,24 @@ import time
 
 from django.core.management.base import BaseCommand
 
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.run_pillowtop import start_pillow
 from pillowtop.utils import get_pillow_by_name
 
 from corehq.pillows.collectra import MANAGED_PILLOWS, processor_lock, replay_start, write_processor_states
+
+
+def configure_checkpointing(pillow):
+    """Persist every completed batch, including partial batches flushed on idle.
+
+    The normal event handler only checks its time limit on incoming changes.
+    A quiet feed can therefore retain a processed tail indefinitely. Keep bulk
+    processing intact, but acknowledge each completed batch rather than waiting
+    for a later change to trigger a checkpoint.
+    """
+    handler = pillow._change_processed_event_handler
+    if isinstance(handler, PillowCheckpointEventHandler):
+        handler.checkpoint_frequency = 1
 
 
 def run_worker(name, lock_fd, ready):
@@ -21,6 +35,7 @@ def run_worker(name, lock_fd, ready):
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     connections.close_all()
     pillow = get_pillow_by_name(name)
+    configure_checkpointing(pillow)
     checkpoint = pillow.get_checkpoint()
     if checkpoint.sequence_format == 'json':
         from corehq.apps.change_feed.connection import get_kafka_consumer
