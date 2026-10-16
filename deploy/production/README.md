@@ -318,3 +318,30 @@ with explicit bounds to prevent accidental unbounded load. No credentials,
 forms, cases, or submissions are sent. Response bodies are bounded at 1 MiB.
 This is a basic HTTP baseline; it does not substitute for authenticated reports
 and simultaneous mobile sync acceptance tests on the final VM.
+
+
+## Managed processing workers
+
+`python manage.py run_collectra_processors` supervises the non-overlapping
+Collectra indexing, Couch-to-Kafka producer, submission/sync metadata and cache
+workers. Both the local launcher and production compose use this command.
+The supervisor restarts exited children and writes a shared readiness heartbeat;
+Admin distinguishes that live evidence from checkpoint progress.
+Alternative combined pipelines and optional custom-report, case-search, stock
+and messaging processors remain inspectable but are not started by this basic
+runtime. Configure the corresponding optional workers before enabling those
+features; do not run a combined pipeline alongside its equivalent separate
+processors.
+
+For maintenance, stop the managed supervisor first. The command
+`python manage.py recover_collectra_processors --backup-dir /private/recovery
+--only NAME[,NAME...]` backs up all checkpoint records and replays only the
+selected supported processors. Put those arguments on one shell command line.
+It stops on a processing error and refuses expired history or a checkpoint
+beyond the source. `--replay-ahead` replays retained events from the earliest
+available offset; it never jumps to the source end. `--rebuild-expired` first
+rebuilds supported derived state from authoritative current records and backs
+up affected index entries and metadata. A failed rebuild cannot advance its
+checkpoint. Recovery does not replay messaging rules or alter submitted forms
+and cases. Keep backups private, and verify index completeness and worker
+readiness after maintenance.

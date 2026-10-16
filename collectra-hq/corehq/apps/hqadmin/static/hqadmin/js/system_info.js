@@ -198,6 +198,10 @@ function pillowModel(pillow) {
     self.error = ko.observable();
     self.operationInProgress = ko.observable(false);
     self.progress = ko.observableArray();
+    self.managed = ko.observable(true);
+    self.selectionNote = ko.observable('');
+    self.runtimeState = ko.observable('unknown');
+    self.pendingErrors = ko.observable(0);
 
     self.update = function (data) {
         self.name(data.name);
@@ -207,6 +211,10 @@ function pillowModel(pillow) {
         self.timeSinceLast(data.time_since_last || 'No checkpoint recorded');
         self.hoursSinceLast(data.hours_since_last);
         self.error(data.error || '');
+        self.managed(data.managed !== false);
+        self.selectionNote(data.selection_note || '');
+        self.runtimeState(data.runtime_state || 'unknown');
+        self.pendingErrors(data.pending_errors || 0);
 
         self.progress([]);
         if (self.seq_format() === 'json') {
@@ -228,7 +236,10 @@ function pillowModel(pillow) {
     self.update(pillow);
 
     self.checkpointState = ko.computed(function () {
+        if (!self.managed()) { return 'inactive'; }
         if (self.error()) { return 'unavailable'; }
+        if (self.pendingErrors() > 0) { return 'failed'; }
+        if (self.runtimeState() === 'stopped') { return 'stopped'; }
         var progress = self.progress();
         if (!progress.length) { return 'unknown'; }
         if (progress.some(function (p) { return p.changesBehind() < 0 || p.seq < 0; })) {
@@ -248,6 +259,8 @@ function pillowModel(pillow) {
             case 'ahead':
             case 'stale':
             case 'unavailable': return 'label-danger';
+            case 'stopped': return 'label-danger';
+            case 'failed': return 'label-danger';
             default: return 'label-default';
         }
     });
@@ -255,6 +268,9 @@ function pillowModel(pillow) {
         return {
             caught_up: 'Caught up', pending: 'Pending changes', ahead: 'Checkpoint ahead of source',
             stale: 'Backlog needs attention', unavailable: 'Status unavailable', unknown: 'Not measured',
+            inactive: 'Inactive / alternative',
+            stopped: 'Worker not running',
+            failed: 'Processing errors need attention',
         }[self.checkpointState()];
     });
     self.overallStatus = ko.computed(function () {
@@ -323,6 +339,15 @@ $(function () {
         couchViewModel = refreshableViewModel(systemAjaxUrl + "?api=_active_tasks", activeTaskModel, couchUpdate);
     }
     var pillowtopViewModel = refreshableViewModel(systemAjaxUrl + "?api=pillowtop", pillowModel, couchUpdate, 'name');
+    pillowtopViewModel.showInactive = ko.observable(false);
+    pillowtopViewModel.inactiveCount = ko.computed(function () {
+        return pillowtopViewModel.models().filter(function (model) { return !model.managed(); }).length;
+    });
+    pillowtopViewModel.visibleModels = ko.computed(function () {
+        return pillowtopViewModel.models().filter(function (model) {
+            return pillowtopViewModel.showInactive() || model.managed();
+        });
+    });
 
     var autoRefreshModel = function () {
         var self = {};

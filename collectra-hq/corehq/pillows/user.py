@@ -89,7 +89,11 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, user_adapter.index_name, topics.USER_TOPICS)
-    user_processor = ElasticProcessor(user_adapter)
+    # The users database also emits domain-removal audit records. They are
+    # not users and have no username; the updated user is indexed separately.
+    user_processor = ElasticProcessor(
+        user_adapter, doc_filter_fn=lambda doc: doc.get('doc_type') == 'DomainRemovalRecord',
+    )
     change_feed = KafkaChangeFeed(
         topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
     )

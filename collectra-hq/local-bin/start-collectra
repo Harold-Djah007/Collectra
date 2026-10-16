@@ -63,8 +63,20 @@ stop_managed_process() {
     if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" >/dev/null 2>&1; then
         local command_line
         command_line="$(ps -p "$pid" -o args= 2>/dev/null || true)"
-        if [[ "$command_line" == *"$expected_command"* ]]; then
+        if [[ "$command_line" == *"$expected_command"* ]] ||
+            [[ "$expected_command" == collectra-processors && ( "$command_line" == *"manage.py run_ptop"* || "$command_line" == *"manage.py run_collectra_processors"* ) ]]; then
             kill "$pid" >/dev/null 2>&1 || true
+            for attempt in {1..20}; do
+                kill -0 "$pid" >/dev/null 2>&1 || break
+                sleep 1
+            done
+            if kill -0 "$pid" >/dev/null 2>&1; then
+                echo "Managed process $pid has not stopped; refusing a duplicate start." >&2
+                return 1
+            fi
+        else
+            echo "PID $pid is not the expected managed process; leaving it untouched." >&2
+            return 1
         fi
     fi
     rm -f "$pid_file"
@@ -78,6 +90,7 @@ cleanup() {
             kill "$pid" >/dev/null 2>&1 || true
         fi
     done
+    if [[ -n "$pillowtop_pid" ]]; then wait "$pillowtop_pid" 2>/dev/null || true; fi
     rm -f "$state_root/pillowtop.pid" "$state_root/form-pillowtop.pid" "$state_root/celery.pid"
 }
 trap cleanup EXIT
@@ -196,7 +209,7 @@ fi
 
 # Stop legacy Docker workers. The managed workers below use the current checkout.
 docker stop hqservice-pillowtop-1 hqservice-celery-1 >/dev/null 2>&1 || true
-stop_managed_process "$state_root/pillowtop.pid" "manage.py run_ptop"
+stop_managed_process "$state_root/pillowtop.pid" collectra-processors
 stop_managed_process "$state_root/form-pillowtop.pid" "manage.py run_ptop --pillow-name XFormToElasticsearchPillow"
 stop_managed_process "$state_root/celery.pid" "celery -A corehq worker"
 
@@ -214,19 +227,11 @@ uv run celery -A corehq worker \
 celery_pid=$!
 echo "$celery_pid" >"$state_root/celery.pid"
 
-echo "Starting CaseToElasticsearchPillow..."
-uv run python manage.py run_ptop \
-    --pillow-name CaseToElasticsearchPillow \
+echo "Starting managed Collectra background processors..."
+uv run python manage.py run_collectra_processors \
     >"$state_root/pillowtop.log" 2>&1 8>&- 9>&- &
 pillowtop_pid=$!
 echo "$pillowtop_pid" >"$state_root/pillowtop.pid"
-
-echo "Starting XFormToElasticsearchPillow..."
-uv run python manage.py run_ptop \
-    --pillow-name XFormToElasticsearchPillow \
-    >"$state_root/form-pillowtop.log" 2>&1 8>&- 9>&- &
-form_pillowtop_pid=$!
-echo "$form_pillowtop_pid" >"$state_root/form-pillowtop.pid"
 
 sleep 5
 if ! kill -0 "$celery_pid" >/dev/null 2>&1; then
@@ -235,15 +240,11 @@ if ! kill -0 "$celery_pid" >/dev/null 2>&1; then
     exit 1
 fi
 if ! kill -0 "$pillowtop_pid" >/dev/null 2>&1; then
-    echo "CaseToElasticsearchPillow failed to start. Recent log output:" >&2
+    echo "The managed Collectra processors failed to start. Recent log output:" >&2
     tail -50 "$state_root/pillowtop.log" >&2 || true
     exit 1
 fi
-if ! kill -0 "$form_pillowtop_pid" >/dev/null 2>&1; then
-    echo "XFormToElasticsearchPillow failed to start. Recent log output:" >&2
-    tail -50 "$state_root/form-pillowtop.log" >&2 || true
-    exit 1
-fi
+
 
 if [[ -n "$case_index_audit_domain" ]]; then
     echo "Auditing case search index for domain: $case_index_audit_domain"

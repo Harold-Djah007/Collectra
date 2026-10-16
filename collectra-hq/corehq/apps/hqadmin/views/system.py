@@ -5,6 +5,7 @@ from collections import defaultdict, namedtuple
 from couchdbkit import Server
 
 from django.conf import settings
+from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -17,6 +18,7 @@ from requests.exceptions import HTTPError
 
 from dimagi.utils.couch.database import is_bigcouch
 from pillowtop.exceptions import PillowNotFoundError
+from pillow_retry.models import PillowError
 from pillowtop.utils import (
     get_all_pillows_json,
     get_pillow_config_by_name,
@@ -39,6 +41,7 @@ from corehq.apps.receiverwrapper.rate_limiter import (
     global_submission_rate_limiter,
 )
 from corehq.toggles import SUPPORT
+from corehq.pillows.collectra import processor_selection, read_processor_states
 
 
 class SystemInfoView(BaseAdminSectionView):
@@ -122,8 +125,14 @@ def system_ajax(request):
             pillow_meta = get_all_pillows_json(include_errors=True)
         except Exception:
             logging.getLogger(__name__).exception("Unable to read background worker status")
-            return JsonResponse({'error': 'Worker status is unavailable. Check Kafka connectivity and server logs.'},
-                                status=503)
+            return JsonResponse(
+                {'error': 'Worker status is unavailable. Check Kafka connectivity and server logs.'}, status=503,
+            )
+        runtime = read_processor_states()
+        failures = dict(PillowError.objects.values_list('pillow').annotate(total=Count('id')))
+        for row in pillow_meta:
+            row.update(processor_selection(row['name'], runtime))
+            row['pending_errors'] = failures.get(row['name'], 0)
         return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()), safe=False)
 
     if celery_monitoring:
@@ -190,6 +199,8 @@ def pillow_operation_api(request):
         }
         if pillow_config:
             response.update(get_pillow_json(pillow_config))
+            response.update(processor_selection(pillow_name, read_processor_states()))
+            response['pending_errors'] = PillowError.objects.filter(pillow=pillow_name).count()
         return JsonResponse(response)
 
     if pillow:

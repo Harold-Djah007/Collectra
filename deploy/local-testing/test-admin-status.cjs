@@ -48,3 +48,18 @@ model.update({name: 'worker', seq_format: 'json', seq: {'case,0':9}, offsets: {'
 assert.equal(model.checkpointStatusText(), 'Pending changes');
 model.update({name: 'worker', seq_format: 'json', seq: {'case,0':9}, offsets: {'case,0':10}, hours_since_last: 20});
 assert.equal(model.checkpointStatusText(), 'Backlog needs attention');
+
+model.update({name: 'alternative', managed: false, seq_format: 'json', seq: {'case,0':1},
+    offsets: {'case,0':10000}, hours_since_last: 500});
+assert.equal(model.checkpointStatusText(), 'Inactive / alternative');
+assert.equal(model.checkpointStatusCss(), 'label-default');
+assert.notEqual(model.checkpointStatusCss(), 'label-success');
+
+model.update({name: 'worker', managed: true, runtime_state: 'stopped', seq_format: 'json',
+    seq: {'case,0':10}, offsets: {'case,0':10}, hours_since_last: 0});
+assert.equal(model.checkpointStatusText(), 'Worker not running');
+assert.equal(model.checkpointStatusCss(), 'label-danger');
+model.update({name: 'worker', managed: true, runtime_state: 'running', pending_errors: 2,
+    seq_format: 'json', seq: {'case,0':10}, offsets: {'case,0':10}, hours_since_last: 0});
+assert.equal(model.checkpointStatusText(), 'Processing errors need attention');
+assert.equal(model.checkpointStatusCss(), 'label-danger');

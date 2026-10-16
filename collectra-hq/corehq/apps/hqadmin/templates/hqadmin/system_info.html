@@ -114,7 +114,7 @@
   <div class="panel panel-default" id="pillowtop-status">
     <div class="panel-heading">
       <h2 class="panel-title">
-        <a data-toggle="collapse" href="#pillowtop-panel">Pillowtop Status</a>
+        <a data-toggle="collapse" href="#pillowtop-panel">Background processors</a>
         <small data-bind="if: loading()">
           <i class="fa fa-refresh fa-spin"></i>
         </small>
@@ -125,7 +125,11 @@
     </div>
     <div class="panel-collapse collapse in" id="pillowtop-panel">
       <div class="panel-body">
-        <p class="help-block">These are registered processors, not a list of running processes. Green means the recorded checkpoint is caught up with its source; it does not prove the worker is running. An old checkpoint can be normal when there are no new changes. Red backlogs or checkpoints ahead of their source need investigation.</p>
+        <p class="help-block">The managed Collectra worker set is shown first. Green means its recorded checkpoint is caught up, not a process heartbeat. Optional and overlapping processors retain their historical checkpoints and can be inspected below.</p>
+        <div class="checkbox"><label>
+          <input type="checkbox" data-bind="checked: showInactive" />
+          Show inactive / alternative processors (<span data-bind="text: inactiveCount"></span>)
+        </label></div>
         <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
         <table class="table table-striped" data-bind="visible: !error()">
           <thead>
@@ -137,10 +141,15 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: models">
+          <tbody data-bind="foreach: visibleModels">
           <tr data-bind="css: overallStatus, attr: {id: name}">
-            <td><code data-bind="text: name"></code></td>
-            <td><span class="label" data-bind="text: checkpointStatusText, css: checkpointStatusCss"></span></td>
+            <td><code data-bind="text: name"></code>
+              <small data-bind="visible: managed, text: runtimeState" class="text-muted"></small>
+              <p class="help-block" data-bind="visible: !managed(), text: selectionNote"></p>
+            </td>
+            <td><span class="label" data-bind="text: checkpointStatusText, css: checkpointStatusCss"></span>
+              <small data-bind="visible: pendingErrors"><span data-bind="text: pendingErrors"></span> retry errors</small>
+            </td>
             <td>
               <span data-bind="visible: error, text: error" class="text-danger"></span>
               <span data-bind="visible: !error(), text: timeSinceLast" class="text-muted"></span>
