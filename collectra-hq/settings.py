@@ -1261,6 +1261,9 @@ COLLECTRA_LOCAL_MOBILE_ORIGIN = (
     else None
 )
 
+# Browser data collection is optional; form-builder previews remain available.
+COLLECTRA_WEB_APPS_ENABLED = os.environ.get("COLLECTRA_WEB_APPS_ENABLED", "0") == "1"
+
 # Collectra is self-hosted. Grant the full software-plan feature set unless
 # tests are running or the operator explicitly disables this with
 # COLLECTRA_ENTERPRISE_MODE=0.

@@ -1260,7 +1260,8 @@ class CloudcareTab(UITab):
     @property
     def _is_viewable(self):
         return (
-            has_privilege(self._request, privileges.CLOUDCARE)
+            getattr(settings, 'COLLECTRA_WEB_APPS_ENABLED', False)
+            and has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
             and (self.couch_user.can_access_any_web_apps(self.domain) or self.couch_user.is_commcare_user())
         )

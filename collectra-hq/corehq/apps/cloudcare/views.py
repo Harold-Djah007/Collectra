@@ -174,6 +174,8 @@ class FormplayerMain(View):
         return request.couch_user, set_cookie
 
     def get(self, request, domain, **kwargs):
+        if not getattr(settings, 'COLLECTRA_WEB_APPS_ENABLED', False):
+            return redirect('dashboard_domain', domain=domain)
         mobile_ucr_count = get_mobile_ucr_count(domain)
         if should_restrict_web_apps_usage(domain, mobile_ucr_count):
             return redirect('block_web_apps', domain=domain)
