@@ -44,7 +44,7 @@
         <p class="collectra-hero-eyebrow">{{ domain }} <span aria-hidden="true">/</span> {% trans "Collectra HQ" %}</p>
         <header class="collectra-dashboard-header">
           <div class="collectra-dashboard-mark" aria-hidden="true">
-            <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
+            <img src="{% static 'hqwebapp/images/collectra-logo.svg' %}?v=original2" alt="" />
           </div>
           <div>
             <p class="collectra-welcome">
@@ -278,7 +278,7 @@
             <div class="collectra-card-header">
               <div class="collectra-tile-icon" aria-hidden="true">
                 <!-- ko if: icon === 'collectra-mark' -->
-                <img class="collectra-tile-brand" src="{% static 'hqwebapp/images/collectra-logo.svg' %}" alt="" />
+                <img class="collectra-tile-brand" src="{% static 'hqwebapp/images/collectra-logo.svg' %}?v=original2" alt="" />
                 <!-- /ko -->
                 <!-- ko if: icon !== 'collectra-mark' -->
                 <i class="dashboard-icon" data-bind="css: icon"></i>
