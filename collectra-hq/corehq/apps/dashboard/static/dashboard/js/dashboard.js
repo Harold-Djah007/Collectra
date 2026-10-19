@@ -150,6 +150,7 @@ $(function () {
         var alertsModel = {
             alerts: ko.observableArray([]),
             loading: ko.observable(true),
+            loaded: ko.observable(false),
             error: ko.observable(false),
             lastUpdated: ko.observable(""),
             selectedSeverity: ko.observable("all"),
@@ -186,10 +187,11 @@ $(function () {
             alertsModel.error(false);
             dashboardJSON(initialPageData.reverse("dashboard_operational_alerts"))
                 .done(function (data) {
-                    alertsModel.alerts(_.map(data.alerts, function (alert) {
+                    alertsModel.alerts(_.map(Array.isArray(data.alerts) ? data.alerts : [], function (alert) {
                         alert.when = new Date(alert.received_on).toLocaleString();
                         return alert;
                     }));
+                    alertsModel.loaded(true);
                     alertsModel.lastUpdated("Updated " + new Date().toLocaleTimeString([], {
                         hour: "numeric", minute: "2-digit",
                     }));
@@ -203,10 +205,9 @@ $(function () {
                 });
         };
         alertsPanel.koApplyBindings(alertsModel);
+        // Fetch once on page load. Subsequent updates are explicitly user-triggered.
+        // Automatic polling disrupted reading and reset the overview during interactions.
         alertsModel.refresh();
-        window.setInterval(function () {
-            if (!document.hidden) { alertsModel.refresh(); }
-        }, 60000);
     }
 
     var reopenPanel = $("#reopen-requests");
@@ -217,6 +218,7 @@ $(function () {
             historyRequests: ko.observableArray([]),
             historyNextCursor: ko.observable(null),
             historyLoaded: ko.observable(false),
+            pendingLoaded: ko.observable(false),
             activeView: ko.observable("pending"),
             loading: ko.observable(true),
             loaded: ko.observable(false),
@@ -234,10 +236,12 @@ $(function () {
                 ? reopenModel.pendingRequests() : reopenModel.historyRequests();
         });
         reopenModel.showPending = function () {
+            if (reopenModel.activeView() === "pending") { return; }
             reopenModel.activeView("pending");
-            reopenModel.refresh();
+            if (!reopenModel.pendingLoaded()) { reopenModel.refresh(); }
         };
         reopenModel.showHistory = function () {
+            if (reopenModel.activeView() === "history") { return; }
             reopenModel.activeView("history");
             if (!reopenModel.historyLoaded()) { reopenModel.refresh(); }
         };
@@ -255,7 +259,19 @@ $(function () {
             })
                 .done(function (data) {
                     if (generation !== reopenModel.requestGeneration) { return; }
-                    var requests = _.map(data.requests, function (request) {
+                    var previousRequests = view === "history"
+                        ? reopenModel.historyRequests() : reopenModel.pendingRequests();
+                    var requests = _.map(Array.isArray(data.requests) ? data.requests : [], function (request) {
+                        // A manual refresh must not discard an in-progress supervisor review.
+                        // Reuse its draft only while the request is still pending.
+                        var draft = previousRequests.find(function (item) {
+                            return item.form_id === request.form_id && item.status === "pending"
+                                && request.status === "pending" && item.reviewOpen && item.reviewOpen();
+                        });
+                        if (draft) {
+                            Object.keys(request).forEach(function (key) { draft[key] = request[key]; });
+                            return draft;
+                        }
                         request.when = new Date(request.received_on).toLocaleString();
                         request.bedLabel = request.bed === "other" ? "Other drying bed"
                             : "Drying bed " + request.bed.replace("dry_bed_", "");
@@ -320,6 +336,7 @@ $(function () {
                         reopenModel.pendingRequests(append
                             ? reopenModel.pendingRequests().concat(requests) : requests);
                         reopenModel.pendingNextCursor(data.next_cursor || null);
+                        reopenModel.pendingLoaded(true);
                     }
                     reopenModel.loaded(true);
                 })
