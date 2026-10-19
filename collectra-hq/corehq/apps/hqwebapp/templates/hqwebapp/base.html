@@ -25,7 +25,7 @@
           href="{% url 'osdd' %}"
           title="Collectra{% if env %} - {{env}}{% endif %}" />
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
     {% if use_bootstrap5 %}
       {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
@@ -38,7 +38,7 @@
     {% block stylesheets %}{% endblock stylesheets %}
 
     {# Optional visual polish layer. Does not change application structure or behavior. #}
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/css/professional-ui.css' %}?v=ss2" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/css/professional-ui.css' %}" />
 
     {% compress css %}
       <link type="text/css"
