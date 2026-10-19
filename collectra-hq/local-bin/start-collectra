@@ -180,9 +180,13 @@ echo "Published mobile address: ${COLLECTRA_DEFAULT_PROTOCOL}://${COLLECTRA_BASE
 echo "Formplayer callback: ${COMMCARE_HOST}"
 echo "Starting Collectra services..."
 
-bash ./scripts/docker up -d \
+if ! bash ./scripts/docker up -d \
     postgres couch redis elasticsearch6 \
-    zookeeper kafka minio
+    zookeeper kafka minio; then
+    echo "Docker could not start Collectra services. Resolve the Docker error above before retrying." >&2
+    echo "For a Docker Desktop forwards/list timeout, restart Docker Desktop, then retry this launcher." >&2
+    exit 1
+fi
 
 if formplayer_ready; then
     echo "Formplayer is already healthy on port ${formplayer_port}; reusing it."
@@ -194,7 +198,10 @@ else
         echo "Stop the process/container using port ${formplayer_port}, then start Collectra again." >&2
         exit 1
     else
-        bash ./scripts/docker up -d --force-recreate formplayer
+        if ! bash ./scripts/docker up -d --force-recreate formplayer; then
+            echo "Docker could not start Formplayer. Resolve the Docker error above before retrying." >&2
+            exit 1
+        fi
     fi
 fi
 

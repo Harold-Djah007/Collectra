@@ -341,7 +341,7 @@ elif [ "$CMD" == "rebuild" ]; then
         docker compose build "$@"
     fi
 else
-    docker compose $CMD "$@"
+    docker compose $CMD "$@" || exit $?
     if [ "$TEARDOWN" == "yes" ]; then
         if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
             echo "THIS WILL DELETE ALL SERVICE DATA"

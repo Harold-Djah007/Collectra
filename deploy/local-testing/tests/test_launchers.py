@@ -45,6 +45,19 @@ class LauncherSafetyTests(unittest.TestCase):
     def commands(self):
         return self.log.read_text() if self.log.exists() else ""
 
+    def test_compose_failure_is_not_reported_as_success(self):
+        self.env['XDG_DATA_HOME'] = str(self.root / 'data')
+        self.stub('docker', 'echo "forwards/list timeout" >&2; exit 17')
+        result = self.run_launcher('collectra-hq/scripts/docker', 'up', '-d', 'kafka')
+        self.assertEqual(result.returncode, 17)
+        self.assertIn('forwards/list timeout', result.stderr)
+
+    def test_successful_compose_returns_success(self):
+        self.env['XDG_DATA_HOME'] = str(self.root / 'data')
+        self.stub('docker', 'exit 0')
+        result = self.run_launcher('collectra-hq/scripts/docker', 'up', '-d', 'kafka')
+        self.assertEqual(result.returncode, 0)
+
     def test_fast_launcher_rejects_url_before_refreshing_runtime(self):
         result = self.run_launcher(
             "deploy/local-testing/start-fast-local.sh", "https://collectra.example.com",
@@ -183,7 +196,7 @@ exit 0''')
         self.assertEqual(self.commands().count("docker start hqservice-kafka-1"), 2)
         self.assertIn("docker logs --since 2026-10-06T08:38:08Z", self.commands())
 
-    def test_form_index_worker_failure_blocks_web_start(self):
+    def test_managed_worker_failure_blocks_web_start(self):
         self.stub("fuser", "exit 1")
         self.stub("curl", """echo '{"status":"ok"}'""")
         self.stub("sleep", "/bin/sleep 0.1")
@@ -192,14 +205,14 @@ if [[ "$1" == inspect && "$2" == hqservice-kafka-1 ]]; then echo healthy; fi
 exit 0''')
         self.stub("uv", '''
 case "$*" in
-    *XFormToElasticsearchPillow*) echo 'simulated form worker failure'; exit 7 ;;
-    *CaseToElasticsearchPillow*|*celery*) exec tail -f /dev/null ;;
+    *run_collectra_processors*) echo 'simulated managed worker failure'; exit 7 ;;
+    *celery*) exec tail -f /dev/null ;;
     *) exit 0 ;;
 esac''')
         result = self.run_launcher("collectra-hq/local-bin/start-collectra")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("XFormToElasticsearchPillow failed to start", result.stderr)
-        self.assertIn("simulated form worker failure", result.stderr)
+        self.assertIn("managed Collectra processors failed to start", result.stderr)
+        self.assertIn("simulated managed worker failure", result.stderr)
         self.assertNotIn("gunicorn", self.commands())
         self.assertFalse((self.root / "state/collectra/form-pillowtop.pid").exists())
 
