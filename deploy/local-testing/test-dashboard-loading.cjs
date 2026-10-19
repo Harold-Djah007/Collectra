@@ -7,7 +7,9 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname,
     '../../collectra-hq/corehq/apps/dashboard/static/dashboard/js/dashboard.js'), 'utf8');
 function observable(value) {
-    return function (next) { if (arguments.length) { value = next; } return value; };
+    const state = function (next) { if (arguments.length) { value = next; } return value; };
+    state.subscribe = () => {};
+    return state;
 }
 const requests = [];
 const $ = function () {}; // Skip DOM initialization; test the actual tile model.
@@ -84,10 +86,11 @@ dom.ajax = options => {
     pending.push(request);
     return request;
 };
+let unexpectedTimerCount = 0;
 const page = {$: dom, ko: {observable, observableArray: observable, pureComputed: fn => fn},
     _: {map: (items, fn) => items.map(fn), filter: (items, fn) => items.filter(fn)},
     initialPageData: {get: () => [], reverse: name => name},
-    document: {hidden: false}, window: {setInterval: () => {}}};
+    document: {hidden: false}, window: {setInterval: () => { unexpectedTimerCount++; }}};
 vm.createContext(page);
 vm.runInContext(source.replace(/^import .*;.*$/gm, ''), page);
 initialize();
@@ -101,4 +104,70 @@ assert.equal(pending.length, 2);
 pending[1].callbacks.done({alerts: []}); pending[1].callbacks.always();
 assert.equal(alerts.error(), false);
 assert.equal(alerts.loading(), false);
-console.log('Dashboard loading: 6 scenarios passed.');
+assert.equal(alerts.loaded(), true);
+assert.equal(unexpectedTimerCount, 0, 'Operational overview must not poll automatically');
+
+// A failed manual refresh keeps the latest successfully fetched overview.
+alerts.refresh();
+assert.equal(pending.length, 3);
+pending[2].callbacks.fail();
+pending[2].callbacks.always();
+assert.equal(alerts.error(), true);
+assert.equal(alerts.loaded(), true);
+assert.equal(alerts.alerts().length, 0);
+alerts.refresh();
+pending[3].callbacks.done({alerts: [{severity: 'urgent', received_on: '2026-10-19T11:00:00Z'}]});
+pending[3].callbacks.always();
+assert.equal(alerts.alerts().length, 1);
+alerts.refresh();
+pending[4].callbacks.fail();
+pending[4].callbacks.always();
+assert.equal(alerts.alerts().length, 1, 'Keep the previous results after a refresh error');
+
+// Reopening requests should not refetch on tab reselect or lose an open review draft.
+let initReopen;
+let reopenModel;
+const reopenPending = [];
+const reopenDOM = function (target) {
+    if (typeof target === 'function') { initReopen = target; return; }
+    return {length: target === '#reopen-requests' ? 1 : 0,
+        koApplyBindings: model => { if (target === '#reopen-requests') { reopenModel = model; } }};
+};
+reopenDOM.ajax = options => {
+    const callbacks = {};
+    const request = {options, callbacks};
+    for (const name of ['done', 'fail', 'always']) {
+        request[name] = callback => { callbacks[name] = callback; return request; };
+    }
+    reopenPending.push(request);
+    return request;
+};
+const reopenPage = {$: reopenDOM, ko: {observable, observableArray: observable,
+    pureComputed: fn => fn, computed: fn => fn},
+_: {map: (items, fn) => items.map(fn), filter: (items, fn) => items.filter(fn)},
+initialPageData: {get: () => [], reverse: name => name}};
+vm.createContext(reopenPage);
+vm.runInContext(source.replace(/^import .*;.*$/gm, ''), reopenPage);
+initReopen();
+assert.equal(reopenPending.length, 1);
+const reopened = {form_id: 'form-A', bed: 'dry_bed_1', status: 'pending', received_on: '2026-10-19'};
+reopenPending[0].callbacks.done({requests: [reopened]});
+reopenPending[0].callbacks.always();
+const draft = reopenModel.pendingRequests()[0];
+draft.reviewOpen(true);
+draft.caseId('case123');
+reopenModel.refresh();
+reopenPending[1].callbacks.done({requests: [{...reopened, reason: 'Updated note'}]});
+reopenPending[1].callbacks.always();
+assert.equal(reopenModel.pendingRequests()[0].caseId(), 'case123');
+assert.equal(reopenModel.pendingRequests()[0].reviewOpen(), true);
+assert.equal(reopenModel.pendingRequests()[0].reason, 'Updated note');
+reopenModel.showPending();
+assert.equal(reopenPending.length, 2, 'Clicking current tab must not refetch');
+reopenModel.showHistory();
+assert.equal(reopenPending.length, 3);
+reopenPending[2].callbacks.done({requests: []});
+reopenPending[2].callbacks.always();
+reopenModel.showPending();
+assert.equal(reopenPending.length, 3, 'Returning to loaded pending tab must not refetch');
+console.log('Dashboard loading and refresh stability: 10 scenarios passed.');
