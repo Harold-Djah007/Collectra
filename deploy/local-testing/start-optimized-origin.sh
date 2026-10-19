@@ -27,7 +27,13 @@ fi
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/../.." && pwd)
-hq_root="$repo_root/collectra-hq"
+# Fast-local launchers stage the checkout into the Linux runtime.
+# Honor that stable directory rather than starting a second copy on /mnt/c.
+hq_root="${COLLECTRA_PROJECT_ROOT:-$repo_root/collectra-hq}"
+if [[ ! -f "$hq_root/manage.py" || ! -f "$hq_root/local-bin/start-collectra" ]]; then
+    echo "Collectra runtime is incomplete: $hq_root" >&2
+    exit 1
+fi
 log_path=${COLLECTRA_LOCAL_HQ_LOG:-"$HOME/collectra-optimized-hq.log"}
 web_workers=${COLLECTRA_WEB_WORKERS:-2}
 hq_ready_attempts=${COLLECTRA_HQ_READY_ATTEMPTS:-120}
