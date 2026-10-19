@@ -74,173 +74,98 @@
 .collectra-quick-actions { grid-area: actions; align-self: center; margin: 0; }
 
 .collectra-alerts {
-  margin: 0 0 20px;
-  padding: 16px 16px 14px;
-  border: 1px solid #d9deea;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: none;
+  margin: 24px 0 32px; padding: 24px 28px 26px; border: 1px solid #dce9ec;
+  border-radius: 20px; background: #fff; box-shadow: 0 10px 30px rgba(18,54,70,.055);
 }
-.collectra-alerts-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.collectra-alerts-header > div:first-child { flex: 1 1 auto; min-width: 0; }
-.collectra-alerts-header h2 {
-  margin: 0 0 4px;
-  color: #031c59;
-  font-family: "Montserrat", "Inter", "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px;
-  line-height: 20px;
-  font-weight: 600;
-  letter-spacing: -.01em;
-}
-.collectra-alerts-header p:not(.collectra-alerts-eyebrow) { margin: 0; color: #5c6788; font-size: 13px; line-height: 18px; }
-.collectra-alerts-eyebrow {
-  display: flex; align-items: center; gap: 8px; margin: 0 0 4px;
-  color: #5c6788; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
-}
-.collectra-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #2d60d7; box-shadow: 0 0 0 3px #eef3fc; }
-.collectra-alerts-controls { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-.collectra-last-updated { color: #5c6788; font-size: 12px; }
-.collectra-refresh,
-.collectra-reopen-more,
-.collectra-tool-filter button {
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid #c8cfe0;
-  border-radius: 4px;
-  background: #fff;
-  color: #031c59;
-  font-size: 13px;
-  font-weight: 600;
-}
-.collectra-refresh:hover,
-.collectra-refresh:focus,
-.collectra-reopen-more:hover,
-.collectra-tool-filter button:hover {
-  border-color: #2d60d7;
-  background: #f5f8fe;
-  color: #1e4bb5;
-}
-.collectra-refresh:disabled,
-.collectra-reopen-more:disabled { opacity: .6; cursor: wait; }
+.collectra-alerts-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.collectra-alerts-header h2 { margin: 2px 0 5px; color: #142e44; font-size: 1.45rem; font-weight: 800; }
+.collectra-alerts-header p:not(.collectra-alerts-eyebrow) { margin: 0; color: #627a89; font-size: .88rem; }
+.collectra-alerts-eyebrow { display: flex; align-items: center; gap: 8px; margin: 0; color: #087e79; font-size: .74rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+.collectra-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #1bab91; box-shadow: 0 0 0 4px #e0f8f1; animation: collectra-glow 2.8s ease-in-out infinite; }
+.collectra-alerts-controls { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+.collectra-last-updated { color: #59727f; font-size: .78rem; }
+.collectra-refresh { padding: 7px 12px; border: 1px solid #cfdee4; border-radius: 9px; background: #fff; color: #16475a; font-size: .81rem; font-weight: 700; }
+.collectra-refresh:hover, .collectra-refresh:focus { background: #edf8f6; border-color: #82c9bc; }
+.collectra-refresh:disabled { opacity: .65; cursor: wait; }
 .collectra-refresh .fa { margin-right: 4px; }
 .collectra-refresh-spinning { animation: collectra-spin 1s linear infinite; }
-
-.collectra-alerts-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
-.collectra-summary-item {
-  display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 10px 12px;
-  border: 1px solid #e6e9f2; border-radius: 6px; background: #f7f8fc;
-}
-.collectra-alerts-summary button.collectra-summary-item {
-  width: 100%; color: inherit; text-align: left; cursor: pointer;
-}
-.collectra-alerts-summary button.collectra-summary-item:hover { border-color: #b7c4e8; background: #f5f8fe; }
-.collectra-alerts-summary button.collectra-summary-item:focus-visible { outline: 2px solid #2d60d7; outline-offset: 2px; }
-.collectra-alerts-summary .collectra-summary-item.is-selected { border-color: #2d60d7; background: #eef3fc; box-shadow: inset 0 0 0 1px #2d60d7; }
-.collectra-summary-arrow { margin-left: auto; color: #8b93ab; font-size: 14px; }
-.collectra-summary-icon {
-  display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px;
-  border-radius: 6px; background: #eef3fc; color: #2d60d7; font-size: 13px;
-}
-.collectra-summary-urgent .collectra-summary-icon { background: #fdecec; color: #c42b2b; }
-.collectra-summary-followup .collectra-summary-icon { background: #fdf6e4; color: #8a6208; }
-.collectra-summary-item strong {
-  display: block; color: #031c59;
-  font-family: "Montserrat", "Inter", sans-serif;
-  font-size: 20px; line-height: 24px; font-weight: 600; font-variant-numeric: tabular-nums;
-}
-.collectra-summary-urgent strong { color: #c42b2b; }
-.collectra-summary-followup strong { color: #8a6208; }
-.collectra-summary-item small { color: #5c6788; font-size: 12px; font-weight: 500; }
-.collectra-alerts-message { margin-top: 12px; color: #5c6788; font-size: 13px; }
-.collectra-alerts-error { padding: 10px 12px; border-radius: 4px; background: #fdecec; color: #8d1f1f; }
-.collectra-alerts-empty {
-  display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px;
-  border-radius: 6px; background: #e7f5f1; color: #05705a; font-size: 13px;
-}
-.collectra-empty-icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; background: #cfe8e1; }
-.collectra-alerts-empty strong,
-.collectra-alerts-empty small { display: block; }
-.collectra-alerts-empty small { margin-top: 2px; color: #05705a; }
-.collectra-alerts-list { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
-.collectra-alert {
-  padding: 12px;
-  border: 1px solid #eadfb8;
-  border-left: 3px solid #ebad1c;
-  border-radius: 6px;
-  background: #fffdf8;
-}
-.collectra-alert-urgent { border-color: #f3d0d0; border-left-color: #c42b2b; background: #fff8f8; }
-.collectra-alert-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; color: #031c59; font-size: 13px; }
-.collectra-alert-summary time { margin-left: auto; color: #5c6788; font-size: 12px; }
-.collectra-alert-severity { color: #8a6208; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-.collectra-alert-urgent .collectra-alert-severity { color: #c42b2b; }
-.collectra-alert-checks { margin: 8px 0; padding-left: 18px; font-size: 13px; color: #3e4c6e; }
-.collectra-alert-note { margin: 8px 0; color: #3e4c6e; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.collectra-alert a,
-.collectra-reopen-cases-link { color: #2d60d7; font-size: 13px; font-weight: 600; text-decoration: none; }
-.collectra-alert a:hover,
-.collectra-reopen-cases-link:hover { color: #1e4bb5; text-decoration: underline; }
-
-.collectra-reopen-requests { border-color: #d9deea; }
-.collectra-reopen-meta { margin: 8px 0 0; color: #5c6788; font-size: 12px; }
-.collectra-reopen-status { display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: 4px; background: #fdf6e4; color: #8a6208; font-size: 11px; font-weight: 700; }
-.collectra-reopen-status.handled { background: #e7f5f1; color: #05705a; }
-.collectra-reopen-cases-link { display: inline-block; margin: 0; }
-.collectra-reopen-tabs { display: flex; gap: 0; margin: 12px 0 4px; border-bottom: 1px solid #e6e9f2; }
-.collectra-reopen-tabs button {
-  min-height: 32px; padding: 6px 12px; border: 0; border-bottom: 2px solid transparent;
-  background: transparent; color: #5c6788; font-size: 13px; font-weight: 600;
-}
-.collectra-reopen-tabs button.is-active { border-bottom-color: #2d60d7; color: #2d60d7; }
-.collectra-reopen-tabs button:hover { color: #031c59; }
-.collectra-reopen-tabs button:focus-visible,
-.collectra-reopen-more:focus-visible,
-.collectra-tool-filter input:focus-visible,
-.collectra-tool-filter button:focus-visible { outline: 2px solid #2d60d7; outline-offset: 2px; }
-.collectra-reopen-more { margin-top: 12px; }
-.collectra-reopen-action,
-.collectra-reopen-confirm {
-  display: inline-flex; align-items: center; margin-top: 12px; min-height: 32px; padding: 0 12px;
-  border: 1px solid #2d60d7; border-radius: 4px; background: #2d60d7; color: #fff; font-size: 13px; font-weight: 600;
-}
-.collectra-reopen-action:hover,
-.collectra-reopen-confirm:hover { background: #1e4bb5; border-color: #1e4bb5; }
-.collectra-reopen-review { margin-top: 12px; padding: 12px; border: 1px solid #d9deea; border-radius: 6px; background: #f7f8fc; font-size: 13px; }
-.collectra-reopen-review label { display: block; margin-bottom: 8px; font-weight: 600; }
-.collectra-reopen-review input[type="text"] {
-  display: block; width: min(100%, 420px); margin-top: 4px; min-height: 32px; padding: 4px 8px;
-  border: 1px solid #c8cfe0; border-radius: 4px;
-}
-.collectra-reopen-review input[type="text"]:focus { border-color: #2d60d7; outline: none; box-shadow: 0 0 0 3px rgba(45, 96, 215, .18); }
+.collectra-alerts-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 21px; }
+.collectra-summary-item { display: flex; align-items: center; gap: 12px; min-height: 86px; padding: 15px 18px; border: 1px solid #e3ecef; border-radius: 13px; background: #f6fafb; }
+.collectra-alerts-summary button.collectra-summary-item { position: relative; width: 100%; color: inherit; text-align: left; cursor: pointer; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.collectra-alerts-summary button.collectra-summary-item:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(18,54,70,.09); }
+.collectra-alerts-summary button.collectra-summary-item:focus-visible { outline: 3px solid #047c85; outline-offset: 2px; }
+.collectra-alerts-summary .collectra-summary-item.is-selected { border-color: #2aa69a; box-shadow: inset 0 0 0 1px #2aa69a; }
+.collectra-summary-arrow { margin-left: auto; align-self: flex-start; color: #40897e; font-size: 1rem; }
+.collectra-summary-icon { display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px; border-radius: 12px; background: #e0f1f0; color: #087f79; font-size: 1.15rem; }
+.collectra-summary-urgent .collectra-summary-icon { background: #ffebe7; color: #b93d33; }
+.collectra-summary-followup .collectra-summary-icon { background: #fff1d9; color: #9d660b; }
+.collectra-summary-item strong { display: block; color: #17344a; font-size: 1.55rem; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; }
+.collectra-summary-item small { color: #5d7180; font-size: .78rem; font-weight: 600; }
+.collectra-alerts-message { margin-top: 15px; color: #567083; }
+.collectra-alerts-error { padding: 12px; border-radius: 9px; background: #fff1ed; color: #9f392c; }
+.collectra-alerts-empty { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: #eaf8f4; color: #186753; }
+.collectra-empty-icon { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; background: #cbefe4; }
+.collectra-alerts-empty strong, .collectra-alerts-empty small { display: block; }
+.collectra-alerts-empty small { margin-top: 2px; color: #446e64; }
+.collectra-alerts-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; margin-top: 18px; }
+.collectra-alert { padding: 17px; border: 1px solid #eadfca; border-left: 4px solid #d6a32d; border-radius: 12px; background: #fffdf8; animation: collectra-appear .4s ease-out both; }
+.collectra-alert-urgent { border-color: #f0d9d5; border-left-color: #d74636; background: #fff8f6; }
+.collectra-alert-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px 10px; color: #17354e; }
+.collectra-alert-summary time { margin-left: auto; color: #687d8e; font-size: .8rem; }
+.collectra-alert-severity { color: #8d551a; font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+.collectra-alert-urgent .collectra-alert-severity { color: #b22d23; }
+.collectra-alert-checks { margin: 12px 0 8px; padding-left: 18px; font-size: .87rem; color: #344e60; }
+.collectra-alert-note { margin: 10px 0; color: #344e60; white-space: pre-wrap; overflow-wrap: anywhere; }
+.collectra-alert a { color: #087e79; font-weight: 700; }
+.collectra-reopen-requests { border-color: #d6e5e2; }
+.collectra-reopen-meta { margin: 9px 0 0; color: #5a7181; font-size: .82rem; }
+.collectra-reopen-status { display: inline-block; margin-top: 7px; padding: 3px 8px; border-radius: 12px; background: #fff0d6; color: #785007; font-size: .7rem; }
+.collectra-reopen-status.handled { background: #dff4e8; color: #176145; }
+.collectra-reopen-cases-link { display: inline-block; margin-top: 9px; color: #087e79; font-weight: 700; }
+.collectra-reopen-tabs { display: flex; gap: 5px; margin: 14px 0 4px; padding: 4px; border: 1px solid #dce9e6; border-radius: 10px; background: #f4f9f8; }
+.collectra-reopen-tabs button { flex: 1; min-height: 34px; padding: 6px 10px; border: 0; border-radius: 7px; background: transparent; color: #4c6a74; font-size: .79rem; font-weight: 700; }
+.collectra-reopen-tabs button.is-active { background: #fff; color: #087e79; box-shadow: 0 2px 8px rgba(18,54,70,.09); }
+.collectra-reopen-tabs button:hover { color: #075d5a; }
+.collectra-reopen-tabs button:focus-visible, .collectra-reopen-more:focus-visible { outline: 2px solid #087e79; outline-offset: 2px; }
+.collectra-reopen-more { margin-top: 14px; padding: 8px 12px; border: 1px solid #a9d2ca; border-radius: 8px; background: #f4faf8; color: #087e79; font-size: .8rem; font-weight: 700; }
+.collectra-reopen-more:disabled { opacity: .6; cursor: wait; }
+.collectra-reopen-action, .collectra-reopen-confirm { display: block; margin-top: 12px; padding: 9px 14px; border: 0; border-radius: 8px; background: #087e79; color: #fff; font-weight: 700; }
+.collectra-reopen-action:hover, .collectra-reopen-confirm:hover { background: #075d5a; }
+.collectra-reopen-review { margin-top: 13px; padding: 16px; border: 1px solid #d6e5e2; border-radius: 10px; background: #f5faf9; }
+.collectra-reopen-review label { display: block; margin-bottom: 10px; font-weight: 600; }
+.collectra-reopen-review input[type="text"] { display: block; width: min(100%, 420px); margin-top: 5px; padding: 8px; border: 1px solid #bacfd1; border-radius: 7px; }
 .collectra-reopen-review input[type="checkbox"] { margin-right: 6px; }
 .collectra-reopen-suggestions { list-style: none; padding: 0; margin: 8px 0 12px; display: grid; gap: 6px; }
-.collectra-reopen-suggestions button {
-  width: 100%; text-align: left; border: 1px solid #d9deea; border-radius: 4px; padding: 8px 10px; background: #fff; color: #031c59;
-}
-.collectra-reopen-suggestions button:hover,
-.collectra-reopen-suggestions button:focus-visible { border-color: #2d60d7; background: #f5f8fe; }
-.collectra-reopen-suggestions span,
-.collectra-reopen-suggestions small { display: block; overflow-wrap: anywhere; color: #5c6788; }
-.collectra-reopen-review [role="alert"] { color: #c42b2b; }
-
-.collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; gap: 16px; margin: 0 0 28px; }
-.collectra-status-grid .collectra-alerts { min-width: 0; margin: 0; padding: 16px; border-top: 3px solid #2d60d7; }
-.collectra-status-grid .collectra-reopen-requests { border-top-color: #ebad1c; }
+.collectra-reopen-suggestions button { width: 100%; text-align: left; border: 1px solid #c3d9d7; border-radius: 8px; padding: 8px 10px; background: #fff; color: #183d50; }
+.collectra-reopen-suggestions button:hover, .collectra-reopen-suggestions button:focus-visible { border-color: #087e79; background: #eaf6f4; }
+.collectra-reopen-suggestions span, .collectra-reopen-suggestions small { display: block; overflow-wrap: anywhere; }
+.collectra-reopen-review [role="alert"] { color: #a33731; }
+.collectra-status-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; gap: 24px; margin: 36px 0 38px; }
+.collectra-status-grid .collectra-alerts { min-width: 0; margin: 0; padding: 18px 20px; border-top: 4px solid #0c9e94; border-radius: 16px; box-shadow: 0 12px 30px rgba(18,54,70,.09); }
+.collectra-status-grid .collectra-reopen-requests { border-top-color: #d39128; }
 .collectra-status-grid .collectra-alerts-header { gap: 12px; }
 .collectra-status-grid .collectra-alerts-header > div:first-child { min-width: 0; }
-.collectra-status-grid .collectra-alerts-controls { gap: 8px; }
-.collectra-status-grid .collectra-alerts-summary { gap: 8px; }
-.collectra-status-grid .collectra-summary-item { min-width: 0; }
-.collectra-status-grid .collectra-alerts-list { grid-template-columns: 1fr; }
-.collectra-request-count {
-  display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px;
-  border-radius: 4px; background: #eef3fc; color: #2d60d7; font-size: 12px; vertical-align: middle;
-}
-.collectra-reopen-help { margin-top: 10px; color: #5c6788; font-size: 13px; }
-.collectra-reopen-help summary { width: fit-content; cursor: pointer; color: #2d60d7; font-weight: 600; }
-.collectra-reopen-help summary:focus-visible { outline: 2px solid #2d60d7; outline-offset: 3px; }
-.collectra-reopen-help p { margin: 6px 0 0; line-height: 1.45; }
-
+.collectra-status-grid .collectra-alerts-header h2 { margin: 2px 0 3px; font-size: 1.15rem; }
+.collectra-status-grid .collectra-alerts-eyebrow { font-size: .65rem; }
+.collectra-status-grid .collectra-alerts-header p:not(.collectra-alerts-eyebrow) { font-size: .77rem; }
+.collectra-status-grid .collectra-alerts-controls { gap: 8px; white-space: nowrap; }
+.collectra-status-grid .collectra-refresh { padding: 5px 9px; }
+.collectra-status-grid .collectra-alerts-summary { gap: 7px; margin-top: 13px; }
+.collectra-status-grid .collectra-summary-item { min-width: 0; min-height: 60px; gap: 8px; padding: 9px; border-radius: 10px; }
+.collectra-status-grid .collectra-summary-icon { flex-basis: 30px; width: 30px; height: 30px; border-radius: 8px; font-size: .9rem; }
+.collectra-status-grid .collectra-summary-item strong { font-size: 1.2rem; }
+.collectra-status-grid .collectra-summary-item small { font-size: .7rem; }
+.collectra-status-grid .collectra-summary-arrow { display: none; }
+.collectra-status-grid .collectra-alerts-empty { margin-top: 12px; padding: 9px 11px; font-size: .78rem; }
+.collectra-status-grid .collectra-empty-icon { flex-basis: 26px; width: 26px; height: 26px; }
+.collectra-status-grid .collectra-alerts-list { grid-template-columns: 1fr; margin-top: 12px; }
+.collectra-status-grid .collectra-alert { padding: 12px; }
+.collectra-request-count { display: inline-grid; place-items: center; min-width: 23px; height: 23px; margin-left: 4px; padding: 0 5px; border-radius: 7px; background: #e6f4f2; color: #087e79; font-size: .77rem; vertical-align: middle; }
+.collectra-reopen-help { margin-top: 10px; color: #496576; font-size: .77rem; }
+.collectra-reopen-help summary { width: fit-content; cursor: pointer; color: #087e79; font-weight: 700; }
+.collectra-reopen-help summary:focus-visible { outline: 2px solid #087e79; outline-offset: 3px; }
+.collectra-reopen-help p { margin: 7px 0 0; line-height: 1.45; }
+.collectra-status-grid .collectra-reopen-cases-link { margin: 0; font-size: .78rem; }
 .collectra-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin: 0 0 8px; }
 .collectra-section-eyebrow { margin-bottom: 4px; }
 .collectra-section-heading h2 {
@@ -337,4 +262,62 @@
 @media (prefers-reduced-motion: reduce) {
   .collectra-dashboard-page,
   .collectra-dashboard-page * { animation: none !important; transition: none !important; }
+}
+
+/* Workspace directory: compact, scan-friendly rows instead of decorative tiles.
+   Dashboard operational/reopening panels above retain their original styling. */
+.collectra-dashboard-page { background: #f7f8fb; color: #1b2d48; }
+.collectra-dashboard-inner { max-width: 1376px; }
+.collectra-hero { margin-bottom: 14px; padding: 4px 0 16px; }
+.collectra-section-heading { margin-bottom: 12px; }
+.collectra-tool-filter {
+  margin: 0 0 0; padding: 12px 16px; background: #fff;
+  border: 1px solid #dce2eb; border-bottom: 0; border-radius: 6px 6px 0 0;
+}
+.collectra-dashboard-grid {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 0;
+  margin: 0; border: 1px solid #dce2eb; border-radius: 0 0 6px 6px;
+  overflow: hidden; background: #fff;
+}
+.collectra-dashboard-col { padding: 0; border-bottom: 1px solid #e9edf3; }
+.collectra-dashboard-col:last-child { border-bottom: 0; }
+.collectra-dashboard-card {
+  display: grid; grid-template-columns: minmax(260px, .9fr) minmax(0, 1.1fr);
+  min-height: 90px; border: 0; border-radius: 0; box-shadow: none;
+}
+.collectra-dashboard-card:hover { border: 0; background: #f7faff; box-shadow: none; }
+.collectra-card-header {
+  align-items: center; min-height: 0; padding: 16px 18px;
+  border-right: 1px solid #edf0f5; background: transparent;
+}
+.collectra-card-title { font-size: 15px; font-weight: 650; }
+.collectra-card-kicker { margin-bottom: 3px; color: #68758e; }
+.collectra-card-description { margin-top: 3px; }
+.collectra-card-body {
+  display: flex; justify-content: center; min-height: 0;
+  padding: 11px 18px; background: transparent;
+}
+.collectra-card-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.collectra-card-item {
+  border: 0; border-radius: 4px; padding: 6px 8px;
+  color: #234678; background: transparent;
+}
+.collectra-card-item:hover { background: #edf3fe; border: 0; }
+.collectra-card-open { margin: 0; }
+.collectra-card-loading, .collectra-card-error { margin: 0; }
+#dashboard-tiles { padding-bottom: 36px; }
+@media (max-width: 1100px) {
+  .collectra-dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .collectra-dashboard-card { grid-template-columns: minmax(0, 1fr); }
+  .collectra-card-header { border-right: 0; padding: 14px 14px 7px; }
+  .collectra-card-body { padding: 6px 14px 14px; }
+  .collectra-card-items { grid-template-columns: minmax(0, 1fr); }
+  .collectra-tool-filter { padding: 12px; }
+}
+@media (max-width: 575px) {
+  .collectra-alerts-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .collectra-status-grid .collectra-summary-item { padding: 8px 5px; }
+  .collectra-summary-item small { font-size: .67rem; }
 }
