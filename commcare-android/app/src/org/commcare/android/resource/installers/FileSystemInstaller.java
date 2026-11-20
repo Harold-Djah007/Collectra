@@ -229,17 +229,58 @@ abstract class FileSystemInstaller implements ResourceInstaller<AndroidCommCareP
             //Get final destination
             String finalLocation = localDestination + "/" + filepart;
 
-            if (!FileSystemUtils.moveFrom(localLocation, finalLocation, false)) {
-                Logger.log(LogTypes.TYPE_RESOURCES, "Failed to move resource " + r.getDescriptor() +
-                        " during upgrade from origin file path " + localLocation + " to  desination file path " +
-                        finalLocation + ". Origin file exists = " + new File(localLocation).exists()
-                        + " and Destination File exits = " + new File(finalLocation).exists());
+            File stagedFile = new File(ReferenceManager.instance().DeriveReference(localLocation).getLocalURI());
+            File installedFile = new File(ReferenceManager.instance().DeriveReference(finalLocation).getLocalURI());
+            if (!stagedFile.isFile()) {
+                Logger.log(LogTypes.TYPE_RESOURCES,
+                        "Refusing resource upgrade with missing staged file: " + stagedFile.getAbsolutePath());
+                return false;
+            }
+
+            boolean moved = FileSystemUtils.moveFrom(localLocation, finalLocation, false);
+            if (!moved && installedFile.isFile()
+                    && isRecoverableUpgradeCollision(r, platform, installedFile)) {
+                moved = FileSystemUtils.moveAsideConflictAndPromote(localLocation, finalLocation);
+            }
+            if (!moved) {
+                Logger.log(LogTypes.TYPE_RESOURCES, "Failed to promote resource " + r.getDescriptor()
+                        + " from " + stagedFile.getAbsolutePath() + " (exists=" + stagedFile.exists()
+                        + ") to " + installedFile.getAbsolutePath() + " (exists=" + installedFile.exists()
+                        + "). Existing resource has not been overwritten.");
                 return false;
             }
 
             localLocation = finalLocation;
             return true;
         } catch (InvalidReferenceException e) {
+            return false;
+        }
+    }
+
+    private boolean isRecoverableUpgradeCollision(Resource incoming, AndroidCommCarePlatform platform,
+                                                    File installedFile) {
+        Resource previous = platform.getGlobalResourceTable().getResourceWithId(incoming.getResourceId());
+        if (previous == null || previous.getStatus() != Resource.RESOURCE_STATUS_UNSTAGED
+                || !incoming.isNewer(previous)
+                || !(previous.getInstaller() instanceof FileSystemInstaller)) {
+            return false;
+        }
+
+        FileSystemInstaller previousInstaller = (FileSystemInstaller)previous.getInstaller();
+        String previousLocation = previousInstaller.getLocalLocation();
+        if (previousLocation == null || !previousLocation.endsWith(STAGING_EXT)
+                || !localDestination.equals(previousInstaller.getLocalDestination())) {
+            return false;
+        }
+
+        try {
+            File preservedPrevious = new File(
+                    ReferenceManager.instance().DeriveReference(previousLocation).getLocalURI());
+            return preservedPrevious.isFile()
+                    && preservedPrevious.getCanonicalFile().getParentFile().equals(
+                            installedFile.getCanonicalFile().getParentFile());
+        } catch (IOException | InvalidReferenceException e) {
+            Logger.log(LogTypes.TYPE_RESOURCES, "Unable to verify prior staged resource: " + e.getMessage());
             return false;
         }
     }

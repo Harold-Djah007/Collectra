@@ -7,6 +7,7 @@ import org.javarosa.core.reference.ReferenceManager;
 import org.javarosa.core.services.Logger;
 
 import java.io.File;
+import java.util.UUID;
 
 public class FileSystemUtils {
 
@@ -26,6 +27,39 @@ public class FileSystemUtils {
             return input;
         }
         return input.substring(0, invalid);
+    }
+
+    static boolean moveAsideConflictAndPromote(String incomingLocation, String destinationLocation)
+            throws InvalidReferenceException {
+        File incoming = new File(ReferenceManager.instance().DeriveReference(incomingLocation).getLocalURI());
+        File destination = new File(ReferenceManager.instance().DeriveReference(destinationLocation).getLocalURI());
+        return moveAsideConflictAndPromote(incoming, destination);
+    }
+
+    static boolean moveAsideConflictAndPromote(File incoming, File destination) {
+        if (!incoming.isFile() || !destination.isFile()
+                || !incoming.getParentFile().isDirectory()
+                || !destination.getParentFile().isDirectory()) {
+            return false;
+        }
+
+        File preserved = new File(destination.getParentFile(),
+                destination.getName() + ".cc_app-conflict-" + UUID.randomUUID());
+        if (preserved.exists() || !destination.renameTo(preserved)) {
+            return false;
+        }
+
+        if (incoming.renameTo(destination)) {
+            Logger.log(LogTypes.TYPE_RESOURCES,
+                    "Preserved conflicting application resource at " + preserved.getAbsolutePath());
+            return true;
+        }
+
+        if (!destination.exists() && !preserved.renameTo(destination)) {
+            Logger.log(LogTypes.TYPE_RESOURCES,
+                    "Failed to restore conflicting application resource from " + preserved.getAbsolutePath());
+        }
+        return false;
     }
 
     protected static boolean moveFrom(String oldLocation, String newLocation, boolean force) throws InvalidReferenceException {
